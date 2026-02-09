@@ -266,6 +266,8 @@ while True:
     
     # Apply thermal colormap
     thermal = cv2.applyColorMap(gray, cv2.COLORMAP_JET)
+
+    thermal = cv2.GaussianBlur(thermal, (81, 81), 0)
     
     # Face detection
     if frame_count % 1 == 0:
@@ -319,7 +321,7 @@ while True:
             box_color, 
             2
         )
-    
+
     # Draw proximity violations
     for center1, center2, distance in violations:
         cv2.line(thermal, center1, center2, (0, 0, 255), 2)
