@@ -5,19 +5,14 @@ import busio
 import adafruit_ads1x15.ads1115 as ADS
 from adafruit_ads1x15.analog_in import AnalogIn
 
-############################
 # Initialize ADC (ADS1115)
-############################
-
 i2c = busio.I2C(board.SCL, board.SDA)
 ads = ADS.ADS1115(i2c)
 
 mq135_channel = AnalogIn(ads, ADS.P0)
 sound_channel = AnalogIn(ads, ADS.P1)
 
-############################
 # Serial connections
-############################
 
 # PMS5003
 pms = serial.Serial("/dev/serial0", baudrate=9600, timeout=2)
@@ -25,10 +20,7 @@ pms = serial.Serial("/dev/serial0", baudrate=9600, timeout=2)
 # mmWave radar (example port)
 radar = serial.Serial("/dev/ttyUSB0", baudrate=256000, timeout=1)
 
-############################
 # PMS5003 Reading Function
-############################
-
 def read_pms5003():
     data = pms.read(32)
 
@@ -41,36 +33,24 @@ def read_pms5003():
 
     return None
 
-############################
 # MQ135 Gas Reading
-############################
-
 def read_mq135():
     voltage = mq135_channel.voltage
     return voltage
 
-############################
 # Sound Sensor
-############################
-
 def read_sound():
     voltage = sound_channel.voltage
     return voltage
 
-############################
 # mmWave Radar Data
-############################
-
 def read_radar():
     if radar.in_waiting:
         data = radar.readline().decode(errors="ignore").strip()
         return data
     return None
 
-############################
 # Main Loop
-############################
-
 while True:
 
     pms_data = read_pms5003()
