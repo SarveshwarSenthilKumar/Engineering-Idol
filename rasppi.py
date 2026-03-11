@@ -60,6 +60,52 @@ while True:
 
     print("----- SENSOR DATA -----")
 
+    """
+    PMS5003 DATA TABLE BREAKDOWN
+    PM1.0: 9 µg/m³
+    PM2.5: 18 µg/m³
+    PM10: 24 µg/m³
+
+    | Value | Meaning          |
+    | ----- | ---------------- |
+    | 0–12  | clean air        |
+    | 12–35 | moderate         |
+    | 35+   | poor air quality |
+
+
+
+
+    MQ135 DATA TABLE BREAKDOWN
+    Voltage: 0.5V - 4.9V
+
+    | Value | Meaning          |
+    | ----- | ---------------- |
+    | 0.5V - 1.1V  | clean air        |
+    | 1.1V - 2.1V | moderate         |
+    | 2.1V - 4.9V   | poor air quality |
+
+
+
+
+    Sound is basic, only need the logic to detect spikes in sound compared to a normal decibel level.
+    | dB  | Meaning      |
+    | --- | ------------ |
+    | 30  | quiet        |
+    | 50  | conversation |
+    | 70  | loud         |
+    | 85+ | very loud    |
+
+
+
+
+
+    mmWave Radar Data
+    Occupancy
+    People detected: 3
+    Movement: low
+
+    """
+
     if pms_data:
         print("PM1.0:", pms_data[0], "µg/m3")
         print("PM2.5:", pms_data[1], "µg/m3")
