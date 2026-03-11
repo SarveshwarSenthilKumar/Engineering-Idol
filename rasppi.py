@@ -4,6 +4,20 @@ import board
 import busio
 import adafruit_ads1x15.ads1115 as ADS
 from adafruit_ads1x15.analog_in import AnalogIn
+import math
+from collections import deque
+
+# Sound tracking settings
+REFERENCE_VOLTAGE = 0.1
+SPIKE_THRESHOLD_DB = 12      # spike if 12 dB above baseline
+WINDOW_SIZE = 20             # rolling window size
+
+sound_history = deque(maxlen=WINDOW_SIZE)
+
+def voltage_to_db(voltage):
+    if voltage <= 0:
+        return 0
+    return 20 * math.log10(voltage / REFERENCE_VOLTAGE)
 
 # Initialize ADC (ADS1115)
 i2c = busio.I2C(board.SCL, board.SDA)
