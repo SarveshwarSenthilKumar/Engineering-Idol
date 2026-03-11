@@ -80,7 +80,7 @@ while True:
 
     pms_data = read_pms5003()
     mq135 = read_mq135()
-    sound = read_sound()
+    db, baseline, spike = read_sound()
     radar_data = read_radar()
 
     print("----- SENSOR DATA -----")
@@ -91,7 +91,13 @@ while True:
         print("PM10:", pms_data[2], "µg/m3")
 
     print("MQ135 Gas Voltage:", round(mq135,2), "V")
-    print("Sound Voltage:", round(sound,2), "V")
+    print("Sound Level:", round(db,2), "dB")
+
+    if baseline:
+        print("Noise Baseline:", round(baseline,2), "dB")
+
+    if spike:
+        print("⚠ SOUND SPIKE DETECTED")
 
     if radar_data:
         print("Radar:", radar_data)
