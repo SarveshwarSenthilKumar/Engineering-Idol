@@ -4,31 +4,27 @@ import board
 import busio
 import adafruit_ads1x15.ads1115 as ADS
 from adafruit_ads1x15.analog_in import AnalogIn
-import math
-from collections import deque
-
+import numpy as np
 import math
 import time
 from collections import deque
+from sklearn.ensemble import RandomForestClassifier
 
-# SOUND ANALYSIS PARAMETERS
-SAMPLE_RATE = 120        # samples per second
-WINDOW_DURATION = 1      # seconds
-SAMPLES_PER_WINDOW = SAMPLE_RATE * WINDOW_DURATION
+# Parameters
+SAMPLE_RATE = 200
+WINDOW_TIME = 1
+WINDOW_SIZE = SAMPLE_RATE * WINDOW_TIME
 
 REFERENCE_VOLTAGE = 0.05
 
-SPIKE_DB_THRESHOLD = 15
-LOUD_DB_THRESHOLD = 65
-SUSTAINED_DURATION = 5
+SPIKE_THRESHOLD = 15
+LOUD_THRESHOLD = 65
 
-# DATA STORAGE
+# Data Storage
 samples = []
 db_history = deque(maxlen=50)
 
-event_timer = 0
-
-# Voltage → Decibel Conversion
+# Sound Utilities
 def voltage_to_db(v):
 
     if v <= 0:
@@ -36,53 +32,91 @@ def voltage_to_db(v):
 
     return 20 * math.log10(v / REFERENCE_VOLTAGE)
 
-# RMS Calculation
+
 def rms(values):
 
-    square_sum = sum(v*v for v in values)
-    mean = square_sum / len(values)
+    arr = np.array(values)
 
-    return math.sqrt(mean)
+    return np.sqrt(np.mean(arr**2))
 
-# SOUND ANALYSIS FUNCTION
+# FFT Analysis
+def fft_features(signal):
+
+    signal = np.array(signal)
+
+    fft = np.fft.fft(signal)
+
+    magnitude = np.abs(fft)
+
+    freqs = np.fft.fftfreq(len(signal), 1/SAMPLE_RATE)
+
+    dominant_freq = freqs[np.argmax(magnitude)]
+
+    spectral_energy = np.sum(magnitude)
+
+    spectral_centroid = np.sum(freqs * magnitude) / np.sum(magnitude)
+
+    return dominant_freq, spectral_energy, spectral_centroid
+
+# Feature Extraction
+def extract_features(signal):
+
+    rms_val = rms(signal)
+
+    db = voltage_to_db(rms_val)
+
+    dom_freq, energy, centroid = fft_features(signal)
+
+    return [db, dom_freq, energy, centroid]
+
+
+# Machine Learning Model
+model = RandomForestClassifier()
+
+# Example training data
+X_train = [
+
+    [40,100,5000,120],
+    [45,120,6000,150],
+    [70,500,20000,600],
+    [80,800,30000,900],
+    [60,300,15000,400]
+
+]
+
+y_train = [
+
+    "quiet",
+    "conversation",
+    "crowd",
+    "door_slam",
+    "shouting"
+
+]
+
+model.fit(X_train, y_train)
+
+# Sound Analysis
 def analyze_sound():
-
     global samples
-    global event_timer
-
     voltage = sound_channel.voltage
-
     samples.append(voltage)
 
-    if len(samples) < SAMPLES_PER_WINDOW:
+    if len(samples) < WINDOW_SIZE:
         return None
 
-    rms_voltage = rms(samples)
+    features = extract_features(samples)
+    prediction = model.predict([features])[0]
 
-    db = voltage_to_db(rms_voltage)
+    db = features[0]
+    db_history.append(db)
+
+    baseline = sum(db_history) / len(db_history)
+    spike = db > baseline + SPIKE_THRESHOLD
 
     samples = []
 
-    db_history.append(db)
-
-    baseline = sum(db_history)/len(db_history)
-
-    spike = db > baseline + SPIKE_DB_THRESHOLD
-
-    event = None
-
-    if spike and db > LOUD_DB_THRESHOLD:
-        event = "IMPACT EVENT (possible door slam)"
-
-    if db > LOUD_DB_THRESHOLD:
-        event_timer += 1
-    else:
-        event_timer = 0
-
-    if event_timer >= SUSTAINED_DURATION:
-        event = "SUSTAINED LOUD ACTIVITY"
-
-    return db, baseline, spike, event
+    return db, baseline, spike, prediction
 
 # Initialize ADC (ADS1115)
 i2c = busio.I2C(board.SCL, board.SDA)
@@ -157,7 +191,7 @@ while True:
 
         if event:
             print("EVENT:", event)
-            
+
     radar_data = read_radar()
 
     print("----- SENSOR DATA -----")
