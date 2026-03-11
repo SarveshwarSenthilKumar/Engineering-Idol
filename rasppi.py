@@ -7,17 +7,82 @@ from adafruit_ads1x15.analog_in import AnalogIn
 import math
 from collections import deque
 
-# Sound tracking settings
-REFERENCE_VOLTAGE = 0.1
-SPIKE_THRESHOLD_DB = 12      # spike if 12 dB above baseline
-WINDOW_SIZE = 20             # rolling window size
+import math
+import time
+from collections import deque
 
-sound_history = deque(maxlen=WINDOW_SIZE)
+# SOUND ANALYSIS PARAMETERS
+SAMPLE_RATE = 120        # samples per second
+WINDOW_DURATION = 1      # seconds
+SAMPLES_PER_WINDOW = SAMPLE_RATE * WINDOW_DURATION
 
-def voltage_to_db(voltage):
-    if voltage <= 0:
+REFERENCE_VOLTAGE = 0.05
+
+SPIKE_DB_THRESHOLD = 15
+LOUD_DB_THRESHOLD = 65
+SUSTAINED_DURATION = 5
+
+# DATA STORAGE
+samples = []
+db_history = deque(maxlen=50)
+
+event_timer = 0
+
+# Voltage → Decibel Conversion
+def voltage_to_db(v):
+
+    if v <= 0:
         return 0
-    return 20 * math.log10(voltage / REFERENCE_VOLTAGE)
+
+    return 20 * math.log10(v / REFERENCE_VOLTAGE)
+
+# RMS Calculation
+def rms(values):
+
+    square_sum = sum(v*v for v in values)
+    mean = square_sum / len(values)
+
+    return math.sqrt(mean)
+
+# SOUND ANALYSIS FUNCTION
+def analyze_sound():
+
+    global samples
+    global event_timer
+
+    voltage = sound_channel.voltage
+
+    samples.append(voltage)
+
+    if len(samples) < SAMPLES_PER_WINDOW:
+        return None
+
+    rms_voltage = rms(samples)
+
+    db = voltage_to_db(rms_voltage)
+
+    samples = []
+
+    db_history.append(db)
+
+    baseline = sum(db_history)/len(db_history)
+
+    spike = db > baseline + SPIKE_DB_THRESHOLD
+
+    event = None
+
+    if spike and db > LOUD_DB_THRESHOLD:
+        event = "IMPACT EVENT (possible door slam)"
+
+    if db > LOUD_DB_THRESHOLD:
+        event_timer += 1
+    else:
+        event_timer = 0
+
+    if event_timer >= SUSTAINED_DURATION:
+        event = "SUSTAINED LOUD ACTIVITY"
+
+    return db, baseline, spike, event
 
 # Initialize ADC (ADS1115)
 i2c = busio.I2C(board.SCL, board.SDA)
@@ -80,7 +145,19 @@ while True:
 
     pms_data = read_pms5003()
     mq135 = read_mq135()
-    db, baseline, spike = read_sound()
+    sound_data = analyze_sound()
+    if sound_data:
+        db, baseline, spike, event = sound_data
+
+        print("Sound Level:", round(db,2),"dB")
+        print("Baseline:", round(baseline,2),"dB")
+
+        if spike:
+            print("⚠ Spike detected")
+
+        if event:
+            print("EVENT:", event)
+            
     radar_data = read_radar()
 
     print("----- SENSOR DATA -----")
