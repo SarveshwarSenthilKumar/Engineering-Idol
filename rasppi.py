@@ -55,7 +55,18 @@ def read_mq135():
 # Sound Sensor
 def read_sound():
     voltage = sound_channel.voltage
-    return voltage
+    db = voltage_to_db(voltage)
+
+    sound_history.append(db)
+
+    if len(sound_history) < WINDOW_SIZE:
+        return db, None, False
+
+    baseline = sum(sound_history) / len(sound_history)
+
+    spike = db > baseline + SPIKE_THRESHOLD_DB
+
+    return db, baseline, spike
 
 # mmWave Radar Data
 def read_radar():
