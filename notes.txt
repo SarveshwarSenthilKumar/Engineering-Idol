@@ -2,3 +2,5 @@ check if there is a way to check if someone fighting shows different patterns th
 look into privacy of recording video and audio
 
 using mmwave radars, audio sensors, vape detectors: concentration detector and organic material detector
+
+create a show a graph of the live data from the sensors especially spikes from the sound sensor
