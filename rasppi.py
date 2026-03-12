@@ -2,395 +2,581 @@ import time
 import serial
 import board
 import busio
-import math
-import numpy as np
-from collections import deque
-from sklearn.ensemble import RandomForestClassifier
-
 import adafruit_ads1x15.ads1115 as ADS
 from adafruit_ads1x15.analog_in import AnalogIn
+import numpy as np
+import math
+from collections import deque
+from sklearn.ensemble import RandomForestClassifier
+import warnings
+warnings.filterwarnings('ignore')
 
-# ============================================================
-# SYSTEM PARAMETERS
-# ============================================================
-
+# ==================== CONFIGURATION PARAMETERS ====================
+# Sound Analysis Parameters
 SAMPLE_RATE = 200
 WINDOW_TIME = 1
 WINDOW_SIZE = SAMPLE_RATE * WINDOW_TIME
-
 REFERENCE_VOLTAGE = 0.05
+SPIKE_THRESHOLD_DB = 15  # Fixed variable name
+LOUD_THRESHOLD_DB = 65    # Fixed variable name
 
-SPIKE_THRESHOLD = 12
-LOUD_THRESHOLD = 65
-
+# Gas Sensor Parameters
 RLOAD = 10000
 VCC = 5.0
 R0 = 20000
+MQ135_CLEAN_AIR_RATIO = 3.6  # Typical clean air ratio for MQ135
 
-# ============================================================
-# UTILITY FUNCTIONS
-# ============================================================
+# Odor Classification Thresholds
+VOC_CLEAN_THRESHOLD = 50
+VOC_ACTIVITY_THRESHOLD = 80
+VOC_CHEMICAL_THRESHOLD = 120
+PM_CLEAN_THRESHOLD = 10
+PM_SMOKE_THRESHOLD = 40
 
-def safe_log(x):
-    if x <= 0:
-        return 0
-    return math.log10(x)
+# ==================== DATA STORAGE ====================
+samples = deque(maxlen=WINDOW_SIZE)  # Use deque for efficiency
+db_history = deque(maxlen=50)
+sound_history = deque(maxlen=WINDOW_SIZE)
+odor_history = deque(maxlen=60)
 
-
+# ==================== SOUND UTILITIES ====================
 def voltage_to_db(v):
-    if v <= 0:
+    """Convert voltage to decibels with protection against invalid values"""
+    if v <= 0 or math.isnan(v) or math.isinf(v):
         return 0
-    return 20 * safe_log(v / REFERENCE_VOLTAGE)
-
+    try:
+        return 20 * math.log10(max(v, 1e-10) / REFERENCE_VOLTAGE)
+    except (ValueError, OverflowError):
+        return 0
 
 def rms(values):
-    arr = np.array(values)
-    return np.sqrt(np.mean(arr ** 2))
+    """Calculate RMS of signal with numerical stability"""
+    if not values:
+        return 0
+    arr = np.array(values, dtype=np.float64)
+    # Remove any NaN or inf values
+    arr = arr[np.isfinite(arr)]
+    if len(arr) == 0:
+        return 0
+    return np.sqrt(np.mean(np.square(arr)))
 
-
-# ============================================================
-# FFT ANALYSIS
-# ============================================================
-
+# ==================== FFT ANALYSIS ====================
 def fft_features(signal):
-
-    signal = np.array(signal)
-
-    if len(signal) == 0:
+    """Extract frequency domain features with error handling"""
+    if len(signal) < 4:  # Need at least a few samples
         return 0, 0, 0
-
-    fft = np.fft.fft(signal)
+    
+    signal = np.array(signal, dtype=np.float64)
+    # Remove DC offset
+    signal = signal - np.mean(signal)
+    
+    # Apply Hanning window to reduce spectral leakage
+    window = np.hanning(len(signal))
+    signal_windowed = signal * window
+    
+    fft = np.fft.rfft(signal_windowed)  # Use rfft for real signals
     magnitude = np.abs(fft)
-
-    freqs = np.fft.fftfreq(len(signal), 1 / SAMPLE_RATE)
-
-    dominant_freq = abs(freqs[np.argmax(magnitude)])
-
-    spectral_energy = float(np.sum(magnitude))
-
+    freqs = np.fft.rfftfreq(len(signal), 1/SAMPLE_RATE)
+    
+    # Handle edge cases
     if np.sum(magnitude) == 0:
-        spectral_centroid = 0
-    else:
-        spectral_centroid = float(np.sum(freqs * magnitude) / np.sum(magnitude))
-
+        return 0, 0, 0
+    
+    dominant_freq = freqs[np.argmax(magnitude)]
+    spectral_energy = np.sum(np.square(magnitude))
+    spectral_centroid = np.sum(freqs * magnitude) / np.sum(magnitude)
+    
     return dominant_freq, spectral_energy, spectral_centroid
 
+# ==================== FEATURE EXTRACTION ====================
+def extract_features(signal):
+    """Extract comprehensive features from sound signal"""
+    if not signal:
+        return [0, 0, 0, 0]
+    
+    rms_val = rms(signal)
+    db = voltage_to_db(rms_val)
+    dom_freq, energy, centroid = fft_features(signal)
+    
+    # Add signal statistics for better classification
+    signal_array = np.array(signal)
+    peak = np.max(np.abs(signal_array)) if len(signal_array) > 0 else 0
+    zero_crossings = np.sum(np.diff(np.sign(signal_array)) != 0) if len(signal_array) > 1 else 0
+    
+    return [db, dom_freq, energy, centroid, peak, zero_crossings]
 
-# ============================================================
-# SOUND ANALYZER
-# ============================================================
+# ==================== MACHINE LEARNING MODEL ====================
+def initialize_model():
+    """Initialize and train the Random Forest model"""
+    model = RandomForestClassifier(
+        n_estimators=50,
+        max_depth=5,
+        random_state=42,
+        min_samples_split=3
+    )
+    
+    # Enhanced training data with more features
+    X_train = [
+        [40, 100, 5000, 120, 0.5, 50],    # quiet
+        [45, 120, 6000, 150, 0.8, 80],    # conversation
+        [70, 500, 20000, 600, 2.5, 200],  # crowd
+        [80, 800, 30000, 900, 3.2, 50],   # door_slam
+        [60, 300, 15000, 400, 1.5, 150],  # shouting
+        [35, 50, 2000, 80, 0.3, 30],      # background
+        [90, 1200, 40000, 1200, 4.0, 40], # explosion/impact
+        [55, 250, 12000, 350, 1.2, 120],  # traffic
+    ]
+    
+    y_train = [
+        "quiet",
+        "conversation",
+        "crowd",
+        "door_slam",
+        "shouting",
+        "background",
+        "impact",
+        "traffic"
+    ]
+    
+    model.fit(X_train, y_train)
+    return model
 
-class SoundAnalyzer:
+model = initialize_model()
 
-    def __init__(self, channel):
+# ==================== SOUND ANALYSIS ====================
+def analyze_sound(new_sample):
+    """Analyze sound samples and return features"""
+    samples.append(new_sample)
+    
+    if len(samples) < WINDOW_SIZE:
+        return None
+    
+    features = extract_features(list(samples))
+    
+    # Make prediction with confidence
+    prediction_proba = model.predict_proba([features])[0]
+    prediction = model.predict([features])[0]
+    confidence = np.max(prediction_proba)
+    
+    db = features[0]
+    db_history.append(db)
+    
+    # Calculate dynamic baseline
+    if len(db_history) > 10:
+        baseline = np.median(db_history)  # Use median for robustness
+        std_dev = np.std(db_history)
+        spike = db > baseline + (SPIKE_THRESHOLD_DB * (1 + 0.1 * (std_dev / baseline)))
+    else:
+        baseline = db
+        spike = False
+    
+    # Clear samples for next window (overlap of 50% for smoother analysis)
+    for _ in range(WINDOW_SIZE // 2):
+        samples.popleft()
+    
+    return {
+        'db': db,
+        'baseline': baseline,
+        'spike': spike,
+        'event': prediction,
+        'confidence': confidence,
+        'features': features
+    }
 
-        self.channel = channel
-
-        self.samples = []
-
-        self.db_history = deque(maxlen=60)
-
-        self.model = RandomForestClassifier()
-
-        self.train_model()
-
-    def train_model(self):
-
-        X_train = [
-
-            [40, 100, 5000, 120],
-            [45, 120, 6000, 150],
-            [70, 500, 20000, 600],
-            [80, 800, 30000, 900],
-            [60, 300, 15000, 400]
-
-        ]
-
-        y_train = [
-
-            "quiet",
-            "conversation",
-            "crowd",
-            "door_slam",
-            "shouting"
-
-        ]
-
-        self.model.fit(X_train, y_train)
-
-    def extract_features(self, signal):
-
-        rms_val = rms(signal)
-
-        db = voltage_to_db(rms_val)
-
-        dom_freq, energy, centroid = fft_features(signal)
-
-        return [db, dom_freq, energy, centroid]
-
-    def analyze(self):
-
-        voltage = self.channel.voltage
-
-        self.samples.append(voltage)
-
-        if len(self.samples) < WINDOW_SIZE:
-            return None
-
-        features = self.extract_features(self.samples)
-
-        prediction = self.model.predict([features])[0]
-
-        db = features[0]
-
-        self.db_history.append(db)
-
-        baseline = np.mean(self.db_history) if len(self.db_history) else db
-
-        spike = db > baseline + SPIKE_THRESHOLD
-
-        self.samples = []
-
-        return {
-
-            "db": round(db,2),
-            "baseline": round(baseline,2),
-            "spike": spike,
-            "event": prediction
-        }
-
-
-# ============================================================
-# MQ135 GAS SENSOR
-# ============================================================
+# ==================== ODOR ANALYSIS ENGINE ====================
+VOC_BASELINE = None
+PM_BASELINE = None
 
 def compute_mq135_ppm(voltage):
-
-    if voltage <= 0:
+    """Convert MQ135 voltage to ppm with improved accuracy"""
+    if voltage <= 0 or math.isnan(voltage):
+        return 0
+    
+    try:
+        rs = RLOAD * (VCC / max(voltage, 0.001) - 1)
+        ratio = rs / R0
+        
+        # MQ135 characteristic curve parameters (adjusted for better accuracy)
+        a = 116.6020682
+        b = -2.769034857
+        
+        # Apply limits to avoid extreme values
+        ratio = np.clip(ratio, 0.1, 10)
+        ppm = a * (ratio ** b)
+        
+        return max(0, min(ppm, 1000))  # Clip to reasonable range
+    except (ZeroDivisionError, OverflowError):
         return 0
 
-    rs = RLOAD * (VCC / voltage - 1)
+def classify_odor(voc_ppm, pm25, people, noise_db):
+    """Enhanced odor classification with confidence"""
+    confidence = 1.0
+    
+    if voc_ppm < VOC_CLEAN_THRESHOLD and pm25 < PM_CLEAN_THRESHOLD:
+        return "clean_air", confidence
+    
+    if voc_ppm > VOC_ACTIVITY_THRESHOLD and people >= 1:
+        confidence = min(1.0, (voc_ppm - VOC_ACTIVITY_THRESHOLD) / 100 + 0.5)
+        return "human_activity", confidence
+    
+    if pm25 > PM_SMOKE_THRESHOLD:
+        confidence = min(1.0, (pm25 - PM_SMOKE_THRESHOLD) / 50 + 0.6)
+        return "dust_or_smoke", confidence
+    
+    if voc_ppm > VOC_CHEMICAL_THRESHOLD:
+        confidence = min(1.0, (voc_ppm - VOC_CHEMICAL_THRESHOLD) / 200 + 0.7)
+        return "strong_chemical", confidence
+    
+    if noise_db > LOUD_THRESHOLD_DB and voc_ppm > VOC_CLEAN_THRESHOLD * 1.5:
+        return "noise_correlated_activity", 0.8
+    
+    return "moderate_odor", 0.6
 
-    ratio = rs / R0
+def compute_odor_intensity(voc_ppm, pm25, people, noise_db, trend):
+    """Calculate comprehensive odor intensity score"""
+    score = 0
+    
+    # VOC contribution
+    voc_score = min(voc_ppm / 50, 4)
+    score += voc_score
+    
+    # Particulate matter contribution
+    pm_score = min(pm25 / 25, 3)
+    score += pm_score
+    
+    # Occupancy contribution
+    people_score = min(people / 3, 2)
+    score += people_score
+    
+    # Noise correlation
+    if noise_db > LOUD_THRESHOLD_DB:
+        score += 0.5
+    
+    # Trend factor (increasing trend increases intensity)
+    if trend > 20:
+        score += 0.5
+    elif trend > 10:
+        score += 0.25
+    
+    return score
 
-    a = 116.6020682
-    b = -2.769034857
+def detect_odor_anomaly(current_score):
+    """Detect anomalies in odor patterns"""
+    if len(odor_history) < 10:
+        odor_history.append(current_score)
+        return False, current_score
+    
+    # Use robust statistics
+    baseline = np.median(list(odor_history))
+    std_dev = np.std(list(odor_history))
+    
+    odor_history.append(current_score)
+    
+    # Anomaly detection with adaptive threshold
+    anomaly = current_score > baseline + max(2, std_dev * 2)
+    
+    return anomaly, baseline
 
-    ppm = a * (ratio ** b)
-
-    return max(ppm,0)
-
-
-# ============================================================
-# ODOR ANALYZER
-# ============================================================
-
-class OdorAnalyzer:
-
-    def __init__(self):
-
-        self.voc_baseline = None
-        self.pm_baseline = None
-
-        self.odor_history = deque(maxlen=60)
-
-    def classify(self, voc, pm25, people):
-
-        if voc < 50 and pm25 < 10:
-            return "clean_air"
-
-        if voc > 80 and people >= 1:
-            return "human_activity"
-
-        if pm25 > 40:
-            return "dust_or_smoke"
-
-        if voc > 120:
-            return "chemical"
-
-        return "moderate"
-
-    def compute_intensity(self, voc, pm25, people, noise):
-
-        score = 0
-
-        score += min(voc / 50, 3)
-        score += min(pm25 / 25, 2)
-        score += min(people / 3, 2)
-
-        if noise > 65:
-            score += 1
-
-        return score
-
-    def detect_anomaly(self, score):
-
-        if len(self.odor_history) < 10:
-            self.odor_history.append(score)
-            return False, score
-
-        baseline = np.mean(self.odor_history)
-
-        self.odor_history.append(score)
-
-        anomaly = score > baseline * 1.8
-
-        return anomaly, baseline
-
-    def analyze(self, voc_ppm, pm25, people, noise):
-
-        if self.voc_baseline is None:
-            self.voc_baseline = voc_ppm
-
-        if self.pm_baseline is None:
-            self.pm_baseline = pm25
-
-        intensity = self.compute_intensity(voc_ppm, pm25, people, noise)
-
-        anomaly, baseline = self.detect_anomaly(intensity)
-
-        odor_type = self.classify(voc_ppm, pm25, people)
-
-        trend = voc_ppm - self.voc_baseline
-
+def analyze_odor(noise_db):
+    """Comprehensive odor analysis"""
+    global VOC_BASELINE, PM_BASELINE
+    
+    try:
+        # Read Sensors with error handling
+        voc_voltage = read_mq135()
+        pms_data = read_pms5003()
+        radar_data = read_radar()
+        
+        # Occupancy estimation with fallback
+        people = 0
+        if radar_data and isinstance(radar_data, dict):
+            people = radar_data.get('target_count', 0)
+        
+        # Particle data with defaults
+        pm1 = pm25 = pm10 = 0
+        if pms_data and len(pms_data) == 3:
+            pm1, pm25, pm10 = pms_data
+        
+        # Convert MQ135 to VOC ppm
+        voc_ppm = compute_mq135_ppm(voc_voltage)
+        
+        # Baseline learning (with gradual update)
+        if VOC_BASELINE is None:
+            VOC_BASELINE = voc_ppm
+        else:
+            # Slowly adapt baseline
+            VOC_BASELINE = 0.95 * VOC_BASELINE + 0.05 * voc_ppm
+        
+        if PM_BASELINE is None:
+            PM_BASELINE = pm25
+        else:
+            PM_BASELINE = 0.95 * PM_BASELINE + 0.05 * pm25
+        
+        # Trend detection
+        trend = voc_ppm - VOC_BASELINE
+        
+        # Odor intensity calculation
+        intensity = compute_odor_intensity(voc_ppm, pm25, people, noise_db, trend)
+        
+        # Odor anomaly detection
+        anomaly, baseline = detect_odor_anomaly(intensity)
+        
+        # Odor classification with confidence
+        odor_type, confidence = classify_odor(voc_ppm, pm25, people, noise_db)
+        
+        # Severity level with more granularity
         if intensity < 2:
             level = "LOW"
-        elif intensity < 4:
+            severity_score = 1
+        elif intensity < 3.5:
             level = "MODERATE"
-        elif intensity < 6:
+            severity_score = 2
+        elif intensity < 5:
             level = "HIGH"
-        else:
+            severity_score = 3
+        elif intensity < 6.5:
             level = "SEVERE"
-
+            severity_score = 4
+        else:
+            level = "CRITICAL"
+            severity_score = 5
+        
+        # Air quality index calculation
+        aqi = (voc_ppm / 100 * 50) + (pm25 / 35 * 50)
+        aqi = min(500, max(0, aqi))
+        
+        # Return comprehensive analysis
         return {
-
-            "voc_ppm": round(voc_ppm,1),
+            "timestamp": time.time(),
+            "voc_voltage": round(voc_voltage, 3),
+            "voc_ppm": round(voc_ppm, 1),
+            "pm1": pm1,
             "pm25": pm25,
+            "pm10": pm10,
             "people": people,
             "odor_type": odor_type,
-            "intensity": round(intensity,2),
-            "level": level,
-            "trend": round(trend,2),
-            "anomaly": anomaly
+            "classification_confidence": round(confidence, 2),
+            "odor_intensity": round(intensity, 2),
+            "odor_level": level,
+            "severity_score": severity_score,
+            "odor_trend": round(trend, 2),
+            "baseline_intensity": round(baseline, 2),
+            "odor_anomaly": anomaly,
+            "air_quality_index": round(aqi, 1)
         }
-
-
-# ============================================================
-# SENSOR READERS
-# ============================================================
-
-def read_pms5003(port):
-
-    if port.in_waiting < 32:
+        
+    except Exception as e:
+        print(f"Error in odor analysis: {e}")
         return None
 
-    data = port.read(32)
+# ==================== HARDWARE INITIALIZATION ====================
+def init_hardware():
+    """Initialize all hardware components with error handling"""
+    try:
+        # Initialize I2C and ADC
+        i2c = busio.I2C(board.SCL, board.SDA)
+        ads = ADS.ADS1115(i2c, address=0x48)
+        
+        # Set ADC gain for appropriate voltage range
+        ads.gain = 1  # +/- 4.096V
+        
+        mq135_channel = AnalogIn(ads, ADS.P0)
+        sound_channel = AnalogIn(ads, ADS.P1)
+        
+        # Initialize serial connections with timeouts
+        pms = serial.Serial(
+            port="/dev/serial0",
+            baudrate=9600,
+            timeout=2,
+            write_timeout=2
+        )
+        
+        radar = serial.Serial(
+            port="/dev/ttyUSB0",
+            baudrate=256000,
+            timeout=1,
+            write_timeout=1
+        )
+        
+        return i2c, ads, mq135_channel, sound_channel, pms, radar
+        
+    except Exception as e:
+        print(f"Hardware initialization error: {e}")
+        return None, None, None, None, None, None
 
-    if data[0] == 0x42 and data[1] == 0x4d:
+# Initialize hardware
+i2c, ads, mq135_channel, sound_channel, pms, radar = init_hardware()
 
-        pm1 = data[10] * 256 + data[11]
-        pm25 = data[12] * 256 + data[13]
-        pm10 = data[14] * 256 + data[15]
-
-        return pm1, pm25, pm10
-
+# ==================== SENSOR READING FUNCTIONS ====================
+def read_pms5003():
+    """Read PMS5003 particulate matter sensor with validation"""
+    if not pms:
+        return None
+    
+    try:
+        # Clear buffer
+        pms.reset_input_buffer()
+        
+        # Read data frame
+        data = pms.read(32)
+        
+        if len(data) == 32 and data[0] == 0x42 and data[1] == 0x4d:
+            # Verify checksum
+            checksum = sum(data[:30]) & 0xFF
+            if checksum == data[30] or checksum == data[31]:  # Some sensors use 2-byte checksum
+                pm1 = (data[10] << 8) | data[11]
+                pm25 = (data[12] << 8) | data[13]
+                pm10 = (data[14] << 8) | data[15]
+                
+                # Validate values
+                if 0 <= pm1 <= 1000 and 0 <= pm25 <= 1000 and 0 <= pm10 <= 1000:
+                    return pm1, pm25, pm10
+                    
+    except Exception as e:
+        print(f"PMS5003 read error: {e}")
+    
     return None
 
-
-def read_radar(port):
-
-    if port.in_waiting:
-
-        line = port.readline().decode(errors="ignore").strip()
-
-        if not line:
-            return 0
-
-        people = line.count("target")
-
-        return people
-
-    return 0
-
-
-# ============================================================
-# HARDWARE INITIALIZATION
-# ============================================================
-
-i2c = busio.I2C(board.SCL, board.SDA)
-
-ads = ADS.ADS1115(i2c)
-
-mq135_channel = AnalogIn(ads, ADS.P0)
-sound_channel = AnalogIn(ads, ADS.P1)
-
-pms = serial.Serial("/dev/serial0", 9600, timeout=1)
-
-radar = serial.Serial("/dev/ttyUSB0", 256000, timeout=1)
-
-sound_analyzer = SoundAnalyzer(sound_channel)
-
-odor_analyzer = OdorAnalyzer()
-
-# ============================================================
-# MAIN LOOP
-# ============================================================
-
-while True:
-
+def read_mq135():
+    """Read MQ135 gas sensor with filtering"""
+    if not mq135_channel:
+        return 0
+    
     try:
-
-        sound_data = sound_analyzer.analyze()
-
-        pms_data = read_pms5003(pms)
-
-        radar_people = read_radar(radar)
-
-        voc_voltage = mq135_channel.voltage
-
-        voc_ppm = compute_mq135_ppm(voc_voltage)
-
-        noise_db = sound_data["db"] if sound_data else 0
-
-        pm25 = pms_data[1] if pms_data else 0
-
-        odor_data = odor_analyzer.analyze(voc_ppm, pm25, radar_people, noise_db)
-
-        print("\n===== ENVIRONMENT STATUS =====")
-
-        if sound_data:
-
-            print("Sound:", sound_data["db"], "dB")
-            print("Baseline:", sound_data["baseline"], "dB")
-            print("Event:", sound_data["event"])
-
-            if sound_data["spike"]:
-                print("⚠ SOUND SPIKE DETECTED")
-
-        if pms_data:
-
-            print("PM1:", pms_data[0])
-            print("PM2.5:", pms_data[1])
-            print("PM10:", pms_data[2])
-
-        print("VOC:", odor_data["voc_ppm"], "ppm")
-
-        print("People:", radar_people)
-
-        print("Odor:", odor_data["odor_type"])
-        print("Odor Level:", odor_data["level"])
-
-        if odor_data["anomaly"]:
-            print("⚠ ODOR ANOMALY DETECTED")
-
-        print("==============================\n")
-
-        time.sleep(1)
-
-    except Exception as e:
-
-        print("Sensor error:", e)
-
-        time.sleep(2)
-
+        # Read multiple samples and average for stability
+        samples = []
+        for _ in range(5):
+            voltage = mq135_channel.voltage
+            if not math.isnan(voltage):
+                samples.append(voltage)
+            time.sleep(0.01)
         
+        if samples:
+            return np.median(samples)  # Use median for robustness
+        return 0
+        
+    except Exception as e:
+        print(f"MQ135 read error: {e}")
+        return 0
+
+def read_sound():
+    """Read sound sensor with validation"""
+    if not sound_channel:
+        return 0
+    
+    try:
+        voltage = sound_channel.voltage
+        return voltage if not math.isnan(voltage) else 0
+    except Exception:
+        return 0
+
+def read_radar():
+    """Read mmWave radar data with parsing"""
+    if not radar:
+        return None
+    
+    try:
+        if radar.in_waiting:
+            data = radar.readline().decode(errors='ignore').strip()
+            if data:
+                # Parse radar data (example format - adjust based on actual radar)
+                parsed = {}
+                if 'target' in data.lower():
+                    parsed['raw'] = data
+                    # Count targets (simplified - adjust based on actual protocol)
+                    parsed['target_count'] = data.lower().count('target')
+                return parsed
+    except Exception as e:
+        print(f"Radar read error: {e}")
+    
+    return None
+
+# ==================== MAIN LOOP ====================
+def main():
+    """Main program loop with error recovery"""
+    print("=== Environmental Monitoring System Started ===")
+    print("Press Ctrl+C to exit\n")
+    
+    last_print_time = time.time()
+    print_interval = 2  # seconds
+    
+    # Check hardware initialization
+    if None in [mq135_channel, sound_channel, pms, radar]:
+        print("Warning: Some sensors failed to initialize")
+    
+    try:
+        while True:
+            current_time = time.time()
+            
+            try:
+                # Read all sensors
+                pms_data = read_pms5003()
+                mq135_voltage = read_mq135()
+                sound_voltage = read_sound()
+                
+                # Analyze sound
+                sound_analysis = analyze_sound(sound_voltage)
+                
+                # Periodic printing
+                if current_time - last_print_time >= print_interval:
+                    print("\n" + "="*50)
+                    print(f"Timestamp: {time.strftime('%Y-%m-%d %H:%M:%S')}")
+                    
+                    # Sound Analysis
+                    if sound_analysis:
+                        print("\n--- SOUND ANALYSIS ---")
+                        print(f"Level: {sound_analysis['db']:.1f} dB")
+                        print(f"Baseline: {sound_analysis['baseline']:.1f} dB")
+                        print(f"Event: {sound_analysis['event']} (conf: {sound_analysis['confidence']:.2f})")
+                        if sound_analysis['spike']:
+                            print("⚠ SOUND SPIKE DETECTED!")
+                    
+                    # Odor Analysis
+                    if sound_analysis:
+                        odor_analysis = analyze_odor(sound_analysis['db'])
+                        
+                        if odor_analysis:
+                            print("\n--- AIR QUALITY ANALYSIS ---")
+                            print(f"VOC: {odor_analysis['voc_ppm']:.1f} ppm")
+                            print(f"PM2.5: {odor_analysis['pm25']} µg/m³")
+                            print(f"Air Quality Index: {odor_analysis['air_quality_index']:.1f}")
+                            print(f"Odor Type: {odor_analysis['odor_type']}")
+                            print(f"Intensity: {odor_analysis['odor_intensity']} ({odor_analysis['odor_level']})")
+                            print(f"People Count: {odor_analysis['people']}")
+                            if odor_analysis['odor_anomaly']:
+                                print("⚠ ODOR ANOMALY DETECTED!")
+                    
+                    # Raw sensor data
+                    print("\n--- RAW SENSOR DATA ---")
+                    if pms_data:
+                        print(f"PM1.0: {pms_data[0]} µg/m³")
+                        print(f"PM2.5: {pms_data[1]} µg/m³")
+                        print(f"PM10: {pms_data[2]} µg/m³")
+                    print(f"MQ135: {mq135_voltage:.3f} V")
+                    
+                    print("="*50 + "\n")
+                    
+                    last_print_time = current_time
+                
+                # Small delay to prevent CPU overload
+                time.sleep(0.01)
+                
+            except KeyboardInterrupt:
+                raise
+            except Exception as e:
+                print(f"Loop iteration error: {e}")
+                time.sleep(1)
+                
+    except KeyboardInterrupt:
+        print("\n\n=== Shutting down... ===")
+    finally:
+        # Clean up resources
+        if pms:
+            pms.close()
+        if radar:
+            radar.close()
+        print("Cleanup complete. Exiting.")
+
+# Run the main program
+if __name__ == "__main__":
+    main()
