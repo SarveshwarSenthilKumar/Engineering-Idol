@@ -11,6 +11,4 @@ create an ai summary of each event and store it with time stamps
 
 create a weekly report at the end of the week summarizing the events, show trends, and give preventative tips
 
-based on the time, persistence, and strength of the odor, turn up the score to a particular point
-
 get rid of storing certain events that set off the alarm, create the portal, create a teams bot type of thing, detect action and breathing patterns
