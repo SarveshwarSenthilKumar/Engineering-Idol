@@ -118,6 +118,206 @@ def analyze_sound():
 
     return db, baseline, spike, prediction
 
+############################################
+# ODOR ANALYSIS ENGINE
+############################################
+
+odor_history = deque(maxlen=60)
+
+VOC_BASELINE = None
+PM_BASELINE = None
+
+RLOAD = 10000
+VCC = 5.0
+R0 = 20000
+
+
+def compute_mq135_ppm(voltage):
+
+    if voltage <= 0:
+        return 0
+
+    rs = RLOAD * (VCC/voltage - 1)
+
+    ratio = rs / R0
+
+    a = 116.6020682
+    b = -2.769034857
+
+    ppm = a * (ratio ** b)
+
+    return ppm
+
+
+def classify_odor(voc_ppm, pm25, people):
+
+    if voc_ppm < 50 and pm25 < 10:
+        return "clean_air"
+
+    if voc_ppm > 80 and people >= 1:
+        return "human_activity"
+
+    if pm25 > 40:
+        return "dust_or_smoke"
+
+    if voc_ppm > 120:
+        return "strong_chemical"
+
+    return "moderate_odor"
+
+
+def compute_odor_intensity(voc_ppm, pm25, people, noise_db):
+
+    score = 0
+
+    score += min(voc_ppm/50,3)
+
+    score += min(pm25/25,2)
+
+    score += min(people/3,2)
+
+    if noise_db > 65:
+        score += 1
+
+    return score
+
+
+def detect_odor_anomaly(current_score):
+
+    if len(odor_history) < 10:
+        odor_history.append(current_score)
+        return False, current_score
+
+    baseline = sum(odor_history)/len(odor_history)
+
+    odor_history.append(current_score)
+
+    anomaly = current_score > baseline * 1.8
+
+    return anomaly, baseline
+
+
+def analyze_odor(noise_db):
+
+    global VOC_BASELINE
+    global PM_BASELINE
+
+    ####################################
+    # Read Sensors
+    ###################################
+
+    voc_voltage = read_mq135()
+
+    pms_data = read_pms5003()
+
+    radar_data = read_radar()
+
+    ####################################
+    # Occupancy estimation
+    ####################################
+
+    people = 0
+
+    if radar_data:
+        people = radar_data.count("target")
+
+    ####################################
+    # Particle data
+    ####################################
+
+    pm1 = 0
+    pm25 = 0
+    pm10 = 0
+
+    if pms_data:
+        pm1,pm25,pm10 = pms_data
+
+    ####################################
+    # Convert MQ135 to VOC ppm
+    ####################################
+
+    voc_ppm = compute_mq135_ppm(voc_voltage)
+
+    ####################################
+    # Baseline learning
+    ####################################
+
+    if VOC_BASELINE is None:
+        VOC_BASELINE = voc_ppm
+
+    if PM_BASELINE is None:
+        PM_BASELINE = pm25
+
+    ####################################
+    # Odor intensity calculation
+    ####################################
+
+    intensity = compute_odor_intensity(voc_ppm,pm25,people,noise_db)
+
+    ####################################
+    # Odor anomaly detection
+    ####################################
+
+    anomaly,baseline = detect_odor_anomaly(intensity)
+
+    ####################################
+    # Odor classification
+    ####################################
+
+    odor_type = classify_odor(voc_ppm,pm25,people)
+
+    ####################################
+    # Odor trend detection
+    ####################################
+
+    trend = voc_ppm - VOC_BASELINE
+
+    ####################################
+    # Severity level
+    ####################################
+
+    if intensity < 2:
+        level = "LOW"
+
+    elif intensity < 4:
+        level = "MODERATE"
+
+    elif intensity < 6:
+        level = "HIGH"
+
+    else:
+        level = "SEVERE"
+
+    ####################################
+    # Return full odor analysis
+    ####################################
+
+    return {
+
+        "voc_voltage": round(voc_voltage,2),
+
+        "voc_ppm": round(voc_ppm,1),
+
+        "pm1": pm1,
+
+        "pm25": pm25,
+
+        "pm10": pm10,
+
+        "people": people,
+
+        "odor_type": odor_type,
+
+        "odor_intensity": round(intensity,2),
+
+        "odor_level": level,
+
+        "odor_trend": round(trend,2),
+
+        "baseline": round(baseline,2),
+
+        "odor_anomaly": anomaly
+    }
 # Initialize ADC (ADS1115)
 i2c = busio.I2C(board.SCL, board.SDA)
 ads = ADS.ADS1115(i2c)
