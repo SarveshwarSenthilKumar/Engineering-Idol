@@ -18,8 +18,8 @@
 
     | Value | Meaning          |
     | ----- | ---------------- |
-    | 0.5V - 1.1V  | clean air        |
-    | 1.1V - 2.1V | moderate         |
+    | 0.5V - 1.1V   | clean air        |
+    | 1.1V - 2.1V   | moderate         |
     | 2.1V - 4.9V   | poor air quality |
 
 
