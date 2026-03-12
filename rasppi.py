@@ -38,19 +38,10 @@ PM_CLEAN_THRESHOLD = 10
 PM_SMOKE_THRESHOLD = 40
 
 # Radar Configuration
-RADAR_FRAME_SIZE = 1024  # Typical frame size for mmWave radar
+RADAR_FRAME_SIZE = 1024
 RADAR_SAMPLE_RATE = 256000
 RADAR_DETECTION_THRESHOLD = 0.6
 RADAR_MAX_TARGETS = 3
-
-# Scoring Weights
-WEIGHTS = {
-    'air_quality': 0.35,
-    'noise': 0.20,
-    'occupancy': 0.15,
-    'activity': 0.15,
-    'anomaly': 0.15
-}
 
 # ==================== DATA STORAGE ====================
 samples = deque(maxlen=WINDOW_SIZE)
@@ -236,9 +227,6 @@ class RadarProcessor:
     def parse_radar_frame(self, raw_data):
         """Parse raw radar data into structured format"""
         try:
-            # Example parsing for common mmWave radar formats
-            # Adjust based on your specific radar model
-            
             # Try JSON format first
             if raw_data.startswith('{'):
                 data = json.loads(raw_data)
@@ -285,15 +273,13 @@ class RadarProcessor:
     
     def _parse_binary_radar(self, raw_data):
         """Parse binary radar data format"""
-        # Example for TI IWR6843 or similar
         targets = []
         
-        if len(raw_data) >= 12:  # Minimum frame size
-            # Parse header (example format)
+        if len(raw_data) >= 12:
             num_targets = min(raw_data[4], self.max_targets)
             
             for i in range(num_targets):
-                offset = 8 + i * 16  # 16 bytes per target
+                offset = 8 + i * 16
                 if offset + 16 <= len(raw_data):
                     target = {
                         'id': self._generate_target_id(),
@@ -320,7 +306,6 @@ class RadarProcessor:
         parts = raw_data.split(',')
         
         if len(parts) >= 3:
-            # Try to extract numeric values
             try:
                 num_targets = int(parts[0]) if parts[0].isdigit() else 0
                 
@@ -331,11 +316,10 @@ class RadarProcessor:
                             'x': float(parts[i*4 + 1]) if parts[i*4 + 1].replace('.','').isdigit() else 0,
                             'y': float(parts[i*4 + 2]) if parts[i*4 + 2].replace('.','').isdigit() else 0,
                             'velocity': float(parts[i*4 + 3]) if parts[i*4 + 3].replace('.','').isdigit() else 0,
-                            'confidence': 0.7  # Default confidence
+                            'confidence': 0.7
                         }
                         targets.append(target)
             except:
-                # Fallback to basic detection
                 if 'target' in raw_data.lower():
                     target = {
                         'id': self._generate_target_id(),
@@ -356,7 +340,6 @@ class RadarProcessor:
         targets = []
         
         if raw_data and len(raw_data) > 0:
-            # Simple target detection based on presence
             target = {
                 'id': self._generate_target_id(),
                 'raw': raw_data[:50] + '...' if len(raw_data) > 50 else raw_data,
@@ -388,13 +371,10 @@ class RadarProcessor:
             target_id = target.get('id')
             
             if target_id in self.last_positions:
-                # Apply simple Kalman-like prediction
                 last = self.last_positions[target_id]
-                predicted_x = last['x'] + last.get('vx', 0) * 0.1
-                predicted_y = last['y'] + last.get('vy', 0) * 0.1
                 
                 # Calculate velocity
-                if 'x' in target and 'y' in target:
+                if 'x' in target and 'y' in target and 'x' in last and 'y' in last:
                     target['vx'] = (target['x'] - last['x']) / 0.1
                     target['vy'] = (target['y'] - last['y']) / 0.1
                     
@@ -404,7 +384,7 @@ class RadarProcessor:
                         target['ay'] = (target['vy'] - last['vy']) / 0.1
                 
                 # Calculate movement metrics
-                if 'x' in target and 'y' in target:
+                if 'x' in target and 'y' in target and 'x' in last and 'y' in last:
                     target['displacement'] = math.sqrt((target['x'] - last['x'])**2 + 
                                                        (target['y'] - last['y'])**2)
             
@@ -438,7 +418,6 @@ class RadarProcessor:
                 'occupancy_pattern': 'unknown'
             }
         
-        # Calculate activity level
         recent_targets = list(self.target_history)[-10:]
         avg_targets = np.mean([t['count'] for t in recent_targets])
         max_targets = np.max([t['count'] for t in recent_targets])
@@ -472,7 +451,7 @@ class RadarProcessor:
         
         return {
             'pattern': pattern,
-            'activity_level': avg_targets / 3.0,  # Normalized to 0-1
+            'activity_level': avg_targets / 3.0,
             'velocity_trend': velocity_trend,
             'occupancy_pattern': occupancy,
             'max_occupancy': max_targets
@@ -485,7 +464,6 @@ class RadarProcessor:
         if len(self.target_history) < 3:
             return events
         
-        # Check for sudden entries/exits
         recent = list(self.target_history)[-3:]
         if len(recent) >= 2:
             count_change = recent[-1]['count'] - recent[-2]['count']
@@ -503,10 +481,9 @@ class RadarProcessor:
                     'confidence': min(0.9, 0.5 + abs(count_change) * 0.2)
                 })
         
-        # Check for rapid movement
         if len(self.velocity_history) > 3:
             velocities = list(self.velocity_history)[-3:]
-            if np.mean(velocities) > 2.0:  # Fast movement threshold
+            if np.mean(velocities) > 2.0:
                 events.append({
                     'type': 'rapid_movement',
                     'velocity': np.mean(velocities),
@@ -519,209 +496,726 @@ class RadarProcessor:
 radar_processor = RadarProcessor(max_targets=RADAR_MAX_TARGETS, 
                                  detection_threshold=RADAR_DETECTION_THRESHOLD)
 
-# ==================== ENHANCED SCORING SYSTEM ====================
-def calculate_environmental_score(sound_data, odor_data, radar_data, radar_analysis, motion_patterns, activity_events):
+# ==================== DYNAMIC SCORING SYSTEM ====================
+
+class DynamicEnvironmentalScorer:
     """
-    Calculate comprehensive environmental quality score from all inputs
-    
-    Returns:
-        dict: Comprehensive scoring with components and final score
+    Advanced environmental scoring system with dynamic weighting based on:
+    - Sensor reliability and confidence
+    - Environmental context
+    - Situational awareness
+    - Historical patterns
+    - Cross-sensor validation
     """
-    score_components = {}
     
-    # 1. Air Quality Score (0-100)
-    if odor_data:
-        # VOC contribution (inverse relationship - lower is better)
-        voc_score = max(0, 100 - (odor_data['voc_ppm'] * 0.5))
+    def __init__(self):
+        # Base weights
+        self.base_weights = {
+            'air_quality': 0.35,
+            'noise': 0.20,
+            'occupancy': 0.15,
+            'activity': 0.15,
+            'anomaly': 0.15
+        }
         
-        # PM2.5 contribution
-        pm25_score = max(0, 100 - (odor_data['pm25'] * 1.5))
+        # Sensor reliability tracking
+        self.sensor_reliability = {
+            'mq135': {'baseline': 1.0, 'history': deque(maxlen=50), 'consecutive_failures': 0, 'last_reading': None},
+            'pms5003': {'baseline': 1.0, 'history': deque(maxlen=50), 'consecutive_failures': 0, 'last_reading': None},
+            'sound': {'baseline': 1.0, 'history': deque(maxlen=50), 'consecutive_failures': 0, 'last_reading': None},
+            'radar': {'baseline': 1.0, 'history': deque(maxlen=50), 'consecutive_failures': 0, 'last_reading': None}
+        }
+        
+        # Context profiles
+        self.context_profiles = {
+            'office': {
+                'ideal_noise': 45,
+                'ideal_occupancy': 2,
+                'voc_threshold': 60,
+                'pm25_threshold': 15,
+                'weights': {'air_quality': 0.30, 'noise': 0.25, 'occupancy': 0.20, 'activity': 0.15, 'anomaly': 0.10}
+            },
+            'home': {
+                'ideal_noise': 40,
+                'ideal_occupancy': 3,
+                'voc_threshold': 50,
+                'pm25_threshold': 12,
+                'weights': {'air_quality': 0.35, 'noise': 0.15, 'occupancy': 0.25, 'activity': 0.15, 'anomaly': 0.10}
+            },
+            'industrial': {
+                'ideal_noise': 65,
+                'ideal_occupancy': 1,
+                'voc_threshold': 100,
+                'pm25_threshold': 35,
+                'weights': {'air_quality': 0.45, 'noise': 0.10, 'occupancy': 0.10, 'activity': 0.20, 'anomaly': 0.15}
+            },
+            'classroom': {
+                'ideal_noise': 55,
+                'ideal_occupancy': 15,
+                'voc_threshold': 70,
+                'pm25_threshold': 20,
+                'weights': {'air_quality': 0.25, 'noise': 0.20, 'occupancy': 0.30, 'activity': 0.15, 'anomaly': 0.10}
+            },
+            'laboratory': {
+                'ideal_noise': 35,
+                'ideal_occupancy': 2,
+                'voc_threshold': 30,
+                'pm25_threshold': 5,
+                'weights': {'air_quality': 0.50, 'noise': 0.15, 'occupancy': 0.15, 'activity': 0.10, 'anomaly': 0.10}
+            }
+        }
+        
+        # Current context (auto-detected or set manually)
+        self.current_context = 'office'
+        self.context_confidence = 0.5
+        
+        # Anomaly patterns
+        self.anomaly_patterns = {
+            'sudden_voc_spike': {'count': 0, 'last_seen': 0, 'severity': 0},
+            'pm25_drift': {'count': 0, 'last_seen': 0, 'severity': 0},
+            'radar_glitch': {'count': 0, 'last_seen': 0, 'severity': 0},
+            'noise_floor_shift': {'count': 0, 'last_seen': 0, 'severity': 0}
+        }
+        
+        # Scoring history for trend analysis
+        self.score_history = deque(maxlen=100)
+        
+        # Confidence thresholds
+        self.min_confidence_for_weight_adjust = 0.3
+        
+    def update_sensor_reliability(self, sensor_name, reading_success, reading_value=None, expected_range=None):
+        """Update sensor reliability based on readings and expected behavior"""
+        if sensor_name not in self.sensor_reliability:
+            return
+        
+        reliability = self.sensor_reliability[sensor_name]
+        
+        # Track consecutive failures
+        if not reading_success:
+            reliability['consecutive_failures'] += 1
+        else:
+            reliability['consecutive_failures'] = 0
+            reliability['last_reading'] = reading_value
+        
+        # Update reliability score
+        if reading_success and reading_value is not None and expected_range:
+            min_val, max_val = expected_range
+            if min_val <= reading_value <= max_val:
+                reliability['history'].append(1.0)
+            else:
+                # Out of range readings reduce reliability
+                reliability['history'].append(0.7)
+        elif reading_success:
+            reliability['history'].append(1.0)
+        else:
+            reliability['history'].append(0.0)
+        
+        # Calculate moving average reliability
+        if len(reliability['history']) > 0:
+            history_list = list(reliability['history'])
+            weights = np.linspace(0.5, 1.0, len(history_list))
+            weighted_avg = np.average(history_list, weights=weights)
+            
+            # Apply consecutive failure penalty
+            failure_penalty = max(0, 1.0 - (reliability['consecutive_failures'] * 0.2))
+            reliability['baseline'] = weighted_avg * failure_penalty
+    
+    def detect_context(self, sound_data, odor_data, radar_data, time_of_day):
+        """Automatically detect environmental context based on sensor patterns"""
+        context_scores = {}
+        
+        if not sound_data or not odor_data:
+            return self.current_context, 0.3
+        
+        current_hour = datetime.fromtimestamp(time_of_day).hour
+        is_business_hours = 9 <= current_hour <= 17
+        is_night = current_hour <= 6 or current_hour >= 22
+        
+        # Score each possible context
+        for context, profile in self.context_profiles.items():
+            score = 0
+            
+            # Noise level matching
+            if sound_data:
+                noise_diff = abs(sound_data['db'] - profile['ideal_noise'])
+                noise_score = max(0, 1 - (noise_diff / 50))
+                score += noise_score * 0.3
+            
+            # Occupancy matching
+            if radar_data:
+                occ_diff = abs(radar_data.get('target_count', 0) - profile['ideal_occupancy'])
+                occ_score = max(0, 1 - (occ_diff / max(profile['ideal_occupancy'], 1)))
+                score += occ_score * 0.3
+            
+            # VOC levels
+            if odor_data:
+                voc_ratio = odor_data['voc_ppm'] / profile['voc_threshold']
+                if voc_ratio < 1:
+                    voc_score = 1 - (voc_ratio * 0.5)
+                else:
+                    voc_score = max(0, 1 - (voc_ratio - 1))
+                score += voc_score * 0.2
+            
+            # Time-based context clues
+            if context == 'office' and is_business_hours:
+                score += 0.2
+            elif context == 'home' and not is_business_hours:
+                score += 0.2
+            elif context == 'industrial' and is_business_hours:
+                score += 0.1
+            
+            context_scores[context] = score
+        
+        # Select best matching context
+        if context_scores:
+            best_context = max(context_scores, key=context_scores.get)
+            confidence = context_scores[best_context]
+            
+            # Only change context if confidence is high enough
+            if confidence > 0.6:
+                self.current_context = best_context
+                self.context_confidence = confidence
+            elif confidence > 0.4:
+                self.context_confidence = confidence
+        
+        return self.current_context, self.context_confidence
+    
+    def calculate_air_quality_score(self, odor_data, sensor_reliability):
+        """Dynamic air quality score with sensor fusion and reliability weighting"""
+        if not odor_data:
+            return 50, 0.3
+        
+        # Get sensor reliabilities
+        mq135_reliability = sensor_reliability['mq135']['baseline']
+        pms_reliability = sensor_reliability['pms5003']['baseline']
+        
+        # VOC scoring with reliability weighting
+        if mq135_reliability > 0.3:
+            voc_raw_score = max(0, 100 - (odor_data['voc_ppm'] * 0.5))
+            
+            # Adjust for odor type
+            if odor_data['odor_type'] == 'strong_chemical':
+                voc_raw_score *= 0.5
+            elif odor_data['odor_type'] == 'dust_or_smoke':
+                voc_raw_score *= 0.7
+            elif odor_data['odor_type'] == 'human_activity':
+                voc_raw_score *= 0.9
+            
+            voc_score = voc_raw_score * mq135_reliability
+            voc_confidence = mq135_reliability
+        else:
+            # Fallback to PM-based estimation if MQ135 unreliable
+            voc_score = 50
+            voc_confidence = 0.2
+        
+        # PM2.5 scoring with reliability weighting
+        if pms_reliability > 0.3:
+            context_profile = self.context_profiles.get(self.current_context, self.context_profiles['office'])
+            pm25_threshold = context_profile['pm25_threshold']
+            
+            pm25_raw_score = max(0, 100 - (odor_data['pm25'] * (100 / pm25_threshold) * 0.5))
+            pm25_score = pm25_raw_score * pms_reliability
+            pm25_confidence = pms_reliability
+        else:
+            pm25_score = 50
+            pm25_confidence = 0.2
         
         # AQI contribution
-        aqi_score = max(0, 100 - (odor_data['air_quality_index'] * 0.2))
+        aqi_score = max(0, 100 - (odor_data.get('air_quality_index', 50) * 0.2))
         
-        # Combined air quality score
-        air_quality_score = (
-            voc_score * 0.3 +
-            pm25_score * 0.4 +
-            aqi_score * 0.3
-        )
+        # Fuse scores based on confidence
+        total_confidence = (voc_confidence + pm25_confidence) / 2
         
-        # Apply odor type modifiers
-        if odor_data['odor_type'] == 'strong_chemical':
-            air_quality_score *= 0.5
-        elif odor_data['odor_type'] == 'dust_or_smoke':
-            air_quality_score *= 0.6
-        elif odor_data['odor_type'] == 'human_activity':
-            air_quality_score *= 0.8
-    else:
-        air_quality_score = 50  # Default mid-range
+        if total_confidence > 0.5:
+            # High confidence - use both sensors
+            air_quality_score = (
+                voc_score * 0.4 +
+                pm25_score * 0.4 +
+                aqi_score * 0.2
+            )
+        else:
+            # Low confidence - rely more on AQI and heuristics
+            air_quality_score = (
+                aqi_score * 0.6 +
+                (voc_score + pm25_score) / 2 * 0.4
+            )
+        
+        # Apply context-based adjustments
+        context_profile = self.context_profiles.get(self.current_context, self.context_profiles['office'])
+        
+        # Stricter scoring for sensitive environments
+        if self.current_context in ['laboratory', 'home']:
+            if odor_data['voc_ppm'] > context_profile['voc_threshold']:
+                air_quality_score *= 0.7
+        
+        return np.clip(air_quality_score, 0, 100), total_confidence
     
-    score_components['air_quality'] = np.clip(air_quality_score, 0, 100)
-    
-    # 2. Noise Score (0-100)
-    if sound_data:
-        # Base noise score (inverse relationship)
-        base_noise_score = max(0, 100 - (sound_data['db'] * 1.2))
+    def calculate_noise_score(self, sound_data, sensor_reliability, context):
+        """Dynamic noise score with event awareness and context"""
+        if not sound_data:
+            return 50, 0.3
+        
+        sound_reliability = sensor_reliability['sound']['baseline']
+        context_profile = self.context_profiles.get(context, self.context_profiles['office'])
+        
+        # Base noise score with context-appropriate ideal
+        ideal_noise = context_profile['ideal_noise']
+        noise_diff = abs(sound_data['db'] - ideal_noise)
+        
+        # Non-linear penalty for deviation from ideal
+        if noise_diff <= 5:
+            base_score = 95 - noise_diff
+        elif noise_diff <= 15:
+            base_score = 85 - (noise_diff - 5) * 2
+        else:
+            base_score = max(20, 70 - (noise_diff - 15) * 3)
+        
+        # Event-based penalties
+        event_penalty = 0
+        event = sound_data.get('event', 'background')
+        
+        # Context-specific event penalties
+        if context == 'office':
+            disruptive_events = ['door_slam', 'shouting', 'impact']
+            if event in disruptive_events:
+                event_penalty = 30
+        elif context == 'home':
+            if event in ['impact', 'door_slam']:
+                event_penalty = 25
+        elif context == 'laboratory':
+            if event != 'background' and event != 'quiet':
+                event_penalty = 40
         
         # Spike penalty
-        spike_penalty = 20 if sound_data.get('spike', False) else 0
+        if sound_data.get('spike', False):
+            spike_magnitude = sound_data.get('rate_of_change', 1)
+            event_penalty += min(25, spike_magnitude * 10)
         
-        # Event-based modifier
-        event_modifiers = {
-            'impact': 0.3,
-            'door_slam': 0.5,
-            'shouting': 0.6,
-            'crowd': 0.7,
-            'traffic': 0.7,
-            'conversation': 0.8,
-            'background': 0.9,
-            'quiet': 1.0
-        }
+        # Calculate final score
+        noise_score = base_score - event_penalty
         
-        event = sound_data.get('event', 'background')
-        event_modifier = event_modifiers.get(event, 0.8)
+        # Apply reliability weighting
+        noise_score = noise_score * (0.7 + 0.3 * sound_reliability)
         
-        # Confidence weighting
-        confidence = sound_data.get('confidence', 0.5)
+        # Confidence based on reliability and event clarity
+        confidence = sound_reliability * (0.5 + 0.5 * sound_data.get('confidence', 0.5))
         
-        noise_score = (base_noise_score - spike_penalty) * event_modifier
-        noise_score = noise_score * (0.7 + 0.3 * confidence)
-    else:
-        noise_score = 50
+        return np.clip(noise_score, 0, 100), confidence
     
-    score_components['noise'] = np.clip(noise_score, 0, 100)
-    
-    # 3. Occupancy Comfort Score (0-100)
-    if radar_data and radar_analysis:
+    def calculate_occupancy_score(self, radar_data, motion_patterns, sensor_reliability, context):
+        """Dynamic occupancy score with comfort modeling"""
+        if not radar_data:
+            return 50, 0.3
+        
+        radar_reliability = sensor_reliability['radar']['baseline']
+        context_profile = self.context_profiles.get(context, self.context_profiles['office'])
+        
         target_count = radar_data.get('target_count', 0)
+        ideal_occupancy = context_profile['ideal_occupancy']
         
-        # Optimal occupancy is 1-2 people
+        # Comfort curve based on occupancy
         if target_count == 0:
-            occupancy_score = 70  # Empty but available
-        elif target_count == 1:
-            occupancy_score = 90  # Ideal for focused work
-        elif target_count == 2:
-            occupancy_score = 85  # Good for collaboration
-        elif target_count == 3:
-            occupancy_score = 70  # Getting crowded
+            if context in ['office', 'classroom']:
+                occupancy_score = 70
+            else:
+                occupancy_score = 80
+        elif target_count <= ideal_occupancy:
+            ratio = target_count / max(ideal_occupancy, 1)
+            occupancy_score = 85 + (15 * ratio)
+        elif target_count <= ideal_occupancy * 1.5:
+            excess = (target_count - ideal_occupancy) / ideal_occupancy
+            occupancy_score = 80 - (excess * 30)
         else:
-            occupancy_score = max(40, 100 - (target_count * 10))  # Decreasing comfort
+            excess_ratio = target_count / ideal_occupancy
+            occupancy_score = max(20, 60 - (excess_ratio - 1.5) * 40)
         
-        # Adjust based on motion pattern
-        pattern = motion_patterns.get('pattern', 'moderate_activity')
-        pattern_modifiers = {
-            'no_activity': 1.1,  # Too still might indicate absence
-            'sporadic_activity': 1.0,
-            'moderate_activity': 0.95,
-            'high_activity': 0.8
-        }
+        # Adjust for motion patterns
+        if motion_patterns:
+            pattern = motion_patterns.get('pattern', 'moderate_activity')
+            
+            if context == 'office':
+                if pattern == 'high_activity':
+                    occupancy_score *= 0.8
+                elif pattern == 'no_activity' and target_count > 0:
+                    occupancy_score *= 0.9
+            elif context == 'home':
+                if pattern == 'sporadic_activity':
+                    occupancy_score *= 1.1
         
-        occupancy_score *= pattern_modifiers.get(pattern, 1.0)
-    else:
-        occupancy_score = 50
+        # Apply reliability weighting
+        occupancy_score *= (0.8 + 0.2 * radar_reliability)
+        
+        # Confidence based on radar reliability and detection clarity
+        confidence = radar_reliability * min(1.0, target_count / 5 + 0.5)
+        
+        return np.clip(occupancy_score, 0, 100), confidence
     
-    score_components['occupancy'] = np.clip(occupancy_score, 0, 100)
-    
-    # 4. Activity Level Score (0-100) - Different from occupancy, measures movement
-    if radar_analysis and motion_patterns:
+    def calculate_activity_score(self, motion_patterns, activity_events, sound_data, context):
+        """Dynamic activity score considering both motion and sound"""
+        if not motion_patterns:
+            return 50, 0.3
+        
+        context_profile = self.context_profiles.get(context, self.context_profiles['office'])
+        
         activity_level = motion_patterns.get('activity_level', 0)
-        velocity_trend = motion_patterns.get('velocity_trend', 0)
         
-        # Moderate activity is good, too much or too little is bad
-        if activity_level < 0.1:
-            activity_score = 60  # Too still
-        elif activity_level < 0.3:
-            activity_score = 85  # Good low activity
-        elif activity_level < 0.6:
-            activity_score = 95  # Optimal activity
-        elif activity_level < 0.8:
-            activity_score = 75  # High activity
+        # Optimal activity level varies by context
+        if context == 'office':
+            if activity_level < 0.2:
+                activity_score = 70
+            elif activity_level < 0.5:
+                activity_score = 90
+            elif activity_level < 0.7:
+                activity_score = 75
+            else:
+                activity_score = 50
+        elif context == 'home':
+            if activity_level < 0.1:
+                activity_score = 60
+            elif activity_level < 0.4:
+                activity_score = 85
+            elif activity_level < 0.7:
+                activity_score = 95
+            else:
+                activity_score = 70
+        elif context == 'laboratory':
+            if activity_level < 0.1:
+                activity_score = 80
+            elif activity_level < 0.3:
+                activity_score = 95
+            else:
+                activity_score = 60
         else:
-            activity_score = 50  # Very high activity
+            # Default scoring
+            activity_score = 50 + (activity_level * 40)
         
         # Velocity trend adjustment
-        if abs(velocity_trend) > 1.0:
-            activity_score *= 0.9  # Penalty for rapid changes
-    else:
-        activity_score = 50
+        velocity_trend = motion_patterns.get('velocity_trend', 0)
+        if abs(velocity_trend) > 1.5:
+            activity_score *= 0.85
+        
+        # Correlate with sound for confidence
+        sound_correlation = 1.0
+        if sound_data:
+            if (activity_level > 0.5 and sound_data['db'] > 60) or \
+               (activity_level < 0.2 and sound_data['db'] < 45):
+                sound_correlation = 1.2
+        
+        confidence = min(1.0, activity_level * 1.5) * sound_correlation
+        
+        return np.clip(activity_score, 0, 100), min(confidence, 1.0)
     
-    score_components['activity'] = np.clip(activity_score, 0, 100)
+    def calculate_anomaly_score(self, sound_data, odor_data, activity_events):
+        """Sophisticated anomaly detection with pattern recognition"""
+        anomaly_penalty = 0
+        anomaly_details = []
+        current_time = time.time()
+        
+        # Sound anomalies
+        if sound_data:
+            if sound_data.get('spike', False):
+                spike_severity = sound_data.get('rate_of_change', 1)
+                penalty = min(25, spike_severity * 15)
+                anomaly_penalty += penalty
+                anomaly_details.append(f"Sound spike (+{penalty:.0f})")
+                
+                # Track pattern
+                self.anomaly_patterns['noise_floor_shift']['count'] += 1
+                self.anomaly_patterns['noise_floor_shift']['last_seen'] = current_time
+                self.anomaly_patterns['noise_floor_shift']['severity'] = max(
+                    self.anomaly_patterns['noise_floor_shift']['severity'], penalty)
+        
+        # Odor anomalies
+        if odor_data:
+            if odor_data.get('odor_anomaly', False):
+                intensity = odor_data.get('odor_intensity', 2)
+                penalty = min(30, intensity * 8)
+                anomaly_penalty += penalty
+                anomaly_details.append(f"Odor anomaly (+{penalty:.0f})")
+            
+            # Check for sudden VOC changes
+            odor_trend = odor_data.get('odor_trend', 0)
+            if abs(odor_trend) > 30:
+                penalty = 20
+                anomaly_penalty += penalty
+                anomaly_details.append(f"Rapid VOC change (+{penalty:.0f})")
+                self.anomaly_patterns['sudden_voc_spike']['count'] += 1
+                self.anomaly_patterns['sudden_voc_spike']['last_seen'] = current_time
+                self.anomaly_patterns['sudden_voc_spike']['severity'] = max(
+                    self.anomaly_patterns['sudden_voc_spike']['severity'], penalty)
+        
+        # Activity anomalies
+        if activity_events:
+            for event in activity_events:
+                if event['type'] == 'rapid_movement':
+                    penalty = 15 * event.get('confidence', 0.5)
+                    anomaly_penalty += penalty
+                    anomaly_details.append(f"Rapid movement (+{penalty:.0f})")
+                    
+                    self.anomaly_patterns['radar_glitch']['count'] += 1
+                    self.anomaly_patterns['radar_glitch']['last_seen'] = current_time
+        
+        # Pattern-based penalties (repeat offenders)
+        for pattern, data in self.anomaly_patterns.items():
+            if data['count'] > 5 and (current_time - data['last_seen']) < 300:
+                # Recurring issue in last 5 minutes
+                pattern_penalty = min(20, data['count'] * 2)
+                anomaly_penalty += pattern_penalty
+                anomaly_details.append(f"Recurring {pattern} (+{pattern_penalty:.0f})")
+        
+        # Calculate score
+        anomaly_score = max(0, 100 - anomaly_penalty)
+        
+        # Confidence based on number and clarity of anomalies
+        if anomaly_penalty == 0:
+            confidence = 0.9
+        else:
+            confidence = min(0.8, 0.5 + (len(anomaly_details) * 0.1))
+        
+        return np.clip(anomaly_score, 0, 100), confidence, anomaly_details
     
-    # 5. Anomaly Score (0-100) - Lower is better (fewer anomalies)
-    anomaly_count = 0
-    anomaly_penalty = 0
+    def calculate_final_score(self, component_scores, confidences, context_weights):
+        """Calculate weighted final score with confidence-based adjustments"""
+        
+        # Adjust weights based on confidence
+        adjusted_weights = {}
+        total_confidence_weight = 0
+        
+        for component, base_weight in context_weights.items():
+            confidence = confidences.get(component, 0.5)
+            
+            # Low confidence components get reduced weight
+            if confidence < self.min_confidence_for_weight_adjust:
+                confidence_factor = confidence / self.min_confidence_for_weight_adjust
+                adjusted_weight = base_weight * confidence_factor
+            else:
+                adjusted_weight = base_weight
+            
+            adjusted_weights[component] = adjusted_weight
+            total_confidence_weight += adjusted_weight
+        
+        # Normalize weights
+        if total_confidence_weight > 0:
+            for component in adjusted_weights:
+                adjusted_weights[component] /= total_confidence_weight
+        
+        # Calculate weighted score
+        final_score = 0
+        for component, score in component_scores.items():
+            final_score += score * adjusted_weights.get(component, 0)
+        
+        # Calculate overall confidence
+        overall_confidence = np.mean(list(confidences.values())) if confidences else 0.5
+        
+        return final_score, overall_confidence, adjusted_weights
     
-    # Sound anomalies
-    if sound_data and sound_data.get('spike', False):
-        anomaly_count += 1
-        anomaly_penalty += 15
+    def generate_insights(self, component_scores, confidences, anomaly_details, context, sound_data, odor_data):
+        """Generate contextual insights based on scores and anomalies"""
+        insights = []
+        recommendations = []
+        
+        # Low score insights with context
+        for component, score in component_scores.items():
+            if score < 60:
+                if component == 'air_quality':
+                    if odor_data:
+                        if odor_data['voc_ppm'] > 100:
+                            insights.append("⚠ CRITICAL: Very high VOC levels detected")
+                            recommendations.append("• Increase ventilation immediately")
+                            recommendations.append("• Check for chemical sources")
+                        elif odor_data['pm25'] > 50:
+                            insights.append("⚠ WARNING: High particulate matter")
+                            recommendations.append("• Consider air purifier")
+                            recommendations.append("• Check for smoke or dust sources")
+                        else:
+                            insights.append("⚠ Poor air quality detected")
+                            recommendations.append("• Improve ventilation")
+                
+                elif component == 'noise':
+                    if sound_data:
+                        db = sound_data['db']
+                        if db > 75:
+                            insights.append(f"🔊 CRITICAL: Excessive noise ({db:.0f} dB)")
+                            recommendations.append("• Hearing protection recommended")
+                        elif db > 65:
+                            insights.append(f"🔊 WARNING: High noise levels ({db:.0f} dB)")
+                            recommendations.append("• Consider noise reduction measures")
+                        else:
+                            insights.append(f"🔊 Elevated noise levels ({db:.0f} dB)")
+                
+                elif component == 'occupancy':
+                    if context == 'office' and score < 60:
+                        insights.append("👥 Suboptimal occupancy for productivity")
+                        recommendations.append("• Consider adjusting workspace allocation")
+                    elif context == 'home':
+                        insights.append("👥 Occupancy level may affect comfort")
+                
+                elif component == 'activity':
+                    if score < 60:
+                        insights.append("🏃 Unusual activity patterns detected")
+                        recommendations.append("• Monitor for unusual behavior")
+                
+                elif component == 'anomaly':
+                    if anomaly_details:
+                        insights.append(f"⚠ {len(anomaly_details)} anomalies detected")
+                        for detail in anomaly_details[:3]:
+                            insights.append(f"  • {detail}")
+        
+        # Confidence-based insights
+        low_confidence_components = [comp for comp, conf in confidences.items() if conf < 0.4]
+        if low_confidence_components:
+            insights.append(f"📊 Low confidence in: {', '.join(low_confidence_components)}")
+            recommendations.append("• Check sensor connections")
+            recommendations.append("• Verify sensor calibration")
+        
+        # Positive insights
+        high_scores = [comp for comp, score in component_scores.items() if score > 85]
+        if len(high_scores) >= 3:
+            insights.append("✅ Environment is in excellent condition")
+            recommendations.append("• Continue current practices")
+        
+        return insights, recommendations
     
-    # Odor anomalies
-    if odor_data and odor_data.get('odor_anomaly', False):
-        anomaly_count += 1
-        anomaly_penalty += 20
+    def detect_trend(self):
+        """Detect environmental trend from score history"""
+        if len(self.score_history) < 5:
+            return "insufficient_data"
+        
+        recent_scores = [entry['final_score'] for entry in list(self.score_history)[-5:]]
+        
+        if len(recent_scores) >= 3:
+            # Calculate slope
+            x = np.arange(len(recent_scores))
+            slope = np.polyfit(x, recent_scores, 1)[0]
+            
+            if slope > 1:
+                return "improving"
+            elif slope < -1:
+                return "worsening"
+            else:
+                return "stable"
+        
+        return "stable"
     
-    # Activity anomalies
-    if activity_events:
-        for event in activity_events:
-            if event['type'] in ['rapid_movement']:
-                anomaly_count += 1
-                anomaly_penalty += 10 * event.get('confidence', 0.5)
-    
-    anomaly_score = max(0, 100 - anomaly_penalty)
-    score_components['anomaly'] = np.clip(anomaly_score, 0, 100)
-    
-    # 6. Calculate weighted final score
-    final_score = (
-        score_components['air_quality'] * WEIGHTS['air_quality'] +
-        score_components['noise'] * WEIGHTS['noise'] +
-        score_components['occupancy'] * WEIGHTS['occupancy'] +
-        score_components['activity'] * WEIGHTS['activity'] +
-        score_components['anomaly'] * WEIGHTS['anomaly']
-    )
-    
-    # 7. Determine quality category
-    if final_score >= 90:
-        category = "EXCELLENT"
-        recommendation = "Environment is ideal"
-    elif final_score >= 80:
-        category = "GOOD"
-        recommendation = "Minor improvements possible"
-    elif final_score >= 70:
-        category = "FAIR"
-        recommendation = "Some environmental factors need attention"
-    elif final_score >= 60:
-        category = "POOR"
-        recommendation = "Multiple factors require improvement"
-    else:
-        category = "CRITICAL"
-        recommendation = "Immediate action recommended"
-    
-    # 8. Generate insights
-    insights = []
-    
-    if score_components['air_quality'] < 60:
-        insights.append("Poor air quality detected")
-    if score_components['noise'] < 60:
-        insights.append(f"High noise levels ({sound_data.get('db', 0):.1f} dB)")
-    if score_components['occupancy'] < 60:
-        insights.append("Occupancy levels are suboptimal")
-    if score_components['anomaly'] < 70:
-        insights.append("Multiple anomalies detected")
-    
-    if odor_data and odor_data['odor_type'] != 'clean_air':
-        insights.append(f"Odor detected: {odor_data['odor_type']}")
-    
-    return {
-        'final_score': round(final_score, 1),
-        'category': category,
-        'recommendation': recommendation,
-        'components': {k: round(v, 1) for k, v in score_components.items()},
-        'insights': insights,
-        'anomaly_count': anomaly_count,
-        'timestamp': time.time()
-    }
+    def score_environment(self, sound_data, odor_data, radar_data, motion_patterns, activity_events):
+        """
+        Main scoring function that synthesizes all inputs into a dynamic environmental score
+        """
+        # Update sensor reliability
+        self.update_sensor_reliability('mq135', odor_data is not None, 
+                                       odor_data.get('voc_ppm') if odor_data else None,
+                                       (0, 500) if odor_data else None)
+        self.update_sensor_reliability('pms5003', odor_data is not None,
+                                       odor_data.get('pm25') if odor_data else None,
+                                       (0, 200) if odor_data else None)
+        self.update_sensor_reliability('sound', sound_data is not None,
+                                       sound_data.get('db') if sound_data else None,
+                                       (20, 100) if sound_data else None)
+        self.update_sensor_reliability('radar', radar_data is not None,
+                                       radar_data.get('target_count') if radar_data else None,
+                                       (0, 10) if radar_data else None)
+        
+        # Detect context
+        current_time = time.time()
+        context, context_confidence = self.detect_context(sound_data, odor_data, radar_data, current_time)
+        
+        # Get context-specific weights
+        context_weights = self.context_profiles.get(context, self.context_profiles['office'])['weights']
+        
+        component_scores = {}
+        confidences = {}
+        all_anomaly_details = []
+        
+        # Calculate each component score with confidence
+        if odor_data:
+            aq_score, aq_confidence = self.calculate_air_quality_score(odor_data, self.sensor_reliability)
+            component_scores['air_quality'] = aq_score
+            confidences['air_quality'] = aq_confidence
+        
+        if sound_data:
+            noise_score, noise_confidence = self.calculate_noise_score(sound_data, self.sensor_reliability, context)
+            component_scores['noise'] = noise_score
+            confidences['noise'] = noise_confidence
+        
+        if radar_data:
+            occ_score, occ_confidence = self.calculate_occupancy_score(
+                radar_data, motion_patterns, self.sensor_reliability, context
+            )
+            component_scores['occupancy'] = occ_score
+            confidences['occupancy'] = occ_confidence
+            
+            act_score, act_confidence = self.calculate_activity_score(
+                motion_patterns, activity_events, sound_data, context
+            )
+            component_scores['activity'] = act_score
+            confidences['activity'] = act_confidence
+        
+        # Always calculate anomaly score
+        anom_score, anom_confidence, anomaly_details = self.calculate_anomaly_score(
+            sound_data, odor_data, activity_events
+        )
+        component_scores['anomaly'] = anom_score
+        confidences['anomaly'] = anom_confidence
+        all_anomaly_details.extend(anomaly_details)
+        
+        # Calculate final weighted score
+        final_score, overall_confidence, used_weights = self.calculate_final_score(
+            component_scores, confidences, context_weights
+        )
+        
+        # Generate insights
+        insights, recommendations = self.generate_insights(
+            component_scores, confidences, all_anomaly_details, context, sound_data, odor_data
+        )
+        
+        # Determine quality category
+        if final_score >= 90:
+            category = "EXCELLENT"
+        elif final_score >= 80:
+            category = "GOOD"
+        elif final_score >= 70:
+            category = "FAIR"
+        elif final_score >= 60:
+            category = "POOR"
+        else:
+            category = "CRITICAL"
+        
+        # Store in history
+        score_entry = {
+            'timestamp': current_time,
+            'final_score': final_score,
+            'components': component_scores,
+            'confidences': confidences,
+            'context': context,
+            'context_confidence': context_confidence,
+            'overall_confidence': overall_confidence
+        }
+        self.score_history.append(score_entry)
+        
+        # Detect trends
+        trend = self.detect_trend()
+        
+        return {
+            'final_score': round(final_score, 1),
+            'category': category,
+            'overall_confidence': round(overall_confidence, 2),
+            'context': context,
+            'context_confidence': round(context_confidence, 2),
+            'component_scores': {k: round(v, 1) for k, v in component_scores.items()},
+            'confidences': {k: round(v, 2) for k, v in confidences.items()},
+            'weights_used': {k: round(v, 2) for k, v in used_weights.items()},
+            'insights': insights,
+            'recommendations': recommendations,
+            'anomaly_details': all_anomaly_details,
+            'trend': trend,
+            'sensor_reliability': {
+                k: round(v['baseline'], 2) for k, v in self.sensor_reliability.items()
+            },
+            'timestamp': current_time
+        }
+
+# Initialize the dynamic scorer
+dynamic_scorer = DynamicEnvironmentalScorer()
 
 # ==================== ODOR ANALYSIS ENGINE ====================
 VOC_BASELINE = None
@@ -983,17 +1477,12 @@ def read_radar():
     
     try:
         if radar.in_waiting:
-            # Read available data
             raw_data = radar.readline().decode(errors='ignore').strip()
             
             if raw_data:
-                # Parse radar data
                 parsed_data = radar_processor.parse_radar_frame(raw_data)
-                
-                # Track targets
                 tracked_data = radar_processor.track_targets(parsed_data)
                 
-                # Store in history
                 radar_history.append({
                     'timestamp': time.time(),
                     'data': tracked_data
@@ -1016,8 +1505,9 @@ def main():
     print("  • Sound Analysis with ML Classification")
     print("  • Air Quality Monitoring (VOC, PM1.0, PM2.5, PM10)")
     print("  • mmWave Radar Tracking & Motion Analysis")
-    print("  • Comprehensive Environmental Scoring")
-    print("  • Anomaly Detection")
+    print("  • Dynamic Environmental Scoring with Context Detection")
+    print("  • Sensor Reliability Tracking")
+    print("  • Anomaly Pattern Recognition")
     print("="*60)
     print("Press Ctrl+C to exit\n")
     
@@ -1043,15 +1533,20 @@ def main():
                 # Analyze sound
                 sound_analysis = analyze_sound(sound_voltage)
                 
+                # Analyze odor (if sound analysis available)
+                odor_analysis = None
+                if sound_analysis:
+                    odor_analysis = analyze_odor(sound_analysis['db'])
+                
                 # Analyze radar patterns
                 motion_patterns = radar_processor.analyze_motion_patterns()
                 activity_events = radar_processor.detect_activity_events()
                 
                 # Periodic comprehensive analysis
                 if current_time - last_print_time >= print_interval:
-                    print("\n" + "="*70)
+                    print("\n" + "="*80)
                     print(f"📊 COMPREHENSIVE REPORT - {time.strftime('%Y-%m-%d %H:%M:%S')}")
-                    print("="*70)
+                    print("="*80)
                     
                     # Sound Analysis
                     if sound_analysis:
@@ -1059,21 +1554,18 @@ def main():
                         print(f"   Level: {sound_analysis['db']:.1f} dB (Baseline: {sound_analysis['baseline']:.1f} dB)")
                         print(f"   Event: {sound_analysis['event']} (confidence: {sound_analysis['confidence']:.2f})")
                         if sound_analysis['spike']:
-                            print("   ⚠ Sound spike detected!")
+                            print(f"   ⚠ Sound spike detected! (Rate: {sound_analysis['rate_of_change']:.2f})")
                     
                     # Odor Analysis
-                    if sound_analysis:
-                        odor_analysis = analyze_odor(sound_analysis['db'])
-                        
-                        if odor_analysis:
-                            print("\n🌬️ AIR QUALITY ANALYSIS:")
-                            print(f"   VOC: {odor_analysis['voc_ppm']:.1f} ppm")
-                            print(f"   PM2.5: {odor_analysis['pm25']} µg/m³")
-                            print(f"   Air Quality Index: {odor_analysis['air_quality_index']:.1f}")
-                            print(f"   Odor Type: {odor_analysis['odor_type']}")
-                            print(f"   Intensity: {odor_analysis['odor_intensity']} ({odor_analysis['odor_level']})")
-                            if odor_analysis['odor_anomaly']:
-                                print("   ⚠ Odor anomaly detected!")
+                    if odor_analysis:
+                        print("\n🌬️ AIR QUALITY ANALYSIS:")
+                        print(f"   VOC: {odor_analysis['voc_ppm']:.1f} ppm")
+                        print(f"   PM2.5: {odor_analysis['pm25']} µg/m³")
+                        print(f"   Air Quality Index: {odor_analysis['air_quality_index']:.1f}")
+                        print(f"   Odor Type: {odor_analysis['odor_type']} (conf: {odor_analysis['classification_confidence']:.2f})")
+                        print(f"   Intensity: {odor_analysis['odor_intensity']} ({odor_analysis['odor_level']})")
+                        if odor_analysis['odor_anomaly']:
+                            print("   ⚠ Odor anomaly detected!")
                     
                     # Radar Analysis
                     if radar_raw_data:
@@ -1091,33 +1583,51 @@ def main():
                             for event in activity_events:
                                 print(f"     • {event['type']} (conf: {event.get('confidence', 0):.2f})")
                     
-                    # Calculate and display environmental score
-                    if sound_analysis and odor_analysis and radar_raw_data:
-                        score_data = calculate_environmental_score(
-                            sound_analysis, 
-                            odor_analysis, 
-                            radar_raw_data,
-                            radar_processor,
-                            motion_patterns,
-                            activity_events
-                        )
-                        
-                        # Store score history
-                        score_history.append(score_data)
-                        
-                        print("\n🎯 ENVIRONMENTAL SCORE:")
-                        print(f"   FINAL SCORE: {score_data['final_score']}/100 - {score_data['category']}")
-                        print(f"   Recommendation: {score_data['recommendation']}")
-                        
-                        print("\n   Component Scores:")
-                        for component, score in score_data['components'].items():
-                            bar = "█" * int(score / 10) + "░" * (10 - int(score / 10))
-                            print(f"   {component.replace('_', ' ').title():12} [{bar}] {score:.1f}")
-                        
-                        if score_data['insights']:
-                            print("\n   Insights:")
-                            for insight in score_data['insights']:
-                                print(f"   • {insight}")
+                    # Calculate and display environmental score using dynamic scorer
+                    score_data = dynamic_scorer.score_environment(
+                        sound_analysis, 
+                        odor_analysis, 
+                        radar_raw_data,
+                        motion_patterns,
+                        activity_events
+                    )
+                    
+                    # Store score history
+                    score_history.append(score_data)
+                    
+                    print("\n🎯 DYNAMIC ENVIRONMENTAL SCORE:")
+                    print(f"   FINAL SCORE: {score_data['final_score']}/100 - {score_data['category']}")
+                    print(f"   Context: {score_data['context']} (conf: {score_data['context_confidence']})")
+                    print(f"   Trend: {score_data['trend']}")
+                    print(f"   Overall Confidence: {score_data['overall_confidence']}")
+                    
+                    print("\n   Component Scores:")
+                    for component, score in score_data['component_scores'].items():
+                        conf = score_data['confidences'].get(component, 0)
+                        weight = score_data['weights_used'].get(component, 0)
+                        bar = "█" * int(score / 10) + "░" * (10 - int(score / 10))
+                        print(f"   {component.replace('_', ' ').title():12} [{bar}] {score:.1f} "
+                              f"(conf:{conf:.2f}, weight:{weight:.2f})")
+                    
+                    if score_data['insights']:
+                        print("\n   Insights:")
+                        for insight in score_data['insights']:
+                            print(f"   • {insight}")
+                    
+                    if score_data['recommendations']:
+                        print("\n   Recommendations:")
+                        for rec in score_data['recommendations']:
+                            print(f"   {rec}")
+                    
+                    if score_data['anomaly_details']:
+                        print(f"\n   Anomalies: {len(score_data['anomaly_details'])}")
+                        for anomaly in score_data['anomaly_details'][:3]:
+                            print(f"     • {anomaly}")
+                    
+                    print("\n   Sensor Reliability:")
+                    for sensor, rel in score_data['sensor_reliability'].items():
+                        bar = "█" * int(rel * 10) + "░" * (10 - int(rel * 10))
+                        print(f"   {sensor:8} [{bar}] {rel:.2f}")
                     
                     # Raw sensor data
                     print("\n📊 RAW SENSOR DATA:")
@@ -1125,7 +1635,7 @@ def main():
                         print(f"   PM1.0: {pms_data[0]:3d} µg/m³  PM2.5: {pms_data[1]:3d} µg/m³  PM10: {pms_data[2]:3d} µg/m³")
                     print(f"   MQ135: {mq135_voltage:.3f} V")
                     
-                    print("\n" + "="*70 + "\n")
+                    print("\n" + "="*80 + "\n")
                     
                     last_print_time = current_time
                 
@@ -1145,10 +1655,17 @@ def main():
         if score_history:
             print("\n📈 Session Summary:")
             avg_score = np.mean([s['final_score'] for s in score_history])
+            best_score = max([s['final_score'] for s in score_history])
+            worst_score = min([s['final_score'] for s in score_history])
             print(f"   Average Score: {avg_score:.1f}")
-            print(f"   Best Score: {max([s['final_score'] for s in score_history]):.1f}")
-            print(f"   Worst Score: {min([s['final_score'] for s in score_history]):.1f}")
+            print(f"   Best Score: {best_score:.1f}")
+            print(f"   Worst Score: {worst_score:.1f}")
             print(f"   Total Readings: {len(score_history)}")
+            
+            # Most common context
+            contexts = [s['context'] for s in score_history]
+            most_common = max(set(contexts), key=contexts.count)
+            print(f"   Primary Context: {most_common}")
         
     finally:
         # Clean up resources
