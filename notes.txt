@@ -4,3 +4,12 @@ look into privacy of recording video and audio
 using mmwave radars, audio sensors, vape detectors: concentration detector and organic material detector
 
 create a show a graph of the live data from the sensors especially spikes from the sound sensor
+
+figure out a way to send a notification or something similar to ping the front office and show the concern score
+
+create an ai summary of each event and store it with time stamps
+
+create a weekly report at the end of the week summarizing the events, show trends, and give preventative tips
+
+based on the time, persistence, and strength of the odor, turn up the score to a particular point
+
