@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - Environmental Monitoring{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">System Settings</h1>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="stat-card">
+            <h5>Alert Thresholds</h5>
+            <form id="thresholds-form">
+                <div class="mb-3">
+                    <label class="form-label">Critical Threat Threshold</label>
+                    <input type="number" class="form-control" id="critical-threshold" value="80" min="0" max="100">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">High Threat Threshold</label>
+                    <input type="number" class="form-control" id="high-threshold" value="60" min="0" max="100">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Elevated Threat Threshold</label>
+                    <input type="number" class="form-control" id="elevated-threshold" value="40" min="0" max="100">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Air Quality Alert (AQI)</label>
+                    <input type="number" class="form-control" id="aqi-threshold" value="150" min="0" max="500">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Sound Spike Threshold (dB)</label>
+                    <input type="number" class="form-control" id="sound-threshold" value="80" min="0" max="120">
+                </div>
+                <button type="submit" class="btn btn-primary">Save Thresholds</button>
+            </form>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="stat-card">
+            <h5>System Configuration</h5>
+            <form id="config-form">
+                <div class="mb-3">
+                    <label class="form-label">Database Logging Interval (seconds)</label>
+                    <input type="number" class="form-control" id="log-interval" value="60" min="5" max="3600">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Dashboard Refresh Rate (seconds)</label>
+                    <input type="number" class="form-control" id="refresh-rate" value="5" min="1" max="60">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">History Retention (days)</label>
+                    <input type="number" class="form-control" id="retention" value="30" min="1" max="365">
+                </div>
+                <div class="mb-3 form-check">
+                    <input type="checkbox" class="form-check-input" id="auto-export" checked>
+                    <label class="form-check-label">Auto-export daily reports</label>
+                </div>
+                <div class="mb-3 form-check">
+                    <input type="checkbox" class="form-check-input" id="email-alerts">
+                    <label class="form-check-label">Enable email alerts</label>
+                </div>
+                <button type="submit" class="btn btn-primary">Save Configuration</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="stat-card">
+            <h5>System Status</h5>
+            <table class="table">
+                <tr>
+                    <td>Database Location</td>
+                    <td><code>{{ app.config['DATABASE_PATH'] }}</code></td>
+                </tr>
+                <tr>
+                    <td>Last Database Write</td>
+                    <td id="last-db-write">--</td>
+                </tr>
+                <tr>
+                    <td>Total Events Logged</td>
+                    <td id="total-events">--</td>
+                </tr>
+                <tr>
+                    <td>System Uptime</td>
+                    <td id="uptime">--</td>
+                </tr>
+                <tr>
+                    <td>Active Connections</td>
+                    <td id="connections">--</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="stat-card">
+            <h5>Data Management</h5>
+            <div class="btn-group" role="group">
+                <button class="btn btn-outline-primary" onclick="exportData()">
+                    <i class="bi bi-download"></i> Export All Data
+                </button>
+                <button class="btn btn-outline-warning" onclick="archiveData()">
+                    <i class="bi bi-archive"></i> Archive Old Data
+                </button>
+                <button class="btn btn-outline-danger" onclick="clearData()">
+                    <i class="bi bi-trash"></i> Clear History
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Load settings
+    document.addEventListener('DOMContentLoaded', function() {
+        loadSystemStatus();
+        setInterval(loadSystemStatus, 30000);
+    });
+
+    function loadSystemStatus() {
+        fetch('/api/stats')
+            .then(response => response.json())
+            .then(stats => {
+                document.getElementById('total-events').textContent = stats.total_events || 0;
+                document.getElementById('last-db-write').textContent = 
+                    stats.last_event ? new Date(stats.last_event).toLocaleString() : 'Never';
+            });
+
+        // Simulate uptime (replace with actual uptime tracking)
+        const startTime = new Date();
+        setInterval(() => {
+            const uptime = Math.floor((new Date() - startTime) / 1000);
+            const hours = Math.floor(uptime / 3600);
+            const minutes = Math.floor((uptime % 3600) / 60);
+            const seconds = uptime % 60;
+            document.getElementById('uptime').textContent = 
+                `${hours}h ${minutes}m ${seconds}s`;
+        }, 1000);
+    }
+
+    // Handle form submissions
+    document.getElementById('thresholds-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        // Save thresholds (implement actual save logic)
+        alert('Thresholds saved (demo)');
+    });
+
+    document.getElementById('config-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        // Save config (implement actual save logic)
+        alert('Configuration saved (demo)');
+    });
+
+    function exportData() {
+        fetch('/api/events/recent?limit=1000')
+            .then(response => response.json())
+            .then(events => {
+                const blob = new Blob([JSON.stringify(events, null, 2)], {type: 'application/json'});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `environmental_data_${new Date().toISOString().slice(0,10)}.json`;
+                a.click();
+            });
+    }
+
+    function archiveData() {
+        if (confirm('Archive data older than 30 days?')) {
+            alert('Archive functionality would be implemented here');
+        }
+    }
+
+    function clearData() {
+        if (confirm('Are you sure? This will delete all historical data!')) {
+            alert('Clear functionality would be implemented here');
+        }
+    }
+</script>
+{% endblock %}
