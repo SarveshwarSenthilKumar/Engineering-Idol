@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+
+{% block title %}Event History - Environmental Monitoring{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Event History</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <button class="btn btn-sm btn-outline-secondary me-2" onclick="refreshEvents()">
+            <i class="bi bi-arrow-clockwise"></i> Refresh
+        </button>
+        <button class="btn btn-sm btn-outline-primary" onclick="exportEvents()">
+            <i class="bi bi-download"></i> Export
+        </button>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="stat-card text-center">
+            <h3 class="text-primary">{{ stats.total_events or 0 }}</h3>
+            <div class="text-muted">Total Events (24h)</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card text-center">
+            <h3 class="text-warning">{{ "%.1f"|format(stats.avg_threat or 0) }}</h3>
+            <div class="text-muted">Avg Threat Score</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card text-center">
+            <h3 class="text-danger">{{ "%.1f"|format(stats.max_threat or 0) }}</h3>
+            <div class="text-muted">Peak Threat</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card text-center">
+            <h3 class="text-info">{{ "%.1f"|format(stats.avg_quality or 0) }}</h3>
+            <div class="text-muted">Avg Quality</div>
+        </div>
+    </div>
+</div>
+
+<!-- Threat Distribution -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="stat-card">
+            <h5>Threat Level Distribution</h5>
+            <canvas id="threat-distribution" height="200"></canvas>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="stat-card">
+            <h5>Event Timeline (24h)</h5>
+            <canvas id="event-timeline" height="200"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="row mb-3">
+    <div class="col-md-3">
+        <select class="form-select" id="level-filter">
+            <option value="all">All Threat Levels</option>
+            <option value="CRITICAL">Critical</option>
+            <option value="HIGH">High</option>
+            <option value="ELEVATED">Elevated</option>
+            <option value="MODERATE">Moderate</option>
+            <option value="LOW">Low</option>
+        </select>
+    </div>
+    <div class="col-md-3">
+        <select class="form-select" id="type-filter">
+            <option value="all">All Event Types</option>
+            <option value="CRITICAL_THREAT">Critical Threat</option>
+            <option value="HIGH_THREAT">High Threat</option>
+            <option value="RAPID_ESCALATION">Rapid Escalation</option>
+            <option value="ABNORMAL_VITALS">Abnormal Vitals</option>
+            <option value="POOR_AIR_QUALITY">Poor Air Quality</option>
+            <option value="SOUND_SPIKE">Sound Spike</option>
+            <option value="PERSON_ENTRY">Person Entry</option>
+            <option value="PERSON_EXIT">Person Exit</option>
+        </select>
+    </div>
+    <div class="col-md-3">
+        <input type="date" class="form-control" id="date-filter">
+    </div>
+    <div class="col-md-3">
+        <button class="btn btn-primary w-100" onclick="applyFilters()">Apply Filters</button>
+    </div>
+</div>
+
+<!-- Events Table -->
+<div class="stat-card">
+    <div class="table-responsive">
+        <table class="table table-hover" id="events-table">
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>Event Type</th>
+                    <th>Threat Level</th>
+                    <th>Threat Score</th>
+                    <th>Quality Score</th>
+                    <th>People</th>
+                    <th>Noise (dB)</th>
+                    <th>AQI</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody id="events-body">
+                {% for event in events %}
+                <tr class="event-{{ event.threat_level|lower }}">
+                    <td>{{ event.timestamp|format_datetime }}</td>
+                    <td>
+                        <span class="badge bg-secondary">{{ event.event_type }}</span>
+                    </td>
+                    <td>
+                        <span class="badge bg-{{ event.threat_level|threat_color }}">
+                            {{ event.threat_level }}
+                        </span>
+                    </td>
+                    <td>{{ "%.1f"|format(event.threat_score) if event.threat_score else '--' }}</td>
+                    <td>{{ "%.1f"|format(event.quality_score) if event.quality_score else '--' }}</td>
+                    <td>{{ event.people_count or 0 }}</td>
+                    <td>{{ "%.1f"|format(event.sound_db) if event.sound_db else '--' }}</td>
+                    <td>{{ "%.0f"|format(event.air_aqi) if event.air_aqi else '--' }}</td>
+                    <td>{{ event.description or '' }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="9" class="text-center">No events found</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Threat distribution chart
+    const distCtx = document.getElementById('threat-distribution').getContext('2d');
+    new Chart(distCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Critical', 'High', 'Elevated', 'Moderate', 'Low'],
+            datasets: [{
+                data: [
+                    {{ stats.critical_count or 0 }},
+                    {{ stats.high_count or 0 }},
+                    {{ stats.elevated_count or 0 }},
+                    {{ stats.moderate_count or 0 }},
+                    {{ stats.low_count or 0 }}
+                ],
+                backgroundColor: [
+                    '#343a40',
+                    '#dc3545',
+                    '#fd7e14',
+                    '#ffc107',
+                    '#28a745'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+
+    // Event timeline chart
+    const timelineCtx = document.getElementById('event-timeline').getContext('2d');
+    new Chart(timelineCtx, {
+        type: 'line',
+        data: {
+            labels: Array.from({length: 24}, (_, i) => i + ':00'),
+            datasets: [{
+                label: 'Events',
+                data: {{ timeline_data|default([])|tojson }},
+                borderColor: '#0d6efd',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+
+    function refreshEvents() {
+        location.reload();
+    }
+
+    function exportEvents() {
+        const events = [];
+        document.querySelectorAll('#events-body tr').forEach(row => {
+            const cells = row.querySelectorAll('td');
+            if (cells.length > 1) {
+                events.push({
+                    timestamp: cells[0].textContent,
+                    type: cells[1].textContent,
+                    threat_level: cells[2].textContent,
+                    threat_score: cells[3].textContent,
+                    quality_score: cells[4].textContent,
+                    people: cells[5].textContent,
+                    noise: cells[6].textContent,
+                    aqi: cells[7].textContent,
+                    description: cells[8].textContent
+                });
+            }
+        });
+
+        const blob = new Blob([JSON.stringify(events, null, 2)], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'events_export.json';
+        a.click();
+    }
+
+    function applyFilters() {
+        const level = document.getElementById('level-filter').value;
+        const type = document.getElementById('type-filter').value;
+        const date = document.getElementById('date-filter').value;
+
+        const rows = document.querySelectorAll('#events-body tr');
+        rows.forEach(row => {
+            const threatLevel = row.querySelector('td:nth-child(3) .badge')?.textContent || '';
+            const eventType = row.querySelector('td:nth-child(2) .badge')?.textContent || '';
+            const timestamp = row.querySelector('td:nth-child(1)')?.textContent || '';
+
+            let show = true;
+            
+            if (level !== 'all' && threatLevel !== level) show = false;
+            if (type !== 'all' && eventType !== type) show = false;
+            if (date && !timestamp.includes(date)) show = false;
+
+            row.style.display = show ? '' : 'none';
+        });
+    }
+</script>
+{% endblock %}
