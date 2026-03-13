@@ -28,7 +28,7 @@ app = Flask(__name__)
 app.config["SESSION_PERMANENT"] = True
 app.config["SESSION_TYPE"] = "filesystem"
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', os.urandom(24).hex())
-app.config['DATABASE_PATH'] = os.getenv('DATABASE_PATH', '../users.db')
+app.config['DATABASE_PATH'] = os.getenv('DATABASE_PATH', 'events.db')
 
 # Initialize extensions
 Session(app)

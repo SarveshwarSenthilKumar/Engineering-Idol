@@ -14,7 +14,7 @@ import os
 import sys
 
 # Configuration
-DB_PATH = '../users.db'
+DB_PATH = 'events.db'
 DAYS_OF_HISTORY = 30  # Generate 30 days of history
 EVENTS_PER_DAY = 50   # Average events per day
 TARGETS_PER_EVENT = 2 # Average targets per event

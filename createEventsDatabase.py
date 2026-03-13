@@ -3,7 +3,7 @@ import os
 from datetime import datetime
 
 # Clear existing database
-database_path = '../users.db'
+database_path = 'events.db'
 if os.path.exists(database_path):
     os.remove(database_path)
 

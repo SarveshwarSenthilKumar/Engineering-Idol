@@ -41,7 +41,7 @@ VERSION = "2.0.0"
 LOG_LEVEL = logging.INFO
 
 # Database Configuration
-DATABASE_PATH = '../users.db'
+DATABASE_PATH = 'events.db'
 
 # Sound Analysis Parameters
 SAMPLE_RATE = 200
