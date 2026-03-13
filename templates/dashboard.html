@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Environmental Monitoring{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Live Monitoring Dashboard</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <span class="badge bg-success me-2" id="connection-status">Connected</span>
+        <span class="text-muted" id="last-update"></span>
+    </div>
+</div>
+
+<!-- Threat Overview -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5>Current Threat Level</h5>
+                <span class="badge" id="threat-badge" style="font-size: 1rem;">Loading...</span>
+            </div>
+            <div class="row mt-3">
+                <div class="col-md-6">
+                    <canvas id="threat-gauge" class="gauge"></canvas>
+                </div>
+                <div class="col-md-6">
+                    <div class="value-large" id="threat-score">--</div>
+                    <div class="text-muted" id="threat-response"></div>
+                    
+                    <div class="mt-4">
+                        <h6>Temporal Dynamics</h6>
+                        <table class="table table-sm">
+                            <tr>
+                                <td>Trend:</td>
+                                <td><span id="trend-value">--</span></td>
+                            </tr>
+                            <tr>
+                                <td>Rate of Change:</td>
+                                <td><span id="slope-value">--</span> pts/min</td>
+                            </tr>
+                            <tr>
+                                <td>Persistence:</td>
+                                <td><span id="persistence-value">--</span>x</td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <h6>Predictions</h6>
+                        <div class="progress mb-2" style="height: 20px;">
+                            <div class="progress-bar bg-warning" id="pred-5min" style="width: 0%">5min</div>
+                            <div class="progress-bar bg-danger" id="pred-15min" style="width: 0%">15min</div>
+                            <div class="progress-bar bg-dark" id="pred-30min" style="width: 0%">30min</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="stat-card">
+            <h5>Environmental Quality</h5>
+            <div class="text-center">
+                <canvas id="quality-gauge" class="gauge"></canvas>
+                <h3 id="quality-score">--</h3>
+                <span class="badge bg-info" id="quality-category">--</span>
+                <div class="mt-2" id="quality-trend"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sensor Grid -->
+<div class="row">
+    <!-- Radar / People -->
+    <div class="col-md-3">
+        <div class="stat-card sensor-card">
+            <h5><i class="bi bi-people"></i> Occupancy</h5>
+            <div class="value-large" id="people-count">0</div>
+            <div class="text-muted">people detected</div>
+            <hr>
+            <div id="target-list" class="small">
+                <!-- Filled by JS -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Air Quality -->
+    <div class="col-md-3">
+        <div class="stat-card sensor-card">
+            <h5><i class="bi bi-wind"></i> Air Quality</h5>
+            <div class="value-large" id="aqi-value">--</div>
+            <div class="text-muted">AQI</div>
+            <hr>
+            <table class="table table-sm">
+                <tr>
+                    <td>VOC:</td>
+                    <td><span id="voc-value">--</span> ppm</td>
+                </tr>
+                <tr>
+                    <td>PM2.5:</td>
+                    <td><span id="pm25-value">--</span> µg/m³</td>
+                </tr>
+                <tr>
+                    <td>Odor:</td>
+                    <td><span id="odor-type">--</span></td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Sound -->
+    <div class="col-md-3">
+        <div class="stat-card sensor-card">
+            <h5><i class="bi bi-volume-up"></i> Noise Level</h5>
+            <div class="value-large" id="noise-value">--</div>
+            <div class="text-muted">dB</div>
+            <hr>
+            <div id="sound-event" class="small"></div>
+            <div class="progress mt-2">
+                <div class="progress-bar" id="noise-bar" style="width: 0%"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Threat Components -->
+    <div class="col-md-3">
+        <div class="stat-card sensor-card">
+            <h5><i class="bi bi-shield"></i> Threat Components</h5>
+            <table class="table table-sm">
+                <tr>
+                    <td>Proximity:</td>
+                    <td><span id="prox-score">--</span></td>
+                </tr>
+                <tr>
+                    <td>Count:</td>
+                    <td><span id="count-score">--</span></td>
+                </tr>
+                <tr>
+                    <td>Behavior:</td>
+                    <td><span id="behave-score">--</span></td>
+                </tr>
+                <tr>
+                    <td>Vital Signs:</td>
+                    <td><span id="vital-score">--</span></td>
+                </tr>
+                <tr>
+                    <td>Air Quality:</td>
+                    <td><span id="air-score">--</span></td>
+                </tr>
+                <tr>
+                    <td>Noise:</td>
+                    <td><span id="noise-score">--</span></td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Events -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="stat-card">
+            <h5><i class="bi
