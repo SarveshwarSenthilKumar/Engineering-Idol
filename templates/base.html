@@ -59,6 +59,7 @@
         .sidebar {
             min-height: 100vh;
             background: linear-gradient(180deg, #2c3e50 0%, #1a252f 100%);
+            padding: 0;
         }
         .sidebar .nav-link {
             color: #ecf0f1;
@@ -80,6 +81,7 @@
         .main-content {
             background: #f8f9fa;
             min-height: 100vh;
+            padding: 20px;
         }
         
         .stat-card {
@@ -172,7 +174,10 @@
         // Update live time
         function updateTime() {
             const now = new Date();
-            document.getElementById('live-time').textContent = now.toLocaleString();
+            const timeElement = document.getElementById('live-time');
+            if (timeElement) {
+                timeElement.textContent = now.toLocaleString();
+            }
         }
         setInterval(updateTime, 1000);
         updateTime();
@@ -182,8 +187,16 @@
             const eventSource = new EventSource("{{ url_for('events_stream') }}");
             
             eventSource.addEventListener('update', function(e) {
-                const data = JSON.parse(e.data);
-                handleLiveUpdate(data);
+                try {
+                    const data = JSON.parse(e.data);
+                    if (typeof handleLiveUpdate === 'function') {
+                        handleLiveUpdate(data);
+                    } else {
+                        console.log('Live update:', data);
+                    }
+                } catch (err) {
+                    console.error('Error parsing update:', err);
+                }
             });
             
             eventSource.addEventListener('heartbeat', function(e) {
@@ -196,15 +209,7 @@
             };
         }
         
-        // Override this in child templates
-        function handleLiveUpdate(data) {
-            console.log('Live update:', data);
-        }
-        
-        // Start SSE if not on settings page
-        {% if request.endpoint != 'settings' %}
-        document.addEventListener('DOMContentLoaded', setupEventSource);
-        {% endif %}
+
     </script>
     
     {% block extra_js %}{% endblock %}
