@@ -435,4 +435,126 @@
         data.forEach(d => {
             // Threat
             const threat = d.threat_score || 0;
-           
+            metrics.threat.values.push(threat);
+            metrics.threat.min = Math.min(metrics.threat.min, threat);
+            metrics.threat.max = Math.max(metrics.threat.max, threat);
+            metrics.threat.sum += threat;
+
+            // Quality
+            const quality = d.quality_score || 0;
+            metrics.quality.values.push(quality);
+            metrics.quality.min = Math.min(metrics.quality.min, quality);
+            metrics.quality.max = Math.max(metrics.quality.max, quality);
+            metrics.quality.sum += quality;
+
+            // People
+            const people = d.people_count || 0;
+            metrics.people.values.push(people);
+            metrics.people.min = Math.min(metrics.people.min, people);
+            metrics.people.max = Math.max(metrics.people.max, people);
+            metrics.people.sum += people;
+
+            // Noise
+            const noise = d.sound_db || 0;
+            metrics.noise.values.push(noise);
+            metrics.noise.min = Math.min(metrics.noise.min, noise);
+            metrics.noise.max = Math.max(metrics.noise.max, noise);
+            metrics.noise.sum += noise;
+
+            // AQI
+            const aqi = d.air_aqi || 0;
+            metrics.aqi.values.push(aqi);
+            metrics.aqi.min = Math.min(metrics.aqi.min, aqi);
+            metrics.aqi.max = Math.max(metrics.aqi.max, aqi);
+            metrics.aqi.sum += aqi;
+        });
+
+        const n = data.length;
+        const statsTable = document.getElementById('stats-table');
+        
+        const stdDev = (values, mean) => {
+            const sqDiff = values.map(v => Math.pow(v - mean, 2));
+            return Math.sqrt(sqDiff.reduce((a, b) => a + b, 0) / values.length);
+        };
+
+        const threatMean = metrics.threat.sum / n;
+        const qualityMean = metrics.quality.sum / n;
+        const peopleMean = metrics.people.sum / n;
+        const noiseMean = metrics.noise.sum / n;
+        const aqiMean = metrics.aqi.sum / n;
+
+        statsTable.innerHTML = `
+            <tr>
+                <td>Threat Score</td>
+                <td>${metrics.threat.min.toFixed(1)}</td>
+                <td>${metrics.threat.max.toFixed(1)}</td>
+                <td>${threatMean.toFixed(1)}</td>
+                <td>${stdDev(metrics.threat.values, threatMean).toFixed(2)}</td>
+                <td>${getTrend(metrics.threat.values)}</td>
+            </tr>
+            <tr>
+                <td>Quality Score</td>
+                <td>${metrics.quality.min.toFixed(1)}</td>
+                <td>${metrics.quality.max.toFixed(1)}</td>
+                <td>${qualityMean.toFixed(1)}</td>
+                <td>${stdDev(metrics.quality.values, qualityMean).toFixed(2)}</td>
+                <td>${getTrend(metrics.quality.values)}</td>
+            </tr>
+            <tr>
+                <td>People Count</td>
+                <td>${metrics.people.min}</td>
+                <td>${metrics.people.max}</td>
+                <td>${peopleMean.toFixed(2)}</td>
+                <td>${stdDev(metrics.people.values, peopleMean).toFixed(2)}</td>
+                <td>${getTrend(metrics.people.values)}</td>
+            </tr>
+            <tr>
+                <td>Noise (dB)</td>
+                <td>${metrics.noise.min.toFixed(1)}</td>
+                <td>${metrics.noise.max.toFixed(1)}</td>
+                <td>${noiseMean.toFixed(1)}</td>
+                <td>${stdDev(metrics.noise.values, noiseMean).toFixed(2)}</td>
+                <td>${getTrend(metrics.noise.values)}</td>
+            </tr>
+            <tr>
+                <td>Air Quality (AQI)</td>
+                <td>${metrics.aqi.min.toFixed(0)}</td>
+                <td>${metrics.aqi.max.toFixed(0)}</td>
+                <td>${aqiMean.toFixed(0)}</td>
+                <td>${stdDev(metrics.aqi.values, aqiMean).toFixed(2)}</td>
+                <td>${getTrend(metrics.aqi.values)}</td>
+            </tr>
+        `;
+    }
+
+    function getTrend(values) {
+        if (values.length < 5) return '➡️';
+        const recent = values.slice(-5);
+        const older = values.slice(-10, -5);
+        const recentAvg = recent.reduce((a, b) => a + b, 0) / recent.length;
+        const olderAvg = older.reduce((a, b) => a + b, 0) / older.length;
+        
+        if (recentAvg > olderAvg * 1.1) return '⬆️ Increasing';
+        if (recentAvg < olderAvg * 0.9) return '⬇️ Decreasing';
+        return '➡️ Stable';
+    }
+
+    function setTimeRange(hours) {
+        currentTimeRange = hours;
+        document.querySelectorAll('.btn-group .btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        event.target.classList.add('active');
+        loadData(hours);
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        initCharts();
+        loadData(24);
+        
+        // Refresh every 60 seconds
+        setInterval(() => loadData(currentTimeRange), 60000);
+    });
+</script>
+{% endblock %}
