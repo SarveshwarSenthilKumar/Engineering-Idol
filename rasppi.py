@@ -2,6 +2,7 @@
 """
 ENHANCED ENVIRONMENTAL MONITORING SYSTEM
 Advanced threat detection with temporal dynamics and exponential escalation
+Integrated with SQLite database for event logging and reporting
 """
 
 import time
@@ -25,6 +26,10 @@ import threading
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 import logging
+import sqlite3
+import os
+import signal
+import sys
 
 warnings.filterwarnings('ignore')
 
@@ -34,6 +39,9 @@ warnings.filterwarnings('ignore')
 SYSTEM_NAME = "Advanced Environmental Monitor"
 VERSION = "2.0.0"
 LOG_LEVEL = logging.INFO
+
+# Database Configuration
+DATABASE_PATH = '../users.db'
 
 # Sound Analysis Parameters
 SAMPLE_RATE = 200
@@ -149,6 +157,606 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger(SYSTEM_NAME)
+
+# ==================== DATABASE MANAGER ====================
+
+class DatabaseManager:
+    """Manages all database operations for the environmental monitoring system"""
+    
+    def __init__(self, db_path=DATABASE_PATH):
+        self.db_path = db_path
+        self.ensure_database_exists()
+    
+    def ensure_database_exists(self):
+        """Ensure database and tables exist"""
+        if not os.path.exists(self.db_path):
+            logger.info(f"Database not found at {self.db_path}. Creating new database...")
+            self.create_database()
+    
+    def create_database(self):
+        """Create database and tables if they don't exist"""
+        conn = None
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            # ==================== USERS TABLE ====================
+            users_fields = [
+                "username TEXT NOT NULL",
+                "password TEXT NOT NULL",
+                "dateJoined TEXT",
+                "salt TEXT",
+                "accountStatus TEXT",
+                "role TEXT",
+                "twoFactorAuth INTEGER",
+                "lastLogin TEXT",
+                "emailAddress TEXT",
+                "phoneNumber TEXT",
+                "name TEXT",
+                "dateOfBirth TEXT",
+                "gender TEXT",
+            ]
+            
+            users_create = "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, " + ", ".join(users_fields) + ")"
+            cursor.execute(users_create)
+            
+            # ==================== EVENTS TABLE ====================
+            events_fields = [
+                "timestamp TEXT NOT NULL",
+                "threat_overall REAL",
+                "threat_base REAL",
+                "threat_level TEXT",
+                "threat_color TEXT",
+                "threat_response TEXT",
+                "threat_confidence REAL",
+                "temporal_trend TEXT",
+                "temporal_slope REAL",
+                "temporal_acceleration REAL",
+                "temporal_volatility REAL",
+                "temporal_persistence_factor REAL",
+                "trajectory_5min REAL",
+                "trajectory_15min REAL",
+                "trajectory_30min REAL",
+                "proximity_score REAL",
+                "proximity_raw REAL",
+                "proximity_confidence REAL",
+                "proximity_weight REAL",
+                "count_score REAL",
+                "count_raw REAL",
+                "count_confidence REAL",
+                "count_weight REAL",
+                "behavior_score REAL",
+                "behavior_raw REAL",
+                "behavior_confidence REAL",
+                "behavior_weight REAL",
+                "vital_signs_score REAL",
+                "vital_signs_raw REAL",
+                "vital_signs_confidence REAL",
+                "vital_signs_weight REAL",
+                "air_quality_score REAL",
+                "air_quality_raw REAL",
+                "air_quality_confidence REAL",
+                "air_quality_weight REAL",
+                "noise_score REAL",
+                "noise_raw REAL",
+                "noise_confidence REAL",
+                "noise_weight REAL",
+                "quality_score REAL",
+                "quality_base REAL",
+                "quality_category TEXT",
+                "quality_icon TEXT",
+                "quality_trend TEXT",
+                "quality_sound_adjust REAL",
+                "quality_air_adjust REAL",
+                "quality_occupancy_adjust REAL",
+                "sound_db REAL",
+                "sound_baseline REAL",
+                "sound_spike INTEGER",
+                "sound_rate_of_change REAL",
+                "sound_event TEXT",
+                "sound_confidence REAL",
+                "sound_dominant_freq REAL",
+                "sound_spectral_energy REAL",
+                "sound_spectral_centroid REAL",
+                "sound_peak REAL",
+                "sound_zero_crossings REAL",
+                "sound_spectral_spread REAL",
+                "sound_skewness REAL",
+                "sound_kurtosis REAL",
+                "sound_low_energy REAL",
+                "sound_mid_energy REAL",
+                "sound_high_energy REAL",
+                "air_voc_ppm REAL",
+                "air_voc_voltage REAL",
+                "air_pm1 INTEGER",
+                "air_pm25 INTEGER",
+                "air_pm10 INTEGER",
+                "air_aqi REAL",
+                "air_odor_type TEXT",
+                "air_odor_confidence REAL",
+                "air_odor_intensity REAL",
+                "air_odor_level TEXT",
+                "air_odor_trend REAL",
+                "air_baseline_intensity REAL",
+                "air_odor_anomaly INTEGER",
+                "radar_target_count INTEGER",
+                "radar_format TEXT",
+                "motion_pattern TEXT",
+                "motion_activity_level REAL",
+                "motion_total_targets INTEGER",
+                "motion_active_targets INTEGER",
+                "activity_events TEXT",
+                "radar_targets TEXT",
+                "physical_risk REAL",
+                "health_risk REAL",
+                "environmental_risk REAL",
+                "danger_index REAL",
+                "comfort_index REAL",
+                "urgency_score REAL",
+                "sensor_radar_connected INTEGER",
+                "sensor_pms_connected INTEGER",
+                "sensor_mq135_connected INTEGER",
+                "sensor_sound_connected INTEGER",
+                "alert_critical_threat INTEGER",
+                "alert_high_threat INTEGER",
+                "alert_rapid_escalation INTEGER",
+                "alert_abnormal_vitals INTEGER",
+                "alert_air_quality INTEGER",
+                "notes TEXT",
+            ]
+            
+            events_create = "CREATE TABLE IF NOT EXISTS events (id INTEGER PRIMARY KEY AUTOINCREMENT, " + ", ".join(events_fields) + ")"
+            cursor.execute(events_create)
+            
+            # ==================== TARGETS TABLE ====================
+            targets_fields = [
+                "event_id INTEGER",
+                "timestamp TEXT NOT NULL",
+                "target_id TEXT",
+                "target_x REAL",
+                "target_y REAL",
+                "target_distance REAL",
+                "target_angle REAL",
+                "target_velocity REAL",
+                "target_direction TEXT",
+                "target_orientation TEXT",
+                "target_confidence REAL",
+                "target_activity TEXT",
+                "target_activity_confidence REAL",
+                "target_breathing_rate REAL",
+                "target_breathing_confidence REAL",
+                "target_abnormal_breathing INTEGER",
+                "target_vx REAL",
+                "target_vy REAL",
+                "target_ax REAL",
+                "target_ay REAL",
+                "target_speed REAL",
+                "FOREIGN KEY(event_id) REFERENCES events(id)"
+            ]
+            
+            targets_create = "CREATE TABLE IF NOT EXISTS targets (id INTEGER PRIMARY KEY AUTOINCREMENT, " + ", ".join(targets_fields) + ")"
+            cursor.execute(targets_create)
+            
+            # ==================== EVENTS_LOG TABLE ====================
+            events_log_fields = [
+                "timestamp TEXT NOT NULL",
+                "threat_level TEXT",
+                "threat_score REAL",
+                "quality_score REAL",
+                "people_count INTEGER",
+                "sound_db REAL",
+                "air_aqi REAL",
+                "event_type TEXT",
+                "description TEXT",
+            ]
+            
+            events_log_create = "CREATE TABLE IF NOT EXISTS events_log (id INTEGER PRIMARY KEY AUTOINCREMENT, " + ", ".join(events_log_fields) + ")"
+            cursor.execute(events_log_create)
+            
+            # ==================== CREATE INDEXES ====================
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_events_timestamp ON events(timestamp)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_events_threat_level ON events(threat_level)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_events_quality_score ON events(quality_score)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_targets_event_id ON targets(event_id)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_targets_target_id ON targets(target_id)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_events_log_timestamp ON events_log(timestamp)")
+            
+            conn.commit()
+            logger.info("✅ Database tables created successfully")
+            
+        except Exception as e:
+            logger.error(f"Database creation error: {e}")
+        finally:
+            if conn:
+                conn.close()
+    
+    def get_connection(self):
+        """Get a database connection"""
+        return sqlite3.connect(self.db_path)
+    
+    def insert_event(self, threat_data, quality_data, sound_analysis, odor_analysis, 
+                    radar_data, motion_patterns, activity_events, targets_list, sensor_status):
+        """
+        Insert a complete environmental snapshot into the database
+        Returns event_id if successful, None otherwise
+        """
+        conn = None
+        try:
+            conn = self.get_connection()
+            cursor = conn.cursor()
+            timestamp = datetime.now().isoformat()
+            
+            # Calculate derived metrics
+            physical_risk = (threat_data['components']['proximity']['score'] + 
+                            threat_data['components']['count']['score'] + 
+                            threat_data['components']['behavior']['score']) / 3 if threat_data else 0
+            
+            health_risk = (threat_data['components']['vital_signs']['score'] + 
+                          threat_data['components']['air_quality']['score']) / 2 if threat_data else 0
+            
+            environmental_risk = (threat_data['components']['noise']['score'] + 
+                                 threat_data['components']['air_quality']['score']) / 2 if threat_data else 0
+            
+            danger_index = threat_data['overall_threat'] * threat_data['temporal']['persistence_factor'] if threat_data else 0
+            comfort_index = 100 - (threat_data['overall_threat'] * 0.5) if threat_data else 100
+            urgency_score = threat_data['overall_threat'] * (1 + abs(threat_data['temporal']['slope']) / 10) if threat_data else 0
+            
+            # Convert to JSON
+            activity_events_json = json.dumps(activity_events) if activity_events else '[]'
+            radar_targets_json = json.dumps(targets_list) if targets_list else '[]'
+            
+            # Get sound features if available
+            sound_features = sound_analysis.get('features', [None]*12) if sound_analysis else [None]*12
+            
+            # Insert main event
+            cursor.execute("""
+                INSERT INTO events (
+                    timestamp,
+                    threat_overall, threat_base, threat_level, threat_color, threat_response, threat_confidence,
+                    temporal_trend, temporal_slope, temporal_acceleration, temporal_volatility, temporal_persistence_factor,
+                    trajectory_5min, trajectory_15min, trajectory_30min,
+                    proximity_score, proximity_raw, proximity_confidence, proximity_weight,
+                    count_score, count_raw, count_confidence, count_weight,
+                    behavior_score, behavior_raw, behavior_confidence, behavior_weight,
+                    vital_signs_score, vital_signs_raw, vital_signs_confidence, vital_signs_weight,
+                    air_quality_score, air_quality_raw, air_quality_confidence, air_quality_weight,
+                    noise_score, noise_raw, noise_confidence, noise_weight,
+                    quality_score, quality_base, quality_category, quality_icon, quality_trend,
+                    quality_sound_adjust, quality_air_adjust, quality_occupancy_adjust,
+                    sound_db, sound_baseline, sound_spike, sound_rate_of_change, sound_event, sound_confidence,
+                    sound_dominant_freq, sound_spectral_energy, sound_spectral_centroid, sound_peak,
+                    sound_zero_crossings, sound_spectral_spread, sound_skewness, sound_kurtosis,
+                    sound_low_energy, sound_mid_energy, sound_high_energy,
+                    air_voc_ppm, air_voc_voltage, air_pm1, air_pm25, air_pm10, air_aqi,
+                    air_odor_type, air_odor_confidence, air_odor_intensity, air_odor_level,
+                    air_odor_trend, air_baseline_intensity, air_odor_anomaly,
+                    radar_target_count, radar_format,
+                    motion_pattern, motion_activity_level, motion_total_targets, motion_active_targets,
+                    activity_events, radar_targets,
+                    physical_risk, health_risk, environmental_risk, danger_index, comfort_index, urgency_score,
+                    sensor_radar_connected, sensor_pms_connected, sensor_mq135_connected, sensor_sound_connected,
+                    alert_critical_threat, alert_high_threat, alert_rapid_escalation, alert_abnormal_vitals, alert_air_quality
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                timestamp,
+                threat_data['overall_threat'] if threat_data else None,
+                threat_data['base_threat'] if threat_data else None,
+                threat_data['level'] if threat_data else None,
+                threat_data['color'] if threat_data else None,
+                threat_data['response'] if threat_data else None,
+                threat_data['confidence'] if threat_data else None,
+                threat_data['temporal']['trend'] if threat_data else None,
+                threat_data['temporal']['slope'] if threat_data else None,
+                threat_data['temporal']['acceleration'] if threat_data else None,
+                threat_data['temporal']['volatility'] if threat_data else None,
+                threat_data['temporal']['persistence_factor'] if threat_data else None,
+                threat_data['trajectory']['5min'] if threat_data else None,
+                threat_data['trajectory']['15min'] if threat_data else None,
+                threat_data['trajectory']['30min'] if threat_data else None,
+                threat_data['components']['proximity']['score'] if threat_data else None,
+                threat_data['components']['proximity']['raw_score'] if threat_data else None,
+                threat_data['components']['proximity']['confidence'] if threat_data else None,
+                threat_data['components']['proximity']['weight'] if threat_data else None,
+                threat_data['components']['count']['score'] if threat_data else None,
+                threat_data['components']['count']['raw_score'] if threat_data else None,
+                threat_data['components']['count']['confidence'] if threat_data else None,
+                threat_data['components']['count']['weight'] if threat_data else None,
+                threat_data['components']['behavior']['score'] if threat_data else None,
+                threat_data['components']['behavior']['raw_score'] if threat_data else None,
+                threat_data['components']['behavior']['confidence'] if threat_data else None,
+                threat_data['components']['behavior']['weight'] if threat_data else None,
+                threat_data['components']['vital_signs']['score'] if threat_data else None,
+                threat_data['components']['vital_signs']['raw_score'] if threat_data else None,
+                threat_data['components']['vital_signs']['confidence'] if threat_data else None,
+                threat_data['components']['vital_signs']['weight'] if threat_data else None,
+                threat_data['components']['air_quality']['score'] if threat_data else None,
+                threat_data['components']['air_quality']['raw_score'] if threat_data else None,
+                threat_data['components']['air_quality']['confidence'] if threat_data else None,
+                threat_data['components']['air_quality']['weight'] if threat_data else None,
+                threat_data['components']['noise']['score'] if threat_data else None,
+                threat_data['components']['noise']['raw_score'] if threat_data else None,
+                threat_data['components']['noise']['confidence'] if threat_data else None,
+                threat_data['components']['noise']['weight'] if threat_data else None,
+                quality_data['quality_score'] if quality_data else None,
+                quality_data['base_quality'] if quality_data else None,
+                quality_data['category'] if quality_data else None,
+                quality_data['icon'] if quality_data else None,
+                quality_data['trend'] if quality_data else None,
+                quality_data['adjustments'].get('sound') if quality_data else None,
+                quality_data['adjustments'].get('air') if quality_data else None,
+                quality_data['adjustments'].get('occupancy') if quality_data else None,
+                sound_analysis['db'] if sound_analysis else None,
+                sound_analysis['baseline'] if sound_analysis else None,
+                1 if sound_analysis and sound_analysis['spike'] else 0,
+                sound_analysis['rate_of_change'] if sound_analysis else None,
+                sound_analysis['event'] if sound_analysis else None,
+                sound_analysis['confidence'] if sound_analysis else None,
+                sound_features[1] if len(sound_features) > 1 else None,
+                sound_features[2] if len(sound_features) > 2 else None,
+                sound_features[3] if len(sound_features) > 3 else None,
+                sound_features[4] if len(sound_features) > 4 else None,
+                sound_features[5] if len(sound_features) > 5 else None,
+                sound_features[6] if len(sound_features) > 6 else None,
+                sound_features[7] if len(sound_features) > 7 else None,
+                sound_features[8] if len(sound_features) > 8 else None,
+                sound_features[9] if len(sound_features) > 9 else None,
+                sound_features[10] if len(sound_features) > 10 else None,
+                sound_features[11] if len(sound_features) > 11 else None,
+                odor_analysis['voc_ppm'] if odor_analysis else None,
+                odor_analysis['voc_voltage'] if odor_analysis else None,
+                odor_analysis['pm1'] if odor_analysis else None,
+                odor_analysis['pm25'] if odor_analysis else None,
+                odor_analysis['pm10'] if odor_analysis else None,
+                odor_analysis['air_quality_index'] if odor_analysis else None,
+                odor_analysis['odor_type'] if odor_analysis else None,
+                odor_analysis['classification_confidence'] if odor_analysis else None,
+                odor_analysis['odor_intensity'] if odor_analysis else None,
+                odor_analysis['odor_level'] if odor_analysis else None,
+                odor_analysis['odor_trend'] if odor_analysis else None,
+                odor_analysis['baseline_intensity'] if odor_analysis else None,
+                1 if odor_analysis and odor_analysis['odor_anomaly'] else 0,
+                radar_data['target_count'] if radar_data else None,
+                radar_data['format'] if radar_data else None,
+                motion_patterns.get('pattern') if motion_patterns else None,
+                motion_patterns.get('activity_level') if motion_patterns else None,
+                motion_patterns.get('total_targets') if motion_patterns else None,
+                motion_patterns.get('active_targets') if motion_patterns else None,
+                activity_events_json,
+                radar_targets_json,
+                physical_risk,
+                health_risk,
+                environmental_risk,
+                danger_index,
+                comfort_index,
+                urgency_score,
+                1 if sensor_status.get('radar') else 0,
+                1 if sensor_status.get('pms5003') else 0,
+                1 if sensor_status.get('mq135') else 0,
+                1 if sensor_status.get('sound') else 0,
+                1 if threat_data and threat_data['overall_threat'] > 80 else 0,
+                1 if threat_data and threat_data['overall_threat'] > 60 else 0,
+                1 if threat_data and threat_data['temporal']['trend'] == 'rapidly_worsening' else 0,
+                1 if any(t.get('abnormal_breathing') for t in targets_list) else 0,
+                1 if odor_analysis and odor_analysis['air_quality_index'] > 150 else 0
+            ))
+            
+            event_id = cursor.lastrowid
+            
+            # Insert individual targets
+            for target in targets_list:
+                cursor.execute("""
+                    INSERT INTO targets (
+                        event_id, timestamp, target_id, target_x, target_y, target_distance,
+                        target_angle, target_velocity, target_direction, target_orientation,
+                        target_confidence, target_activity, target_activity_confidence,
+                        target_breathing_rate, target_breathing_confidence, target_abnormal_breathing,
+                        target_vx, target_vy, target_ax, target_ay, target_speed
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    event_id,
+                    timestamp,
+                    target.get('id'),
+                    target.get('x'),
+                    target.get('y'),
+                    target.get('distance'),
+                    target.get('angle'),
+                    target.get('velocity'),
+                    target.get('direction'),
+                    target.get('orientation'),
+                    target.get('confidence'),
+                    target.get('activity'),
+                    target.get('activity_confidence'),
+                    target.get('breathing_rate'),
+                    target.get('breathing_confidence'),
+                    1 if target.get('abnormal_breathing') else 0,
+                    target.get('vx'),
+                    target.get('vy'),
+                    target.get('ax'),
+                    target.get('ay'),
+                    target.get('speed')
+                ))
+            
+            conn.commit()
+            logger.debug(f"Event {event_id} inserted into database")
+            return event_id
+            
+        except Exception as e:
+            logger.error(f"Database insert error: {e}")
+            if conn:
+                conn.rollback()
+            return None
+        finally:
+            if conn:
+                conn.close()
+    
+    def log_significant_event(self, event_type, threat_data, quality_data, radar_data, 
+                             sound_analysis, odor_analysis, description=""):
+        """Log a significant event to the events_log table"""
+        conn = None
+        try:
+            conn = self.get_connection()
+            cursor = conn.cursor()
+            timestamp = datetime.now().isoformat()
+            
+            cursor.execute("""
+                INSERT INTO events_log (
+                    timestamp, threat_level, threat_score, quality_score,
+                    people_count, sound_db, air_aqi, event_type, description
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                timestamp,
+                threat_data['level'] if threat_data else None,
+                threat_data['overall_threat'] if threat_data else None,
+                quality_data['quality_score'] if quality_data else None,
+                radar_data['target_count'] if radar_data else 0,
+                sound_analysis['db'] if sound_analysis else None,
+                odor_analysis['air_quality_index'] if odor_analysis else None,
+                event_type,
+                description
+            ))
+            
+            conn.commit()
+            logger.info(f"Significant event logged: {event_type}")
+            return cursor.lastrowid
+            
+        except Exception as e:
+            logger.error(f"Error logging significant event: {e}")
+            return None
+        finally:
+            if conn:
+                conn.close()
+    
+    def generate_report(self, start_time=None, end_time=None, min_threat=0):
+        """Generate a comprehensive report of events"""
+        conn = None
+        try:
+            conn = self.get_connection()
+            cursor = conn.cursor()
+            
+            query = "SELECT * FROM events_log WHERE 1=1"
+            params = []
+            
+            if start_time:
+                query += " AND timestamp >= ?"
+                params.append(start_time)
+            if end_time:
+                query += " AND timestamp <= ?"
+                params.append(end_time)
+            if min_threat > 0:
+                query += " AND threat_score >= ?"
+                params.append(min_threat)
+            
+            query += " ORDER BY timestamp DESC"
+            
+            cursor.execute(query, params)
+            events = cursor.fetchall()
+            
+            # Get column names
+            cursor.execute("PRAGMA table_info(events_log)")
+            columns = [col[1] for col in cursor.fetchall()]
+            
+            # Get statistics
+            cursor.execute("""
+                SELECT 
+                    COUNT(*) as total_events,
+                    AVG(threat_score) as avg_threat,
+                    MAX(threat_score) as max_threat,
+                    AVG(quality_score) as avg_quality,
+                    AVG(people_count) as avg_people,
+                    AVG(sound_db) as avg_noise,
+                    AVG(air_aqi) as avg_aqi
+                FROM events_log
+                WHERE 1=1
+            """ + (" AND timestamp >= ?" if start_time else ""), 
+                ([start_time] if start_time else []))
+            
+            stats = cursor.fetchone()
+            
+            # Get threat level distribution
+            cursor.execute("""
+                SELECT threat_level, COUNT(*) as count
+                FROM events_log
+                WHERE 1=1
+            """ + (" AND timestamp >= ?" if start_time else "") + """
+                GROUP BY threat_level
+                ORDER BY count DESC
+            """, ([start_time] if start_time else []))
+            
+            distribution = cursor.fetchall()
+            
+            report = {
+                'generated_at': datetime.now().isoformat(),
+                'period': {
+                    'start': start_time,
+                    'end': end_time
+                },
+                'statistics': {
+                    'total_events': stats[0] if stats else 0,
+                    'average_threat': round(stats[1], 2) if stats and stats[1] else 0,
+                    'maximum_threat': round(stats[2], 2) if stats and stats[2] else 0,
+                    'average_quality': round(stats[3], 2) if stats and stats[3] else 0,
+                    'average_people': round(stats[4], 2) if stats and stats[4] else 0,
+                    'average_noise': round(stats[5], 2) if stats and stats[5] else 0,
+                    'average_aqi': round(stats[6], 2) if stats and stats[6] else 0
+                },
+                'threat_distribution': {level: count for level, count in distribution},
+                'events': []
+            }
+            
+            # Format events
+            for event in events:
+                event_dict = dict(zip(columns, event))
+                report['events'].append(event_dict)
+            
+            return report
+            
+        except Exception as e:
+            logger.error(f"Error generating report: {e}")
+            return None
+        finally:
+            if conn:
+                conn.close()
+    
+    def print_report(self, report):
+        """Pretty print a report"""
+        if not report:
+            print("No report data available")
+            return
+        
+        print("\n" + "="*80)
+        print(f"📊 ENVIRONMENTAL MONITORING REPORT")
+        print("="*80)
+        print(f"Generated: {report['generated_at']}")
+        if report['period']['start']:
+            print(f"Period: {report['period']['start']} to {report['period']['end'] or 'now'}")
+        print("-"*80)
+        
+        print("\n📈 STATISTICS:")
+        print(f"   Total Events: {report['statistics']['total_events']}")
+        print(f"   Average Threat: {report['statistics']['average_threat']}/100")
+        print(f"   Maximum Threat: {report['statistics']['maximum_threat']}/100")
+        print(f"   Average Quality: {report['statistics']['average_quality']}/100")
+        print(f"   Average People: {report['statistics']['average_people']:.1f}")
+        print(f"   Average Noise: {report['statistics']['average_noise']:.1f} dB")
+        print(f"   Average AQI: {report['statistics']['average_aqi']:.1f}")
+        
+        if report['threat_distribution']:
+            print("\n🎯 THREAT DISTRIBUTION:")
+            max_count = max(report['threat_distribution'].values()) if report['threat_distribution'] else 1
+            for level, count in report['threat_distribution'].items():
+                bar = "█" * int(count / max_count * 20) if max_count > 0 else ""
+                print(f"   {level:10}: {bar} {count}")
+        
+        if report['events']:
+            print("\n📋 RECENT EVENTS:")
+            for event in report['events'][:10]:
+                print(f"\n   [{event['timestamp']}]")
+                print(f"   Threat: {event['threat_level']} ({event['threat_score']}/100)")
+                print(f"   Type: {event['event_type']}")
+                if event['description']:
+                    print(f"   Note: {event['description']}")
+        
+        print("\n" + "="*80)
 
 # ==================== SOUND UTILITIES ====================
 def voltage_to_db(v):
@@ -532,7 +1140,8 @@ class RadarProcessor:
             return {
                 'pattern': 'no_detections',
                 'activity_level': 0,
-                'crowd_density': 0
+                'total_targets': 0,
+                'active_targets': 0
             }
         
         active_targets = sum(1 for t in self.last_positions.values() 
@@ -760,7 +1369,8 @@ class TemporalThreatScorer:
                 'slope': 0,
                 'acceleration': 0,
                 'volatility': 0,
-                'persistence_factor': 1.0
+                'persistence_factor': 1.0,
+                'trend_strength': 0
             }
         
         values = [t['overall_threat'] for t in recent]
@@ -1189,7 +1799,7 @@ class EnvironmentalQualityScorer:
                          odor_data: Optional[Dict], radar_data: Optional[Dict]) -> Dict:
         """Calculate environmental quality score"""
         if not threat_data:
-            return {'quality_score': 75, 'category': 'GOOD', 'icon': '✅'}
+            return {'quality_score': 75, 'category': 'GOOD', 'icon': '✅', 'adjustments': {}, 'trend': 'stable', 'base_quality': 75}
         
         # Base quality is inverse of threat with exponential scaling
         base_quality = 100 - (threat_data['overall_threat'] * 0.8)
@@ -1510,14 +2120,62 @@ def read_sound():
     except Exception:
         return 0
 
+# Signal handler for generating reports
+def signal_handler(sig, frame):
+    """Handle Ctrl+C and Ctrl+\ signals"""
+    if sig == signal.SIGQUIT:  # Ctrl+\
+        print("\n\n📋 Generating report...")
+        report = db_manager.generate_report(start_time=(datetime.now() - timedelta(hours=24)).isoformat())
+        db_manager.print_report(report)
+    else:  # Ctrl+C
+        print("\n\n=== Shutting down gracefully... ===")
+        
+        # Summary statistics
+        if threat_history:
+            threats = [t['overall_threat'] for t in threat_history]
+            print(f"\n📈 THREAT SUMMARY:")
+            print(f"   Average: {np.mean(threats):.1f}")
+            print(f"   Maximum: {max(threats):.1f}")
+            print(f"   Minimum: {min(threats):.1f}")
+            print(f"   Volatility: {np.std(threats):.1f}")
+            
+            # Time in each level
+            levels = {'LOW': 0, 'MODERATE': 0, 'ELEVATED': 0, 'HIGH': 0, 'CRITICAL': 0}
+            for t in threat_history:
+                levels[t['level']] = levels.get(t['level'], 0) + 1
+            print("\n   Time Distribution:")
+            for level, count in levels.items():
+                pct = count / len(threat_history) * 100
+                print(f"     {level}: {pct:.1f}%")
+        
+        if quality_scorer.quality_history:
+            qualities = list(quality_scorer.quality_history)
+            print(f"\n🌿 ENVIRONMENTAL QUALITY:")
+            print(f"   Average: {np.mean(qualities):.1f}")
+            print(f"   Best: {max(qualities):.1f}")
+            print(f"   Worst: {min(qualities):.1f}")
+        
+        # Cleanup
+        if pms:
+            pms.close()
+        if radar_processor and radar_processor.serial_conn:
+            radar_processor.serial_conn.close()
+        print("\n✓ Cleanup complete. Exiting.")
+        sys.exit(0)
+
+# Register signal handlers
+signal.signal(signal.SIGINT, signal_handler)   # Ctrl+C
+signal.signal(signal.SIGQUIT, signal_handler)  # Ctrl+\
+
 # Initialize processors
 radar_processor = RadarProcessor(radar_type=RADAR_TYPE, port=RADAR_PORT)
 threat_scorer = EnhancedThreatScorer()
 quality_scorer = EnvironmentalQualityScorer()
+db_manager = DatabaseManager()
 
 # ==================== MAIN LOOP ====================
 def main():
-    """Main program loop"""
+    """Main program loop with database integration"""
     print("\n" + "="*100)
     print(f"🚀 {SYSTEM_NAME} v{VERSION}")
     print("="*100)
@@ -1534,11 +2192,21 @@ def main():
     print("    - Trend acceleration detection")
     print("    - 5/15/30 minute predictions")
     print("  • Environmental Quality Assessment")
+    print("  • DATABASE INTEGRATION:")
+    print("    - Automatic event logging")
+    print("    - Comprehensive reporting")
+    print("    - Historical data analysis")
     print("="*100)
-    print("Press Ctrl+C to exit\n")
+    print("Press Ctrl+C to exit")
+    print("Press Ctrl+\\ to generate and print report\n")
     
     last_print_time = time.time()
+    last_db_log_time = time.time()
     print_interval = 5
+    db_log_interval = 60  # Log to database every minute by default
+    
+    # Track last event types to avoid duplicate logging
+    last_event_types = deque(maxlen=10)
     
     # Check hardware
     if None in [mq135_channel, sound_channel, pms]:
@@ -1566,6 +2234,102 @@ def main():
                 # Analyze radar
                 motion_patterns = radar_processor.analyze_motion_patterns() if radar_processor else {}
                 activity_events = radar_processor.detect_activity_events() if radar_processor else []
+                
+                # Get sensor status
+                sensor_status = {
+                    'radar': radar_processor.serial_conn is not None,
+                    'pms5003': pms is not None,
+                    'mq135': mq135_channel is not None,
+                    'sound': sound_channel is not None
+                }
+                
+                # Calculate threat and quality
+                threat_data = threat_scorer.calculate_overall_threat(
+                    radar_data, odor_analysis, sound_analysis, motion_patterns, activity_events
+                )
+                
+                quality_data = quality_scorer.calculate_quality(
+                    threat_data, sound_analysis, odor_analysis, radar_data
+                )
+                
+                # Get targets list for database
+                targets_list = radar_data.get('targets', []) if radar_data else []
+                
+                # ===== DATABASE LOGGING =====
+                # Log to database periodically
+                if current_time - last_db_log_time >= db_log_interval:
+                    db_manager.insert_event(
+                        threat_data, quality_data, sound_analysis, odor_analysis,
+                        radar_data, motion_patterns, activity_events, targets_list, sensor_status
+                    )
+                    last_db_log_time = current_time
+                
+                # Log significant events immediately
+                significant_event = False
+                event_description = ""
+                event_type = "NORMAL"
+                
+                # Check for critical threats
+                if threat_data['overall_threat'] > 80:
+                    significant_event = True
+                    event_type = "CRITICAL_THREAT"
+                    event_description = f"Critical threat level: {threat_data['overall_threat']}/100"
+                
+                # Check for high threats
+                elif threat_data['overall_threat'] > 60:
+                    significant_event = True
+                    event_type = "HIGH_THREAT"
+                    event_description = f"High threat level: {threat_data['overall_threat']}/100"
+                
+                # Check for rapid escalation
+                elif threat_data['temporal']['trend'] == 'rapidly_worsening':
+                    significant_event = True
+                    event_type = "RAPID_ESCALATION"
+                    event_description = f"Threat escalating rapidly: +{threat_data['temporal']['slope']:.2f}/min"
+                
+                # Check for abnormal vitals
+                elif any(t.get('abnormal_breathing') for t in targets_list):
+                    significant_event = True
+                    event_type = "ABNORMAL_VITALS"
+                    abnormal_count = sum(1 for t in targets_list if t.get('abnormal_breathing'))
+                    event_description = f"Abnormal breathing detected for {abnormal_count} person(s)"
+                
+                # Check for air quality issues
+                elif odor_analysis and odor_analysis['air_quality_index'] > 150:
+                    significant_event = True
+                    event_type = "POOR_AIR_QUALITY"
+                    event_description = f"Poor air quality (AQI: {odor_analysis['air_quality_index']})"
+                
+                # Check for sound spikes
+                elif sound_analysis and sound_analysis['spike'] and sound_analysis['db'] > 80:
+                    significant_event = True
+                    event_type = "SOUND_SPIKE"
+                    event_description = f"Sound spike detected: {sound_analysis['db']:.1f} dB"
+                
+                # Check for activity events
+                elif activity_events:
+                    for event in activity_events:
+                        if event['type'] == 'entry' and event.get('magnitude', 0) > 0:
+                            significant_event = True
+                            event_type = "PERSON_ENTRY"
+                            event_description = f"{event['magnitude']} person(s) entered"
+                            break
+                        elif event['type'] == 'exit' and event.get('magnitude', 0) > 0:
+                            significant_event = True
+                            event_type = "PERSON_EXIT"
+                            event_description = f"{event['magnitude']} person(s) exited"
+                            break
+                
+                # Log significant event if not too frequent
+                if significant_event:
+                    # Check if we've logged this event type recently
+                    event_key = f"{event_type}_{int(current_time / 300)}"  # Group by 5-minute windows
+                    if event_key not in last_event_types:
+                        db_manager.log_significant_event(
+                            event_type, threat_data, quality_data, radar_data,
+                            sound_analysis, odor_analysis, event_description
+                        )
+                        last_event_types.append(event_key)
                 
                 # Periodic output
                 if current_time - last_print_time >= print_interval:
@@ -1625,10 +2389,6 @@ def main():
                                 print(f"     • {event['type']} (conf: {event.get('confidence', 0):.2f})")
                     
                     # Threat Assessment
-                    threat_data = threat_scorer.calculate_overall_threat(
-                        radar_data, odor_analysis, sound_analysis, motion_patterns, activity_events
-                    )
-                    
                     print(f"\n{threat_data['color']} THREAT ASSESSMENT {threat_data['color']}")
                     print(f"   OVERALL THREAT: {threat_data['overall_threat']}/100 - {threat_data['level']}")
                     print(f"   Response: {threat_data['response']}")
@@ -1666,9 +2426,6 @@ def main():
                               f"(base:{data['raw_score']:.0f}, conf:{data['confidence']:.2f}, w:{data['weight']:.2f})")
                     
                     # Environmental Quality
-                    quality_data = quality_scorer.calculate_quality(
-                        threat_data, sound_analysis, odor_analysis, radar_data
-                    )
                     print(f"\n   {quality_data['icon']} ENVIRONMENTAL QUALITY: {quality_data['quality_score']}/100 - {quality_data['category']}")
                     print(f"      Trend: {quality_data['trend']}")
                     
@@ -1683,47 +2440,12 @@ def main():
                 
                 time.sleep(0.05)
                 
-            except KeyboardInterrupt:
-                raise
             except Exception as e:
                 logger.error(f"Loop error: {e}")
                 time.sleep(1)
     
     except KeyboardInterrupt:
-        print("\n\n=== Shutting down gracefully... ===")
-        
-        # Summary statistics
-        if threat_history:
-            threats = [t['overall_threat'] for t in threat_history]
-            print(f"\n📈 THREAT SUMMARY:")
-            print(f"   Average: {np.mean(threats):.1f}")
-            print(f"   Maximum: {max(threats):.1f}")
-            print(f"   Minimum: {min(threats):.1f}")
-            print(f"   Volatility: {np.std(threats):.1f}")
-            
-            # Time in each level
-            levels = {'LOW': 0, 'MODERATE': 0, 'ELEVATED': 0, 'HIGH': 0, 'CRITICAL': 0}
-            for t in threat_history:
-                levels[t['level']] = levels.get(t['level'], 0) + 1
-            print("\n   Time Distribution:")
-            for level, count in levels.items():
-                pct = count / len(threat_history) * 100
-                print(f"     {level}: {pct:.1f}%")
-        
-        if quality_scorer.quality_history:
-            qualities = list(quality_scorer.quality_history)
-            print(f"\n🌿 ENVIRONMENTAL QUALITY:")
-            print(f"   Average: {np.mean(qualities):.1f}")
-            print(f"   Best: {max(qualities):.1f}")
-            print(f"   Worst: {min(qualities):.1f}")
-    
-    finally:
-        # Cleanup
-        if pms:
-            pms.close()
-        if radar_processor and radar_processor.serial_conn:
-            radar_processor.serial_conn.close()
-        print("\n✓ Cleanup complete. Exiting.")
+        signal_handler(signal.SIGINT, None)
 
 if __name__ == "__main__":
     main()
