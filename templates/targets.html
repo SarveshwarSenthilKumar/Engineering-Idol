@@ -1,0 +1,302 @@
+{% extends "base.html" %}
+
+{% block title %}Target Tracking - Environmental Monitoring{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Target Tracking</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <button class="btn btn-sm btn-outline-primary" onclick="refreshTargets()">
+            <i class="bi bi-arrow-clockwise"></i> Refresh
+        </button>
+    </div>
+</div>
+
+<!-- Live Target Overview -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="stat-card text-center">
+            <h3 class="text-primary" id="total-targets">0</h3>
+            <small>Total Targets</small>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card text-center">
+            <h3 class="text-success" id="active-targets">0</h3>
+            <small>Active Targets</small>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card text-center">
+            <h3 class="text-warning" id="avg-distance">0.0m</h3>
+            <small>Avg Distance</small>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card text-center">
+            <h3 class="text-info" id="abnormal-count">0</h3>
+            <small>Abnormal Breathing</small>
+        </div>
+    </div>
+</div>
+
+<!-- Radar Visualization -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="stat-card">
+            <h5>Target Positions (Radar View)</h5>
+            <div class="position-relative" style="height: 400px; background: #1a2634; border-radius: 10px;">
+                <canvas id="radar-canvas" width="800" height="400"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Current Targets -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="stat-card">
+            <h5>Current Targets</h5>
+            <div class="row" id="target-cards">
+                <div class="col-12 text-center">No targets detected</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Target History -->
+<div class="row">
+    <div class="col-12">
+        <div class="stat-card">
+            <h5>Recent Target Activity</h5>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Target ID</th>
+                            <th>Distance</th>
+                            <th>Angle</th>
+                            <th>Velocity</th>
+                            <th>Activity</th>
+                            <th>Breathing Rate</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="target-history">
+                        {% for target in targets %}
+                        <tr>
+                            <td>{{ target.event_timestamp|format_datetime }}</td>
+                            <td><code>{{ target.target_id }}</code></td>
+                            <td>{{ "%.2f"|format(target.target_distance) }}m</td>
+                            <td>{{ "%.1f"|format(target.target_angle) }}°</td>
+                            <td>{{ "%.2f"|format(target.target_velocity) }} m/s</td>
+                            <td>
+                                <span class="badge bg-secondary">{{ target.target_activity }}</span>
+                            </td>
+                            <td>
+                                {% if target.target_breathing_rate %}
+                                    {{ "%.1f"|format(target.target_breathing_rate) }} bpm
+                                    {% if target.target_abnormal_breathing %}
+                                        <span class="badge bg-danger">⚠️</span>
+                                    {% endif %}
+                                {% else %}
+                                    --
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if target.target_abnormal_breathing %}
+                                    <span class="badge bg-danger">Abnormal</span>
+                                {% else %}
+                                    <span class="badge bg-success">Normal</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center">No target history found</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let radarCanvas = document.getElementById('radar-canvas');
+    let ctx = radarCanvas.getContext('2d');
+    let animationFrame;
+
+    function drawRadar(targets) {
+        ctx.clearRect(0, 0, 800, 400);
+        
+        // Draw radar background
+        ctx.fillStyle = '#1a2634';
+        ctx.fillRect(0, 0, 800, 400);
+        
+        // Draw grid
+        ctx.strokeStyle = '#2c3e50';
+        ctx.lineWidth = 1;
+        
+        // Distance rings
+        for (let i = 1; i <= 5; i++) {
+            ctx.beginPath();
+            ctx.arc(400, 200, i * 60, 0, Math.PI * 2);
+            ctx.strokeStyle = '#2c3e50';
+            ctx.stroke();
+            
+            // Distance labels
+            ctx.fillStyle = '#6c757d';
+            ctx.font = '10px Arial';
+            ctx.fillText(i + 'm', 400 + i * 60 + 5, 200);
+        }
+        
+        // Angle lines
+        for (let i = 0; i < 360; i += 30) {
+            let rad = (i - 90) * Math.PI / 180;
+            let x = 400 + Math.cos(rad) * 300;
+            let y = 200 + Math.sin(rad) * 300;
+            
+            ctx.beginPath();
+            ctx.moveTo(400, 200);
+            ctx.lineTo(x, y);
+            ctx.strokeStyle = '#2c3e50';
+            ctx.stroke();
+            
+            // Angle labels
+            ctx.fillStyle = '#6c757d';
+            ctx.font = '10px Arial';
+            if (i === 0) ctx.fillText('0°', x + 5, y);
+            else if (i === 90) ctx.fillText('90°', x + 5, y);
+            else if (i === 180) ctx.fillText('180°', x - 20, y);
+            else if (i === 270) ctx.fillText('-90°', x + 5, y - 10);
+        }
+        
+        // Draw targets
+        targets.forEach(target => {
+            let distance = target.distance || 0;
+            let angle = target.angle || 0;
+            
+            // Convert polar to cartesian
+            let rad = (angle - 90) * Math.PI / 180;
+            let x = 400 + Math.cos(rad) * (distance * 60);
+            let y = 200 + Math.sin(rad) * (distance * 60);
+            
+            // Draw target
+            ctx.beginPath();
+            ctx.arc(x, y, 8, 0, Math.PI * 2);
+            
+            // Color based on activity
+            if (target.abnormal_breathing) {
+                ctx.fillStyle = '#dc3545';
+            } else if (target.activity === 'running') {
+                ctx.fillStyle = '#fd7e14';
+            } else if (target.activity === 'walking') {
+                ctx.fillStyle = '#ffc107';
+            } else {
+                ctx.fillStyle = '#28a745';
+            }
+            
+            ctx.fill();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Target ID
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 12px Arial';
+            ctx.fillText(target.id, x + 15, y - 10);
+        });
+        
+        // Draw center point
+        ctx.beginPath();
+        ctx.arc(400, 200, 5, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+    }
+
+    function updateTargets() {
+        fetch('/api/targets')
+            .then(response => response.json())
+            .then(targets => {
+                // Update counters
+                const total = targets.length;
+                const active = targets.filter(t => t.target_velocity > 0.1).length;
+                const avgDist = targets.reduce((sum, t) => sum + (t.target_distance || 0), 0) / total || 0;
+                const abnormal = targets.filter(t => t.target_abnormal_breathing).length;
+                
+                document.getElementById('total-targets').textContent = total;
+                document.getElementById('active-targets').textContent = active;
+                document.getElementById('avg-distance').textContent = avgDist.toFixed(1) + 'm';
+                document.getElementById('abnormal-count').textContent = abnormal;
+                
+                // Group by target ID for current state
+                const currentTargets = {};
+                targets.forEach(t => {
+                    if (!currentTargets[t.target_id] || 
+                        new Date(t.event_timestamp) > new Date(currentTargets[t.target_id].event_timestamp)) {
+                        currentTargets[t.target_id] = t;
+                    }
+                });
+                
+                const currentList = Object.values(currentTargets);
+                
+                // Update radar visualization
+                drawRadar(currentList);
+                
+                // Update target cards
+                const cardsContainer = document.getElementById('target-cards');
+                if (currentList.length === 0) {
+                    cardsContainer.innerHTML = '<div class="col-12 text-center">No targets detected</div>';
+                } else {
+                    let cardsHtml = '';
+                    currentList.forEach((target, i) => {
+                        cardsHtml += `
+                            <div class="col-md-4 mb-3">
+                                <div class="card ${target.target_abnormal_breathing ? 'border-danger' : ''}">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Target ${target.target_id}</h5>
+                                        <h6 class="card-subtitle mb-2 text-muted">
+                                            Activity: ${target.target_activity || 'unknown'}
+                                        </h6>
+                                        <p class="card-text">
+                                            <i class="bi bi-geo-alt"></i> Distance: ${target.target_distance?.toFixed(2)}m<br>
+                                            <i class="bi bi-arrow-right"></i> Angle: ${target.target_angle?.toFixed(1)}°<br>
+                                            <i class="bi bi-speedometer2"></i> Velocity: ${target.target_velocity?.toFixed(2)} m/s<br>
+                                            <i class="bi bi-heart-pulse"></i> Breathing: 
+                                            ${target.target_breathing_rate ? target.target_breathing_rate.toFixed(1) + ' bpm' : '--'}
+                                            ${target.target_abnormal_breathing ? ' ⚠️' : ''}
+                                        </p>
+                                        <div class="progress mb-2">
+                                            <div class="progress-bar bg-${target.target_abnormal_breathing ? 'danger' : 'success'}" 
+                                                 style="width: ${target.target_confidence * 100}%">
+                                                Conf: ${(target.target_confidence * 100).toFixed(0)}%
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    cardsContainer.innerHTML = cardsHtml;
+                }
+            });
+    }
+
+    function refreshTargets() {
+        updateTargets();
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        updateTargets();
+        // Update every 2 seconds
+        setInterval(updateTargets, 2000);
+    });
+</script>
+{% endblock %}
