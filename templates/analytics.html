@@ -1,0 +1,438 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics - Environmental Monitoring{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Analytics Dashboard</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setTimeRange(6)">6h</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setTimeRange(12)">12h</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary active" onclick="setTimeRange(24)">24h</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setTimeRange(48)">48h</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setTimeRange(168)">7d</button>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-2">
+        <div class="stat-card text-center">
+            <h3 class="text-primary">{{ "%.1f"|format(stats.avg_threat or 0) }}</h3>
+            <small>Avg Threat</small>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="stat-card text-center">
+            <h3 class="text-success">{{ "%.1f"|format(stats.avg_quality or 0) }}</h3>
+            <small>Avg Quality</small>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="stat-card text-center">
+            <h3 class="text-warning">{{ "%.1f"|format(stats.avg_people or 0) }}</h3>
+            <small>Avg People</small>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="stat-card text-center">
+            <h3 class="text-info">{{ "%.1f"|format(stats.avg_noise or 0) }}</h3>
+            <small>Avg Noise (dB)</small>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="stat-card text-center">
+            <h3 class="text-danger">{{ "%.0f"|format(stats.avg_aqi or 0) }}</h3>
+            <small>Avg AQI</small>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="stat-card text-center">
+            <h3 class="text-secondary">{{ stats.total_events or 0 }}</h3>
+            <small>Total Events</small>
+        </div>
+    </div>
+</div>
+
+<!-- Main Charts -->
+<div class="row">
+    <div class="col-md-8">
+        <div class="stat-card">
+            <h5>Threat & Quality Timeline</h5>
+            <canvas id="threat-timeline" height="300"></canvas>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <h5>Threat Level Distribution</h5>
+            <canvas id="threat-pie" height="300"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="stat-card">
+            <h5>People Count Over Time</h5>
+            <canvas id="people-chart" height="250"></canvas>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="stat-card">
+            <h5>Noise Levels</h5>
+            <canvas id="noise-chart" height="250"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="stat-card">
+            <h5>Air Quality (AQI)</h5>
+            <canvas id="aqi-chart" height="250"></canvas>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="stat-card">
+            <h5>VOC & PM2.5 Levels</h5>
+            <canvas id="pollution-chart" height="250"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Component Analysis -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="stat-card">
+            <h5>Threat Component Analysis</h5>
+            <canvas id="radar-chart" height="300"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Table -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="stat-card">
+            <h5>Detailed Statistics</h5>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th>Min</th>
+                            <th>Max</th>
+                            <th>Avg</th>
+                            <th>Std Dev</th>
+                            <th>Trend</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stats-table">
+                        <tr><td colspan="6" class="text-center">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let currentTimeRange = 24;
+    let charts = {};
+
+    function initCharts() {
+        // Threat timeline
+        const threatCtx = document.getElementById('threat-timeline').getContext('2d');
+        charts.threat = new Chart(threatCtx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: 'Threat Score',
+                        data: [],
+                        borderColor: '#dc3545',
+                        backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                        tension: 0.1,
+                        fill: true
+                    },
+                    {
+                        label: 'Quality Score',
+                        data: [],
+                        borderColor: '#28a745',
+                        backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                        tension: 0.1,
+                        fill: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+                }
+            }
+        });
+
+        // Threat pie chart
+        const pieCtx = document.getElementById('threat-pie').getContext('2d');
+        charts.pie = new Chart(pieCtx, {
+            type: 'pie',
+            data: {
+                labels: ['Critical', 'High', 'Elevated', 'Moderate', 'Low'],
+                datasets: [{
+                    data: [0, 0, 0, 0, 0],
+                    backgroundColor: ['#343a40', '#dc3545', '#fd7e14', '#ffc107', '#28a745']
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+
+        // People chart
+        const peopleCtx = document.getElementById('people-chart').getContext('2d');
+        charts.people = new Chart(peopleCtx, {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'People Count',
+                    data: [],
+                    backgroundColor: '#0d6efd'
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+
+        // Noise chart
+        const noiseCtx = document.getElementById('noise-chart').getContext('2d');
+        charts.noise = new Chart(noiseCtx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Noise Level (dB)',
+                    data: [],
+                    borderColor: '#ffc107',
+                    backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                    tension: 0.1,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 120
+                    }
+                }
+            }
+        });
+
+        // AQI chart
+        const aqiCtx = document.getElementById('aqi-chart').getContext('2d');
+        charts.aqi = new Chart(aqiCtx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Air Quality Index',
+                    data: [],
+                    borderColor: '#20c997',
+                    backgroundColor: 'rgba(32, 201, 151, 0.1)',
+                    tension: 0.1,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 500
+                    }
+                }
+            }
+        });
+
+        // Pollution chart
+        const pollCtx = document.getElementById('pollution-chart').getContext('2d');
+        charts.pollution = new Chart(pollCtx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: 'VOC (ppm)',
+                        data: [],
+                        borderColor: '#dc3545',
+                        yAxisID: 'y',
+                        tension: 0.1
+                    },
+                    {
+                        label: 'PM2.5 (µg/m³)',
+                        data: [],
+                        borderColor: '#fd7e14',
+                        yAxisID: 'y1',
+                        tension: 0.1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'VOC (ppm)'
+                        }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'PM2.5 (µg/m³)'
+                        },
+                        grid: {
+                            drawOnChartArea: false
+                        }
+                    }
+                }
+            }
+        });
+
+        // Radar chart for components
+        const radarCtx = document.getElementById('radar-chart').getContext('2d');
+        charts.radar = new Chart(radarCtx, {
+            type: 'radar',
+            data: {
+                labels: ['Proximity', 'Count', 'Behavior', 'Vital Signs', 'Air Quality', 'Noise'],
+                datasets: [{
+                    label: 'Current Threat Components',
+                    data: [0, 0, 0, 0, 0, 0],
+                    backgroundColor: 'rgba(220, 53, 69, 0.2)',
+                    borderColor: '#dc3545',
+                    pointBackgroundColor: '#dc3545'
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    r: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+                }
+            }
+        });
+    }
+
+    function loadData(hours) {
+        fetch(`/api/timeline?hours=${hours}`)
+            .then(response => response.json())
+            .then(data => {
+                if (!data.length) return;
+
+                // Format timestamps
+                const labels = data.map(d => {
+                    const date = new Date(d.timestamp);
+                    return date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                });
+
+                // Update threat timeline
+                charts.threat.data.labels = labels;
+                charts.threat.data.datasets[0].data = data.map(d => d.threat_score || 0);
+                charts.threat.data.datasets[1].data = data.map(d => d.quality_score || 0);
+                charts.threat.update();
+
+                // Update people chart
+                charts.people.data.labels = labels;
+                charts.people.data.datasets[0].data = data.map(d => d.people_count || 0);
+                charts.people.update();
+
+                // Count threat levels
+                const levels = {CRITICAL: 0, HIGH: 0, ELEVATED: 0, MODERATE: 0, LOW: 0};
+                data.forEach(d => {
+                    if (d.threat_score >= 80) levels.CRITICAL++;
+                    else if (d.threat_score >= 60) levels.HIGH++;
+                    else if (d.threat_score >= 40) levels.ELEVATED++;
+                    else if (d.threat_score >= 20) levels.MODERATE++;
+                    else levels.LOW++;
+                });
+                charts.pie.data.datasets[0].data = [
+                    levels.CRITICAL, levels.HIGH, levels.ELEVATED, 
+                    levels.MODERATE, levels.LOW
+                ];
+                charts.pie.update();
+
+                // Calculate statistics
+                calculateStats(data);
+            })
+            .catch(error => console.error('Error loading timeline:', error));
+
+        // Load live data for radar chart
+        fetch('/api/live')
+            .then(response => response.json())
+            .then(data => {
+                if (data.threat && data.threat.components) {
+                    const comp = data.threat.components;
+                    charts.radar.data.datasets[0].data = [
+                        comp.proximity?.score || 0,
+                        comp.count?.score || 0,
+                        comp.behavior?.score || 0,
+                        comp.vital_signs?.score || 0,
+                        comp.air_quality?.score || 0,
+                        comp.noise?.score || 0
+                    ];
+                    charts.radar.update();
+                }
+            });
+    }
+
+    function calculateStats(data) {
+        const metrics = {
+            threat: { values: [], min: Infinity, max: -Infinity, sum: 0 },
+            quality: { values: [], min: Infinity, max: -Infinity, sum: 0 },
+            people: { values: [], min: Infinity, max: -Infinity, sum: 0 },
+            noise: { values: [], min: Infinity, max: -Infinity, sum: 0 },
+            aqi: { values: [], min: Infinity, max: -Infinity, sum: 0 }
+        };
+
+        data.forEach(d => {
+            // Threat
+            const threat = d.threat_score || 0;
+           
