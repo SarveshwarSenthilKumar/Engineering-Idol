@@ -162,4 +162,276 @@
 <div class="row mt-4">
     <div class="col-12">
         <div class="stat-card">
-            <h5><i class="bi
+                        <h5><i class="bi bi-clock-history"></i> Recent Events</h5>
+            <div class="table-responsive">
+                <table class="table table-hover" id="events-table">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Event Type</th>
+                            <th>Threat Level</th>
+                            <th>Score</th>
+                            <th>People</th>
+                            <th>Noise (dB)</th>
+                            <th>AQI</th>
+                        </tr>
+                    </thead>
+                    <tbody id="events-body">
+                        <tr>
+                            <td colspan="7" class="text-center">Loading events...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="text-end mt-2">
+                <a href="{{ url_for('history') }}" class="btn btn-sm btn-outline-primary">View All Events</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Threat gauge
+    const threatCtx = document.getElementById('threat-gauge').getContext('2d');
+    const threatGauge = new Chart(threatCtx, {
+        type: 'doughnut',
+        data: {
+            datasets: [{
+                data: [0, 100],
+                backgroundColor: ['#28a745', '#e9ecef'],
+                borderWidth: 0,
+                circumference: 180,
+                rotation: 270
+            }]
+        },
+        options: {
+            cutout: '70%',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                tooltip: { enabled: false },
+                legend: { display: false }
+            }
+        }
+    });
+
+    // Quality gauge
+    const qualityCtx = document.getElementById('quality-gauge').getContext('2d');
+    const qualityGauge = new Chart(qualityCtx, {
+        type: 'doughnut',
+        data: {
+            datasets: [{
+                data: [0, 100],
+                backgroundColor: ['#17a2b8', '#e9ecef'],
+                borderWidth: 0,
+                circumference: 180,
+                rotation: 270
+            }]
+        },
+        options: {
+            cutout: '70%',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                tooltip: { enabled: false },
+                legend: { display: false }
+            }
+        }
+    });
+
+    function handleLiveUpdate(data) {
+        console.log('Updating dashboard with:', data);
+        
+        // Update threat score
+        if (data.threat) {
+            const threat = data.threat;
+            const score = threat.overall_threat || 0;
+            
+            document.getElementById('threat-score').textContent = score + '/100';
+            document.getElementById('threat-response').textContent = threat.response || '';
+            
+            // Update gauge
+            threatGauge.data.datasets[0].data = [score, 100 - score];
+            
+            // Set color based on level
+            const colors = {
+                'LOW': '#28a745',
+                'MODERATE': '#ffc107',
+                'ELEVATED': '#fd7e14',
+                'HIGH': '#dc3545',
+                'CRITICAL': '#343a40'
+            };
+            threatGauge.data.datasets[0].backgroundColor[0] = colors[threat.level] || '#28a745';
+            threatGauge.update();
+            
+            // Update badge
+            const badge = document.getElementById('threat-badge');
+            badge.textContent = threat.level || 'UNKNOWN';
+            badge.className = `badge bg-${threat.level === 'CRITICAL' ? 'dark' : 
+                                               threat.level === 'HIGH' ? 'danger' :
+                                               threat.level === 'ELEVATED' ? 'warning' :
+                                               threat.level === 'MODERATE' ? 'info' : 'success'}`;
+            
+            // Temporal dynamics
+            if (threat.temporal) {
+                document.getElementById('trend-value').textContent = threat.temporal.trend || '--';
+                document.getElementById('slope-value').textContent = (threat.temporal.slope || 0).toFixed(2);
+                document.getElementById('persistence-value').textContent = (threat.temporal.persistence_factor || 1.0).toFixed(2);
+                
+                // Trend icon
+                const trendEl = document.getElementById('trend-value');
+                if (threat.temporal.trend === 'rapidly_worsening') {
+                    trendEl.innerHTML = '⬆️⬆️ Rapidly Worsening';
+                } else if (threat.temporal.trend === 'worsening') {
+                    trendEl.innerHTML = '⬆️ Worsening';
+                } else if (threat.temporal.trend === 'improving') {
+                    trendEl.innerHTML = '⬇️ Improving';
+                } else if (threat.temporal.trend === 'rapidly_improving') {
+                    trendEl.innerHTML = '⬇️⬇️ Rapidly Improving';
+                } else {
+                    trendEl.innerHTML = '➡️ Stable';
+                }
+            }
+            
+            // Trajectory
+            if (threat.trajectory) {
+                const setProgress = (id, value, max = 100) => {
+                    const el = document.getElementById(id);
+                    if (el && value) {
+                        el.style.width = (value / max * 100) + '%';
+                        el.textContent = value + (id.includes('min') ? '' : '');
+                    }
+                };
+                setProgress('pred-5min', threat.trajectory['5min']);
+                setProgress('pred-15min', threat.trajectory['15min']);
+                setProgress('pred-30min', threat.trajectory['30min']);
+            }
+            
+            // Component scores
+            if (threat.components) {
+                const comp = threat.components;
+                document.getElementById('prox-score').textContent = comp.proximity?.score || '--';
+                document.getElementById('count-score').textContent = comp.count?.score || '--';
+                document.getElementById('behave-score').textContent = comp.behavior?.score || '--';
+                document.getElementById('vital-score').textContent = comp.vital_signs?.score || '--';
+                document.getElementById('air-score').textContent = comp.air_quality?.score || '--';
+                document.getElementById('noise-score').textContent = comp.noise?.score || '--';
+            }
+        }
+        
+        // Update quality
+        if (data.quality) {
+            const quality = data.quality;
+            document.getElementById('quality-score').textContent = quality.quality_score + '/100';
+            document.getElementById('quality-category').textContent = quality.category || '--';
+            
+            qualityGauge.data.datasets[0].data = [quality.quality_score || 0, 100 - (quality.quality_score || 0)];
+            qualityGauge.update();
+            
+            const trendEl = document.getElementById('quality-trend');
+            if (quality.trend === 'improving') {
+                trendEl.innerHTML = '<span class="trend-up">⬆️ Improving</span>';
+            } else if (quality.trend === 'declining') {
+                trendEl.innerHTML = '<span class="trend-down">⬇️ Declining</span>';
+            } else {
+                trendEl.innerHTML = '<span class="trend-stable">➡️ Stable</span>';
+            }
+        }
+        
+        // Update radar/people
+        if (data.radar) {
+            document.getElementById('people-count').textContent = data.radar.target_count || 0;
+            
+            // Target list
+            const targets = data.radar.targets || [];
+            let targetHtml = '';
+            targets.forEach((t, i) => {
+                targetHtml += `
+                    <div class="mb-2 p-2 bg-light rounded">
+                        <strong>Target ${i+1}</strong><br>
+                        Distance: ${t.distance?.toFixed(2)}m<br>
+                        Activity: ${t.activity || 'unknown'}<br>
+                        ${t.breathing_rate ? 'Breathing: ' + t.breathing_rate + ' bpm' : ''}
+                        ${t.abnormal_breathing ? ' ⚠️' : ''}
+                    </div>
+                `;
+            });
+            document.getElementById('target-list').innerHTML = targets.length ? targetHtml : 'No targets detected';
+        }
+        
+        // Update air quality
+        if (data.odor) {
+            document.getElementById('aqi-value').textContent = data.odor.air_quality_index || '--';
+            document.getElementById('voc-value').textContent = (data.odor.voc_ppm || 0).toFixed(1);
+            document.getElementById('pm25-value').textContent = data.odor.pm25 || '--';
+            document.getElementById('odor-type').textContent = data.odor.odor_type || '--';
+        }
+        
+        // Update sound
+        if (data.sound) {
+            const db = data.sound.db || 0;
+            document.getElementById('noise-value').textContent = db.toFixed(1);
+            document.getElementById('noise-bar').style.width = (db / 120 * 100) + '%';
+            
+            const event = data.sound.event || 'normal';
+            const spike = data.sound.spike ? ' ⚠️ SPIKE' : '';
+            document.getElementById('sound-event').innerHTML = `
+                <span class="badge bg-secondary">${event}</span>${spike}
+            `;
+        }
+        
+        // Update last update time
+        document.getElementById('last-update').textContent = 'Updated: ' + new Date().toLocaleTimeString();
+    }
+    
+    // Load recent events
+    function loadEvents() {
+        fetch('/api/events/recent?limit=10')
+            .then(response => response.json())
+            .then(events => {
+                const tbody = document.getElementById('events-body');
+                if (events.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center">No events found</td></tr>';
+                    return;
+                }
+                
+                let html = '';
+                events.forEach(event => {
+                    const threatClass = event.threat_level ? 
+                        `bg-${event.threat_level === 'CRITICAL' ? 'dark' : 
+                               event.threat_level === 'HIGH' ? 'danger' :
+                               event.threat_level === 'ELEVATED' ? 'warning' :
+                               event.threat_level === 'MODERATE' ? 'info' : 'success'}` : 'bg-secondary';
+                    
+                    html += `
+                        <tr>
+                            <td>${new Date(event.timestamp).toLocaleTimeString()}</td>
+                            <td>${event.event_type || 'NORMAL'}</td>
+                            <td><span class="badge ${threatClass}">${event.threat_level || 'UNKNOWN'}</span></td>
+                            <td>${event.threat_score?.toFixed(0) || '--'}</td>
+                            <td>${event.people_count || 0}</td>
+                            <td>${event.sound_db?.toFixed(1) || '--'}</td>
+                            <td>${event.air_aqi?.toFixed(0) || '--'}</td>
+                        </tr>
+                    `;
+                });
+                tbody.innerHTML = html;
+            })
+            .catch(error => {
+                console.error('Error loading events:', error);
+                document.getElementById('events-body').innerHTML = 
+                    '<tr><td colspan="7" class="text-center text-danger">Error loading events</td></tr>';
+            });
+    }
+    
+    // Load initial data
+    document.addEventListener('DOMContentLoaded', function() {
+        loadEvents();
+        // Refresh events every 30 seconds
+        setInterval(loadEvents, 30000);
+    });
+</script>
+{% endblock %}
