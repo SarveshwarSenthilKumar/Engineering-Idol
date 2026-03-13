@@ -1,0 +1,918 @@
+{% extends "base.html" %}
+
+{% block title %}Futuristic Sensor Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap');
+    
+    :root {
+        --glow-color: #00ffff;
+        --glow-color-secondary: #ff00ff;
+        --dark-bg: #0a0f1e;
+        --darker-bg: #050813;
+        --card-bg: rgba(20, 30, 50, 0.7);
+        --text-primary: #e0e0ff;
+        --text-secondary: #a0a0ff;
+        --border-glow: 0 0 10px rgba(0, 255, 255, 0.3);
+    }
+    
+    body {
+        background: var(--dark-bg);
+        font-family: 'Rajdhani', sans-serif;
+        color: var(--text-primary);
+        overflow-x: hidden;
+    }
+    
+    .main-content {
+        background: linear-gradient(135deg, #0a0f1e 0%, #050813 100%);
+        position: relative;
+    }
+    
+    /* Animated background grid */
+    .main-content::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image: 
+            linear-gradient(rgba(0, 255, 255, 0.05) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0, 255, 255, 0.05) 1px, transparent 1px);
+        background-size: 50px 50px;
+        pointer-events: none;
+        animation: gridMove 20s linear infinite;
+    }
+    
+    @keyframes gridMove {
+        0% { transform: translate(0, 0); }
+        100% { transform: translate(50px, 50px); }
+    }
+    
+    /* Floating particles */
+    .particle {
+        position: absolute;
+        width: 2px;
+        height: 2px;
+        background: rgba(0, 255, 255, 0.5);
+        border-radius: 50%;
+        pointer-events: none;
+        animation: float 10s infinite;
+    }
+    
+    @keyframes float {
+        0% { transform: translateY(0) translateX(0); opacity: 0; }
+        50% { opacity: 1; }
+        100% { transform: translateY(-100px) translateX(100px); opacity: 0; }
+    }
+    
+    /* Futuristic card */
+    .sensor-card {
+        background: var(--card-bg);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(0, 255, 255, 0.2);
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 0 20px rgba(0, 255, 255, 0.1);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .sensor-card::before {
+        content: '';
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        background: linear-gradient(45deg, 
+            rgba(0, 255, 255, 0.5), 
+            rgba(255, 0, 255, 0.5), 
+            rgba(0, 255, 255, 0.5));
+        border-radius: 17px;
+        z-index: -1;
+        animation: borderRotate 4s linear infinite;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    .sensor-card:hover::before {
+        opacity: 1;
+    }
+    
+    .sensor-card:hover {
+        transform: translateY(-5px) scale(1.02);
+        box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+    }
+    
+    @keyframes borderRotate {
+        0% { filter: hue-rotate(0deg); }
+        100% { filter: hue-rotate(360deg); }
+    }
+    
+    /* Futuristic header */
+    .futuristic-header {
+        font-family: 'Orbitron', sans-serif;
+        text-transform: uppercase;
+        letter-spacing: 4px;
+        text-shadow: 0 0 10px var(--glow-color);
+        margin-bottom: 30px;
+        position: relative;
+    }
+    
+    .futuristic-header::after {
+        content: '';
+        position: absolute;
+        bottom: -10px;
+        left: 0;
+        width: 100px;
+        height: 3px;
+        background: linear-gradient(90deg, var(--glow-color), transparent);
+    }
+    
+    /* Holographic display */
+    .holo-display {
+        background: rgba(0, 20, 40, 0.6);
+        border: 1px solid rgba(0, 255, 255, 0.3);
+        border-radius: 10px;
+        padding: 15px;
+        box-shadow: inset 0 0 20px rgba(0, 255, 255, 0.1);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .holo-display::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, 
+            transparent, 
+            rgba(0, 255, 255, 0.1), 
+            transparent);
+        animation: scan 3s linear infinite;
+    }
+    
+    @keyframes scan {
+        0% { left: -100%; }
+        100% { left: 200%; }
+    }
+    
+    /* Gauge styles */
+    .gauge-container {
+        position: relative;
+        width: 100%;
+        height: 150px;
+        margin: 20px 0;
+    }
+    
+    .gauge-value {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 2.5rem;
+        font-weight: bold;
+        font-family: 'Orbitron', sans-serif;
+        text-shadow: 0 0 20px currentColor;
+    }
+    
+    .gauge-label {
+        position: absolute;
+        bottom: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        color: var(--text-secondary);
+    }
+    
+    /* Glowing text */
+    .glow-text {
+        text-shadow: 0 0 10px currentColor;
+        animation: glowPulse 2s ease-in-out infinite;
+    }
+    
+    @keyframes glowPulse {
+        0%, 100% { text-shadow: 0 0 10px currentColor; }
+        50% { text-shadow: 0 0 20px currentColor, 0 0 30px currentColor; }
+    }
+    
+    /* Status indicators */
+    .status-led {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 5px;
+        animation: ledPulse 1.5s infinite;
+    }
+    
+    .status-led.green { background: #00ff00; box-shadow: 0 0 10px #00ff00; }
+    .status-led.yellow { background: #ffff00; box-shadow: 0 0 10px #ffff00; }
+    .status-led.red { background: #ff0000; box-shadow: 0 0 10px #ff0000; }
+    .status-led.blue { background: #00ffff; box-shadow: 0 0 10px #00ffff; }
+    .status-led.purple { background: #ff00ff; box-shadow: 0 0 10px #ff00ff; }
+    
+    @keyframes ledPulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+    
+    /* Waveform animation */
+    .waveform {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 60px;
+        gap: 3px;
+    }
+    
+    .waveform-bar {
+        width: 5px;
+        height: 20px;
+        background: var(--glow-color);
+        animation: waveform 1s ease-in-out infinite;
+    }
+    
+    @keyframes waveform {
+        0%, 100% { height: 20px; }
+        50% { height: 50px; }
+    }
+    
+    /* Fake data indicator */
+    .fake-indicator {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: rgba(255, 255, 0, 0.2);
+        border: 1px solid #ffff00;
+        color: #ffff00;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        z-index: 10;
+        backdrop-filter: blur(5px);
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .fake-indicator.off {
+        background: rgba(255, 0, 0, 0.2);
+        border-color: #ff0000;
+        color: #ff0000;
+    }
+    
+    .fake-indicator:hover {
+        transform: scale(1.05);
+        box-shadow: 0 0 20px currentColor;
+    }
+    
+    /* Toggle switch */
+    .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 60px;
+        height: 34px;
+    }
+    
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    
+    .toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(255, 0, 0, 0.3);
+        transition: .4s;
+        border-radius: 34px;
+        border: 1px solid #ff0000;
+    }
+    
+    .toggle-slider:before {
+        position: absolute;
+        content: "";
+        height: 26px;
+        width: 26px;
+        left: 4px;
+        bottom: 4px;
+        background-color: #ff0000;
+        transition: .4s;
+        border-radius: 50%;
+    }
+    
+    input:checked + .toggle-slider {
+        background-color: rgba(255, 255, 0, 0.3);
+        border-color: #ffff00;
+    }
+    
+    input:checked + .toggle-slider:before {
+        transform: translateX(26px);
+        background-color: #ffff00;
+    }
+    
+    /* Radial progress */
+    .radial-progress {
+        --size: 120px;
+        --half-size: calc(var(--size) / 2);
+        --stroke-width: 8px;
+        --radius: calc((var(--size) - var(--stroke-width)) / 2);
+        --circumference: calc(var(--radius) * pi * 2);
+    }
+    
+    .radial-progress circle {
+        stroke-width: var(--stroke-width);
+        fill: none;
+        stroke-linecap: round;
+        transition: stroke-dashoffset 0.5s;
+        transform: rotate(-90deg);
+        transform-origin: var(--half-size) var(--half-size);
+    }
+    
+    /* Data stream effect */
+    .data-stream {
+        font-family: 'Courier New', monospace;
+        font-size: 0.8rem;
+        color: #00ff00;
+        text-shadow: 0 0 5px #00ff00;
+        animation: dataFade 2s linear infinite;
+    }
+    
+    @keyframes dataFade {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="position-relative" style="min-height: 100vh;">
+    <!-- Fake data toggle -->
+    <div class="position-fixed top-0 end-0 m-4" style="z-index: 1000;">
+        <div class="d-flex align-items-center gap-3">
+            <span class="text-uppercase" style="font-family: 'Orbitron', sans-serif; letter-spacing: 2px;">
+                <span class="status-led {{ 'yellow' if fake_mode else 'red' }}"></span>
+                FAKE DATA: {{ 'ON' if fake_mode else 'OFF' }}
+            </span>
+            <label class="toggle-switch">
+                <input type="checkbox" id="fakeToggle" {% if fake_mode %}checked{% endif %} onchange="toggleFakeMode()">
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <div class="futuristic-header">
+        <h1 class="display-4 glow-text" style="color: var(--glow-color);">
+            <i class="bi bi-cpu"></i> NEURAL SENSOR INTERFACE
+        </h1>
+        <p class="text-secondary" style="font-size: 1.1rem; letter-spacing: 3px;">
+            QUANTUM ENVIRONMENTAL MONITORING v2.0
+        </p>
+    </div>
+
+    <!-- Quick Stats Row -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="sensor-card text-center">
+                <div class="status-led green"></div>
+                <span class="text-uppercase small">System Status</span>
+                <h3 class="glow-text" style="color: #00ff00;">ONLINE</h3>
+                <div class="data-stream mt-2">
+                    UPTIME: {{ "%.2f"|format(uptime) }}s
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="sensor-card text-center">
+                <div class="status-led blue"></div>
+                <span class="text-uppercase small">Data Stream</span>
+                <h3 class="glow-text" style="color: #00ffff;">{{ "%.1f"|format(data_rate) }} Hz</h3>
+                <div class="data-stream mt-2">
+                    PACKETS: {{ packet_count }}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="sensor-card text-center">
+                <div class="status-led purple"></div>
+                <span class="text-uppercase small">Active Targets</span>
+                <h3 class="glow-text" style="color: #ff00ff;">{{ people_count }}</h3>
+                <div class="data-stream mt-2">
+                    TRACKING: {{ 'ACTIVE' if people_count > 0 else 'IDLE' }}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="sensor-card text-center">
+                <div class="status-led {{ 'yellow' if threat_score > 60 else 'green' }}"></div>
+                <span class="text-uppercase small">Threat Level</span>
+                <h3 class="glow-text" style="color: {{ 'red' if threat_score > 60 else 'yellow' if threat_score > 30 else 'green' }};">
+                    {{ threat_level }}
+                </h3>
+                <div class="data-stream mt-2">
+                    SCORE: {{ "%.1f"|format(threat_score) }}/100
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Sensor Grid -->
+    <div class="row">
+        <!-- Radar / Target Tracking -->
+        <div class="col-md-6">
+            <div class="sensor-card">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="glow-text" style="color: var(--glow-color);">
+                        <i class="bi bi-radar"></i> QUANTUM RADAR ARRAY
+                    </h4>
+                    <span class="badge bg-dark" style="border: 1px solid var(--glow-color);">
+                        <span class="status-led blue"></span> 3D TRACKING
+                    </span>
+                </div>
+                
+                <!-- Radar Visualization -->
+                <div class="holo-display" style="height: 300px; position: relative;">
+                    <canvas id="radarCanvas" width="600" height="280" style="width: 100%; height: 100%;"></canvas>
+                    
+                    <!-- Target info overlay -->
+                    <div class="position-absolute top-0 start-0 p-2">
+                        {% for target in targets %}
+                        <div class="small mb-1" style="background: rgba(0,0,0,0.7); padding: 2px 8px; border-radius: 12px; border-left: 3px solid {{ 'red' if target.abnormal_breathing else 'cyan' }};">
+                            <span class="status-led {{ 'red' if target.abnormal_breathing else 'blue' }}"></span>
+                            {{ target.id }}: {{ "%.1f"|format(target.distance) }}m 
+                            {% if target.activity %}({{ target.activity }}){% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- Target Stats -->
+                <div class="row mt-3">
+                    <div class="col-4 text-center">
+                        <div class="small text-uppercase text-secondary">COUNT</div>
+                        <div class="h3 glow-text">{{ people_count }}</div>
+                    </div>
+                    <div class="col-4 text-center">
+                        <div class="small text-uppercase text-secondary">ACTIVE</div>
+                        <div class="h3 glow-text">{{ active_targets }}</div>
+                    </div>
+                    <div class="col-4 text-center">
+                        <div class="small text-uppercase text-secondary">ABNORMAL</div>
+                        <div class="h3 glow-text" style="color: {{ 'red' if abnormal_count > 0 else 'green' }};">
+                            {{ abnormal_count }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Air Quality Hub -->
+        <div class="col-md-6">
+            <div class="sensor-card">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="glow-text" style="color: var(--glow-color-secondary);">
+                        <i class="bi bi-wind"></i> ATMOSPHERIC ANALYSIS
+                    </h4>
+                    <span class="badge bg-dark" style="border: 1px solid var(--glow-color-secondary);">
+                        <span class="status-led purple"></span> REAL-TIME
+                    </span>
+                </div>
+                
+                <!-- Air Quality Gauges -->
+                <div class="row">
+                    <div class="col-4 text-center">
+                        <div class="gauge-container">
+                            <canvas id="vocGauge" width="120" height="120"></canvas>
+                            <div class="gauge-value" style="color: {{ 'red' if voc > 100 else 'yellow' if voc > 50 else 'green' }};">
+                                {{ "%.0f"|format(voc) }}
+                            </div>
+                            <div class="gauge-label">VOC (ppm)</div>
+                        </div>
+                    </div>
+                    <div class="col-4 text-center">
+                        <div class="gauge-container">
+                            <canvas id="pm25Gauge" width="120" height="120"></canvas>
+                            <div class="gauge-value" style="color: {{ 'red' if pm25 > 50 else 'yellow' if pm25 > 25 else 'green' }};">
+                                {{ pm25 }}
+                            </div>
+                            <div class="gauge-label">PM2.5</div>
+                        </div>
+                    </div>
+                    <div class="col-4 text-center">
+                        <div class="gauge-container">
+                            <canvas id="aqiGauge" width="120" height="120"></canvas>
+                            <div class="gauge-value" style="color: {{ 'red' if aqi > 150 else 'yellow' if aqi > 100 else 'green' }};">
+                                {{ "%.0f"|format(aqi) }}
+                            </div>
+                            <div class="gauge-label">AQI</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Odor Analysis -->
+                <div class="holo-display mt-3 p-3">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <span class="text-uppercase small text-secondary">Odor Signature</span>
+                            <h4 class="glow-text" style="color: #ffaa00;">{{ odor_type }}</h4>
+                        </div>
+                        <div class="text-end">
+                            <span class="text-uppercase small text-secondary">Confidence</span>
+                            <h4>{{ "%.0f"|format(odor_confidence * 100) }}%</h4>
+                        </div>
+                    </div>
+                    <div class="progress mt-2" style="height: 20px; background: rgba(0,0,0,0.5);">
+                        <div class="progress-bar bg-info" role="progressbar" 
+                             style="width: {{ odor_intensity * 10 }}%; box-shadow: 0 0 10px cyan;">
+                            Intensity: {{ "%.1f"|format(odor_intensity) }}/10
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Second Row -->
+    <div class="row mt-4">
+        <!-- Sound Analysis -->
+        <div class="col-md-4">
+            <div class="sensor-card">
+                <h4 class="glow-text mb-3" style="color: #00ffaa;">
+                    <i class="bi bi-soundwave"></i> ACOUSTIC MONITOR
+                </h4>
+                
+                <div class="text-center">
+                    <div style="font-size: 4rem; font-family: 'Orbitron', sans-serif; text-shadow: 0 0 20px cyan;">
+                        {{ "%.1f"|format(sound_db) }}
+                        <small style="font-size: 1rem;">dB</small>
+                    </div>
+                    
+                    <!-- Waveform Animation -->
+                    <div class="waveform my-3">
+                        {% for i in range(20) %}
+                        <div class="waveform-bar" style="animation-delay: {{ i * 0.05 }}s; height: {{ 20 + (sound_db * 0.5) }}px;"></div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="row mt-3">
+                        <div class="col-6">
+                            <span class="text-uppercase small text-secondary">Event</span>
+                            <h5 class="glow-text">{{ sound_event }}</h5>
+                        </div>
+                        <div class="col-6">
+                            <span class="text-uppercase small text-secondary">Baseline</span>
+                            <h5>{{ "%.1f"|format(sound_baseline) }} dB</h5>
+                        </div>
+                    </div>
+                    
+                    {% if sound_spike %}
+                    <div class="alert alert-danger mt-2 py-2" style="background: rgba(255,0,0,0.2); border: 1px solid red;">
+                        <span class="blink">⚠️ AUDIO SPIKE DETECTED</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Threat Components -->
+        <div class="col-md-4">
+            <div class="sensor-card">
+                <h4 class="glow-text mb-3" style="color: #ff5500;">
+                    <i class="bi bi-shield"></i> THREAT MATRIX
+                </h4>
+                
+                {% for component, data in components.items() %}
+                <div class="mb-2">
+                    <div class="d-flex justify-content-between">
+                        <span class="text-uppercase small">{{ component|replace('_', ' ') }}</span>
+                        <span class="glow-text" style="color: {{ 'red' if data.score > 60 else 'yellow' if data.score > 30 else 'green' }};">
+                            {{ "%.0f"|format(data.score) }}/100
+                        </span>
+                    </div>
+                    <div class="progress" style="height: 8px; background: rgba(0,0,0,0.5);">
+                        <div class="progress-bar" role="progressbar" 
+                             style="width: {{ data.score }}%; background: linear-gradient(90deg, cyan, magenta);"
+                             aria-valuenow="{{ data.score }}" aria-valuemin="0" aria-valuemax="100">
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between small text-secondary">
+                        <span>Weight: {{ "%.2f"|format(data.weight) }}</span>
+                        <span>Conf: {{ "%.0f"|format(data.confidence * 100) }}%</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Temporal Dynamics -->
+        <div class="col-md-4">
+            <div class="sensor-card">
+                <h4 class="glow-text mb-3" style="color: #aa00ff;">
+                    <i class="bi bi-graph-up"></i> TEMPORAL ANALYSIS
+                </h4>
+                
+                <!-- Trend Indicator -->
+                <div class="text-center mb-4">
+                    <div style="font-size: 3rem;">
+                        {% if temporal_trend == 'rapidly_worsening' %}
+                            ⬆️⬆️
+                        {% elif temporal_trend == 'worsening' %}
+                            ⬆️
+                        {% elif temporal_trend == 'improving' %}
+                            ⬇️
+                        {% elif temporal_trend == 'rapidly_improving' %}
+                            ⬇️⬇️
+                        {% else %}
+                            ➡️
+                        {% endif %}
+                    </div>
+                    <h5 class="glow-text">{{ temporal_trend|upper }}</h5>
+                </div>
+                
+                <div class="row">
+                    <div class="col-6">
+                        <div class="small text-uppercase text-secondary">Slope</div>
+                        <div class="h4">{{ "%.2f"|format(temporal_slope) }}/min</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="small text-uppercase text-secondary">Acceleration</div>
+                        <div class="h4">{{ "%.3f"|format(temporal_acceleration) }}</div>
+                    </div>
+                </div>
+                
+                <!-- Persistence Factor -->
+                <div class="mt-3 p-2" style="background: rgba(255,255,255,0.05); border-radius: 10px;">
+                    <div class="d-flex justify-content-between">
+                        <span>Persistence Multiplier</span>
+                        <span class="glow-text" style="color: magenta;">{{ "%.2f"|format(persistence_factor) }}x</span>
+                    </div>
+                </div>
+                
+                <!-- Threat Trajectory -->
+                <div class="mt-3">
+                    <div class="small text-uppercase text-secondary mb-2">THREAT TRAJECTORY</div>
+                    <div class="progress mb-2" style="height: 25px;">
+                        <div class="progress-bar bg-warning" style="width: {{ trajectory_5min }}%">
+                            {{ "%.0f"|format(trajectory_5min) }} (5m)
+                        </div>
+                        <div class="progress-bar bg-danger" style="width: {{ trajectory_15min - trajectory_5min }}%">
+                            {{ "%.0f"|format(trajectory_15min) }} (15m)
+                        </div>
+                        <div class="progress-bar bg-dark" style="width: {{ trajectory_30min - trajectory_15min }}%">
+                            {{ "%.0f"|format(trajectory_30min) }} (30m)
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Stream Footer -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="sensor-card">
+                <div class="data-stream" style="height: 100px; overflow-y: auto; font-family: 'Courier New', monospace;">
+                    {% for log in recent_logs %}
+                    > [{{ log.timestamp }}] {{ log.message }}<br>
+                    {% endfor %}
+                </div>
+                <div class="text-end mt-2">
+                    <span class="small text-secondary">LAST UPDATE: {{ last_update }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Fake data indicator that follows mouse -->
+<div id="fakeCursor" class="position-fixed" style="display: none; pointer-events: none; z-index: 9999; font-family: 'Courier New', monospace; background: rgba(0,0,0,0.8); padding: 5px 10px; border: 1px solid yellow; border-radius: 5px; color: yellow; font-size: 12px;">
+    ⚠️ FAKE DATA MODE
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script>
+    // Fake mode state
+    let fakeMode = {{ 'true' if fake_mode else 'false' }};
+    
+    // Initialize gauges
+    document.addEventListener('DOMContentLoaded', function() {
+        initGauges();
+        initRadar();
+        initParticles();
+        
+        // Mouse follower for fake mode
+        if (fakeMode) {
+            document.getElementById('fakeCursor').style.display = 'block';
+            document.addEventListener('mousemove', function(e) {
+                const cursor = document.getElementById('fakeCursor');
+                cursor.style.left = (e.pageX + 20) + 'px';
+                cursor.style.top = (e.pageY - 30) + 'px';
+            });
+        }
+        
+        // Start live updates
+        startLiveUpdates();
+    });
+    
+    function initGauges() {
+        // VOC Gauge
+        const vocCtx = document.getElementById('vocGauge').getContext('2d');
+        new Chart(vocCtx, {
+            type: 'doughnut',
+            data: {
+                datasets: [{
+                    data: [{{ voc }}, 200 - {{ voc }}],
+                    backgroundColor: ['#00ffff', 'rgba(0,255,255,0.1)'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                cutout: '80%',
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: { legend: { display: false }, tooltip: { enabled: false } }
+            }
+        });
+        
+        // PM2.5 Gauge
+        const pmCtx = document.getElementById('pm25Gauge').getContext('2d');
+        new Chart(pmCtx, {
+            type: 'doughnut',
+            data: {
+                datasets: [{
+                    data: [{{ pm25 }}, 100 - {{ pm25 }}],
+                    backgroundColor: ['#ff00ff', 'rgba(255,0,255,0.1)'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                cutout: '80%',
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: { legend: { display: false }, tooltip: { enabled: false } }
+            }
+        });
+        
+        // AQI Gauge
+        const aqiCtx = document.getElementById('aqiGauge').getContext('2d');
+        new Chart(aqiCtx, {
+            type: 'doughnut',
+            data: {
+                datasets: [{
+                    data: [{{ aqi }}, 500 - {{ aqi }}],
+                    backgroundColor: ['#ffff00', 'rgba(255,255,0,0.1)'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                cutout: '80%',
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: { legend: { display: false }, tooltip: { enabled: false } }
+            }
+        });
+    }
+    
+    function initRadar() {
+        const canvas = document.getElementById('radarCanvas');
+        const ctx = canvas.getContext('2d');
+        const width = canvas.width;
+        const height = canvas.height;
+        const centerX = width / 2;
+        const centerY = height / 2;
+        const maxRadius = Math.min(width, height) * 0.4;
+        
+        function drawRadar() {
+            ctx.clearRect(0, 0, width, height);
+            
+            // Draw grid
+            ctx.strokeStyle = 'rgba(0, 255, 255, 0.2)';
+            ctx.lineWidth = 1;
+            
+            // Distance rings
+            for (let i = 1; i <= 5; i++) {
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, (maxRadius / 5) * i, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+            
+            // Angle lines
+            for (let i = 0; i < 360; i += 30) {
+                const rad = (i - 90) * Math.PI / 180;
+                const x = centerX + Math.cos(rad) * maxRadius;
+                const y = centerY + Math.sin(rad) * maxRadius;
+                
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.lineTo(x, y);
+                ctx.stroke();
+            }
+            
+            // Sweep animation
+            const time = Date.now() / 1000;
+            const sweepAngle = (time * 2) % 360;
+            const sweepRad = (sweepAngle - 90) * Math.PI / 180;
+            
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(centerX + Math.cos(sweepRad) * maxRadius, 
+                      centerY + Math.sin(sweepRad) * maxRadius);
+            ctx.strokeStyle = 'cyan';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Draw targets
+            {% for target in targets %}
+            const distance = {{ target.distance }};
+            const angle = {{ target.angle }};
+            
+            if (distance > 0) {
+                const rad = (angle - 90) * Math.PI / 180;
+                const r = (distance / 10) * maxRadius;
+                const x = centerX + Math.cos(rad) * r;
+                const y = centerY + Math.sin(rad) * r;
+                
+                // Target dot
+                ctx.beginPath();
+                ctx.arc(x, y, 5, 0, Math.PI * 2);
+                ctx.fillStyle = {{ 'true' if target.abnormal_breathing else 'false' }} ? '#ff0000' : '#00ffff';
+                ctx.shadowColor = {{ 'true' if target.abnormal_breathing else 'false' }} ? '#ff0000' : '#00ffff';
+                ctx.shadowBlur = 10;
+                ctx.fill();
+                
+                // Target label
+                ctx.shadowBlur = 0;
+                ctx.font = '10px Orbitron';
+                ctx.fillStyle = '#ffffff';
+                ctx.fillText('{{ target.id }}', x + 10, y - 10);
+            }
+            {% endfor %}
+            
+            requestAnimationFrame(drawRadar);
+        }
+        
+        drawRadar();
+    }
+    
+    function initParticles() {
+        const container = document.querySelector('.main-content');
+        for (let i = 0; i < 50; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.top = Math.random() * 100 + '%';
+            particle.style.animationDelay = Math.random() * 10 + 's';
+            particle.style.animationDuration = 10 + Math.random() * 20 + 's';
+            container.appendChild(particle);
+        }
+    }
+    
+    function toggleFakeMode() {
+        fakeMode = !fakeMode;
+        const cursor = document.getElementById('fakeCursor');
+        cursor.style.display = fakeMode ? 'block' : 'none';
+        
+        // Reload with fake mode parameter
+        window.location.href = window.location.pathname + '?fake=' + (fakeMode ? '1' : '0');
+    }
+    
+    function startLiveUpdates() {
+        setInterval(function() {
+            // Animate waveform
+            const bars = document.querySelectorAll('.waveform-bar');
+            bars.forEach(bar => {
+                const newHeight = 20 + Math.random() * 30;
+                bar.style.height = newHeight + 'px';
+            });
+        }, 100);
+    }
+    
+    function handleLiveUpdate(data) {
+        // Update dashboard with new data
+        if (data.threat) {
+            document.querySelector('[data-threat-score]').textContent = data.threat.overall_threat;
+        }
+    }
+</script>
+{% endblock %}
