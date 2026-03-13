@@ -12,3 +12,9 @@ create an ai summary of each event and store it with time stamps
 create a weekly report at the end of the week summarizing the events, show trends, and give preventative tips
 
 get rid of storing certain events that set off the alarm, create the portal, create a teams bot type of thing, detect action and breathing patterns
+
+show snippet of person exiting or entering and create timestamps based off these events and store
+
+list out all organic compounds and concentration of human detection, extreme vs normal, ventilation system, intensity of the event
+
+work with different sizes of washrooms for average calculation
