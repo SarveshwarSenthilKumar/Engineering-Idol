@@ -501,7 +501,9 @@ def targets_view():
 def settings():
     """Settings page"""
     return render_template('settings.html',
-                         current_time=datetime.now().isoformat())
+                         current_time=datetime.now().isoformat(),
+                         database_path=app.config.get('DATABASE_PATH', 'N/A'),
+                         other_config_values=app.config.get('OTHER_CONFIG_VALUES', 'N/A'))
 
 # ==================== API ROUTES ====================
 
