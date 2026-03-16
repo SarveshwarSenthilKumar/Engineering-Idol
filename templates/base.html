@@ -58,20 +58,23 @@
         
         .sidebar {
             min-height: 100vh;
-            background: linear-gradient(180deg, #2c3e50 0%, #1a252f 100%);
+            background: #343a40;
             padding: 0;
+            border-right: 1px solid #dee2e6;
         }
         .sidebar .nav-link {
-            color: #ecf0f1;
-            padding: 1rem;
-            transition: all 0.3s;
+            color: #ffffff;
+            padding: 0.75rem 1rem;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
         }
         .sidebar .nav-link:hover {
             background: rgba(255,255,255,0.1);
-            padding-left: 1.5rem;
+            border-left-color: #007bff;
         }
         .sidebar .nav-link.active {
-            background: #3498db;
+            background: #007bff;
+            border-left-color: #0056b3;
         }
         .sidebar .nav-link i {
             margin-right: 10px;
@@ -115,8 +118,9 @@
             <nav class="col-md-2 d-md-block sidebar">
                 <div class="position-sticky pt-3">
                     <div class="text-center text-white mb-4">
-                        <i class="bi bi-shield-shaded" style="font-size: 3rem;"></i>
-                        <h5 class="mt-2">EMS</h5>
+                        <i class="bi bi-activity" style="font-size: 2.5rem;"></i>
+                        <h6 class="mt-2 mb-0">Environmental Monitoring</h6>
+                        <small class="text-white-50">System</small>
                     </div>
                     
                     <ul class="nav flex-column">
@@ -129,7 +133,7 @@
                         <li class="nav-item">
                             <a class="nav-link {% if request.endpoint == 'sensors' %}active{% endif %}" 
                                href="{{ url_for('sensors') }}">
-                                <i class="bi bi-cpu"></i> Neural Sensors
+                                <i class="bi bi-cpu"></i> Sensors
                             </a>
                         </li>
                         <li class="nav-item">
@@ -147,7 +151,7 @@
                         <li class="nav-item">
                             <a class="nav-link {% if request.endpoint == 'targets_view' %}active{% endif %}" 
                                href="{{ url_for('targets_view') }}">
-                                <i class="bi bi-people"></i> Target Tracking
+                                <i class="bi bi-people"></i> Personnel
                             </a>
                         </li>
                         <li class="nav-item">
@@ -158,9 +162,9 @@
                         </li>
                     </ul>
                     
-                    <div class="mt-5 text-white-50 small text-center">
-                        <div id="live-time" class="mb-2"></div>
-                        <div>v2.0.0</div>
+                    <div class="mt-auto text-white-50 small text-center pt-3">
+                        <div id="live-time" class="mb-1"></div>
+                        <div>Environmental Monitoring System v2.0.0</div>
                     </div>
                 </div>
             </nav>

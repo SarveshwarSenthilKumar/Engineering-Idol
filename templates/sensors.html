@@ -1,167 +1,77 @@
 {% extends "base.html" %}
 
-{% block title %}Futuristic Sensor Dashboard{% endblock %}
+{% block title %}Sensor Dashboard{% endblock %}
 
 {% block extra_css %}
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap');
-    
     :root {
-        --glow-color: #00ffff;
-        --glow-color-secondary: #ff00ff;
-        --dark-bg: #0a0f1e;
-        --darker-bg: #050813;
-        --card-bg: rgba(20, 30, 50, 0.7);
-        --text-primary: #e0e0ff;
-        --text-secondary: #a0a0ff;
-        --border-glow: 0 0 10px rgba(0, 255, 255, 0.3);
+        --primary-color: #007bff;
+        --secondary-color: #6c757d;
+        --success-color: #28a745;
+        --warning-color: #ffc107;
+        --danger-color: #dc3545;
+        --info-color: #17a2b8;
+        --light-bg: #f8f9fa;
+        --card-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
     
     body {
-        background: var(--dark-bg);
-        font-family: 'Rajdhani', sans-serif;
-        color: var(--text-primary);
-        overflow-x: hidden;
+        background: var(--light-bg);
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        color: #333;
     }
     
     .main-content {
-        background: linear-gradient(135deg, #0a0f1e 0%, #050813 100%);
+        background: var(--light-bg);
         position: relative;
     }
     
-    /* Animated background grid */
-    .main-content::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-image: 
-            linear-gradient(rgba(0, 255, 255, 0.05) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(0, 255, 255, 0.05) 1px, transparent 1px);
-        background-size: 50px 50px;
-        pointer-events: none;
-        animation: gridMove 20s linear infinite;
-    }
     
-    @keyframes gridMove {
-        0% { transform: translate(0, 0); }
-        100% { transform: translate(50px, 50px); }
-    }
-    
-    /* Floating particles */
-    .particle {
-        position: absolute;
-        width: 2px;
-        height: 2px;
-        background: rgba(0, 255, 255, 0.5);
-        border-radius: 50%;
-        pointer-events: none;
-        animation: float 10s infinite;
-    }
-    
-    @keyframes float {
-        0% { transform: translateY(0) translateX(0); opacity: 0; }
-        50% { opacity: 1; }
-        100% { transform: translateY(-100px) translateX(100px); opacity: 0; }
-    }
-    
-    /* Futuristic card */
+    /* Professional card */
     .sensor-card {
-        background: var(--card-bg);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(0, 255, 255, 0.2);
-        border-radius: 15px;
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
         padding: 20px;
         margin-bottom: 20px;
-        box-shadow: 0 0 20px rgba(0, 255, 255, 0.1);
-        transition: all 0.3s ease;
+        box-shadow: var(--card-shadow);
+        transition: all 0.2s ease;
         position: relative;
-        overflow: hidden;
     }
     
-    .sensor-card::before {
-        content: '';
-        position: absolute;
-        top: -2px;
-        left: -2px;
-        right: -2px;
-        bottom: -2px;
-        background: linear-gradient(45deg, 
-            rgba(0, 255, 255, 0.5), 
-            rgba(255, 0, 255, 0.5), 
-            rgba(0, 255, 255, 0.5));
-        border-radius: 17px;
-        z-index: -1;
-        animation: borderRotate 4s linear infinite;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    }
-    
-    .sensor-card:hover::before {
-        opacity: 1;
-    }
     
     .sensor-card:hover {
-        transform: translateY(-5px) scale(1.02);
-        box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
     }
     
-    @keyframes borderRotate {
-        0% { filter: hue-rotate(0deg); }
-        100% { filter: hue-rotate(360deg); }
-    }
     
-    /* Futuristic header */
-    .futuristic-header {
-        font-family: 'Orbitron', sans-serif;
-        text-transform: uppercase;
-        letter-spacing: 4px;
-        text-shadow: 0 0 10px var(--glow-color);
-        margin-bottom: 30px;
+    /* Professional header */
+    .professional-header {
+        font-weight: 600;
+        margin-bottom: 25px;
         position: relative;
     }
     
-    .futuristic-header::after {
+    .professional-header::after {
         content: '';
         position: absolute;
-        bottom: -10px;
+        bottom: -8px;
         left: 0;
-        width: 100px;
+        width: 60px;
         height: 3px;
-        background: linear-gradient(90deg, var(--glow-color), transparent);
+        background: var(--primary-color);
     }
     
-    /* Holographic display */
-    .holo-display {
-        background: rgba(0, 20, 40, 0.6);
-        border: 1px solid rgba(0, 255, 255, 0.3);
-        border-radius: 10px;
+    /* Professional display */
+    .data-display {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 6px;
         padding: 15px;
-        box-shadow: inset 0 0 20px rgba(0, 255, 255, 0.1);
         position: relative;
-        overflow: hidden;
     }
     
-    .holo-display::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, 
-            transparent, 
-            rgba(0, 255, 255, 0.1), 
-            transparent);
-        animation: scan 3s linear infinite;
-    }
-    
-    @keyframes scan {
-        0% { left: -100%; }
-        100% { left: 200%; }
-    }
     
     /* Gauge styles */
     .gauge-container {
@@ -176,10 +86,8 @@
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        font-size: 2.5rem;
-        font-weight: bold;
-        font-family: 'Orbitron', sans-serif;
-        text-shadow: 0 0 20px currentColor;
+        font-size: 2rem;
+        font-weight: 600;
     }
     
     .gauge-label {
@@ -187,103 +95,56 @@
         bottom: 10px;
         left: 50%;
         transform: translateX(-50%);
-        font-size: 0.9rem;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        color: var(--text-secondary);
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: var(--secondary-color);
     }
     
-    /* Glowing text */
-    .glow-text {
-        text-shadow: 0 0 10px currentColor;
-        animation: glowPulse 2s ease-in-out infinite;
-    }
-    
-    @keyframes glowPulse {
-        0%, 100% { text-shadow: 0 0 10px currentColor; }
-        50% { text-shadow: 0 0 20px currentColor, 0 0 30px currentColor; }
-    }
     
     /* Status indicators */
-    .status-led {
-        width: 12px;
-        height: 12px;
+    .status-indicator {
+        width: 10px;
+        height: 10px;
         border-radius: 50%;
         display: inline-block;
-        margin-right: 5px;
-        animation: ledPulse 1.5s infinite;
+        margin-right: 8px;
     }
     
-    .status-led.green { background: #00ff00; box-shadow: 0 0 10px #00ff00; }
-    .status-led.yellow { background: #ffff00; box-shadow: 0 0 10px #ffff00; }
-    .status-led.red { background: #ff0000; box-shadow: 0 0 10px #ff0000; }
-    .status-led.blue { background: #00ffff; box-shadow: 0 0 10px #00ffff; }
-    .status-led.purple { background: #ff00ff; box-shadow: 0 0 10px #ff00ff; }
+    .status-indicator.green { background: var(--success-color); }
+    .status-indicator.yellow { background: var(--warning-color); }
+    .status-indicator.red { background: var(--danger-color); }
+    .status-indicator.blue { background: var(--info-color); }
+    .status-indicator.purple { background: #6f42c1; }
     
-    @keyframes ledPulse {
-        0% { opacity: 1; }
-        50% { opacity: 0.5; }
-        100% { opacity: 1; }
-    }
     
-    /* Waveform animation */
-    .waveform {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 60px;
-        gap: 3px;
-    }
-    
-    .waveform-bar {
-        width: 5px;
-        height: 20px;
-        background: var(--glow-color);
-        animation: waveform 1s ease-in-out infinite;
-    }
-    
-    @keyframes waveform {
-        0%, 100% { height: 20px; }
-        50% { height: 50px; }
-    }
-    
-    /* Fake data indicator */
-    .fake-indicator {
+    /* Demo mode indicator */
+    .demo-indicator {
         position: absolute;
         top: 10px;
         right: 10px;
-        background: rgba(255, 255, 0, 0.2);
-        border: 1px solid #ffff00;
-        color: #ffff00;
-        padding: 5px 10px;
-        border-radius: 20px;
-        font-size: 0.8rem;
-        font-weight: bold;
-        text-transform: uppercase;
-        letter-spacing: 1px;
+        background: var(--warning-color);
+        color: white;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 500;
         z-index: 10;
-        backdrop-filter: blur(5px);
-        cursor: pointer;
-        transition: all 0.3s ease;
     }
     
-    .fake-indicator.off {
-        background: rgba(255, 0, 0, 0.2);
-        border-color: #ff0000;
-        color: #ff0000;
+    .demo-indicator.off {
+        background: var(--secondary-color);
     }
     
-    .fake-indicator:hover {
-        transform: scale(1.05);
-        box-shadow: 0 0 20px currentColor;
+    .demo-indicator:hover {
+        opacity: 0.8;
     }
     
     /* Toggle switch */
     .toggle-switch {
         position: relative;
         display: inline-block;
-        width: 60px;
-        height: 34px;
+        width: 50px;
+        height: 24px;
     }
     
     .toggle-switch input {
@@ -299,65 +160,41 @@
         left: 0;
         right: 0;
         bottom: 0;
-        background-color: rgba(255, 0, 0, 0.3);
+        background-color: #ccc;
         transition: .4s;
-        border-radius: 34px;
-        border: 1px solid #ff0000;
+        border-radius: 24px;
     }
     
     .toggle-slider:before {
         position: absolute;
         content: "";
-        height: 26px;
-        width: 26px;
-        left: 4px;
-        bottom: 4px;
-        background-color: #ff0000;
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
         transition: .4s;
         border-radius: 50%;
     }
     
     input:checked + .toggle-slider {
-        background-color: rgba(255, 255, 0, 0.3);
-        border-color: #ffff00;
+        background-color: var(--success-color);
     }
     
     input:checked + .toggle-slider:before {
         transform: translateX(26px);
-        background-color: #ffff00;
     }
     
-    /* Radial progress */
-    .radial-progress {
-        --size: 120px;
-        --half-size: calc(var(--size) / 2);
-        --stroke-width: 8px;
-        --radius: calc((var(--size) - var(--stroke-width)) / 2);
-        --circumference: calc(var(--radius) * pi * 2);
-    }
     
-    .radial-progress circle {
-        stroke-width: var(--stroke-width);
-        fill: none;
-        stroke-linecap: round;
-        transition: stroke-dashoffset 0.5s;
-        transform: rotate(-90deg);
-        transform-origin: var(--half-size) var(--half-size);
-    }
-    
-    /* Data stream effect */
-    .data-stream {
+    /* Data log */
+    .data-log {
         font-family: 'Courier New', monospace;
         font-size: 0.8rem;
-        color: #00ff00;
-        text-shadow: 0 0 5px #00ff00;
-        animation: dataFade 2s linear infinite;
-    }
-    
-    @keyframes dataFade {
-        0% { opacity: 1; }
-        50% { opacity: 0.5; }
-        100% { opacity: 1; }
+        color: var(--secondary-color);
+        background: #f8f9fa;
+        padding: 10px;
+        border-radius: 4px;
+        border: 1px solid #e9ecef;
     }
 </style>
 {% endblock %}
@@ -367,9 +204,9 @@
     <!-- Fake data toggle -->
     <div class="position-fixed top-0 end-0 m-4" style="z-index: 1000;">
         <div class="d-flex align-items-center gap-3">
-            <span class="text-uppercase" style="font-family: 'Orbitron', sans-serif; letter-spacing: 2px;">
-                <span class="status-led {{ 'yellow' if fake_mode else 'red' }}"></span>
-                FAKE DATA: {{ 'ON' if fake_mode else 'OFF' }}
+            <span class="text-uppercase small">
+                <span class="status-indicator {{ 'yellow' if fake_mode else 'red' }}"></span>
+                Demo Data: {{ 'ON' if fake_mode else 'OFF' }}
             </span>
             <label class="toggle-switch">
                 <input type="checkbox" id="fakeToggle" {% if fake_mode %}checked{% endif %} onchange="toggleFakeMode()">
@@ -379,12 +216,12 @@
     </div>
 
     <!-- Header -->
-    <div class="futuristic-header">
-        <h1 class="display-4 glow-text" style="color: var(--glow-color);">
-            <i class="bi bi-cpu"></i> NEURAL SENSOR INTERFACE
+    <div class="professional-header">
+        <h1 class="display-5">
+            <i class="bi bi-cpu"></i> Environmental Sensors
         </h1>
-        <p class="text-secondary" style="font-size: 1.1rem; letter-spacing: 3px;">
-            QUANTUM ENVIRONMENTAL MONITORING v2.0
+        <p class="text-muted">
+            Real-time Environmental Monitoring System
         </p>
     </div>
 
@@ -392,43 +229,43 @@
     <div class="row mb-4">
         <div class="col-md-3">
             <div class="sensor-card text-center">
-                <div class="status-led green"></div>
-                <span class="text-uppercase small">System Status</span>
-                <h3 class="glow-text" style="color: #00ff00;">ONLINE</h3>
-                <div class="data-stream mt-2">
-                    UPTIME: {{ "%.2f"|format(uptime) }}s
+                <div class="status-indicator green"></div>
+                <span class="text-muted small">System Status</span>
+                <h3 class="text-success">Online</h3>
+                <div class="data-log mt-2">
+                    Uptime: {{ "%.2f"|format(uptime) }}s
                 </div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="sensor-card text-center">
-                <div class="status-led blue"></div>
-                <span class="text-uppercase small">Data Stream</span>
-                <h3 class="glow-text" style="color: #00ffff;">{{ "%.1f"|format(data_rate) }} Hz</h3>
-                <div class="data-stream mt-2">
-                    PACKETS: {{ packet_count }}
+                <div class="status-indicator blue"></div>
+                <span class="text-muted small">Data Stream</span>
+                <h3 class="text-info">{{ "%.1f"|format(data_rate) }} Hz</h3>
+                <div class="data-log mt-2">
+                    Packets: {{ packet_count }}
                 </div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="sensor-card text-center">
-                <div class="status-led purple"></div>
-                <span class="text-uppercase small">Active Targets</span>
-                <h3 class="glow-text" style="color: #ff00ff;">{{ people_count }}</h3>
-                <div class="data-stream mt-2">
-                    TRACKING: {{ 'ACTIVE' if people_count > 0 else 'IDLE' }}
+                <div class="status-indicator purple"></div>
+                <span class="text-muted small">Active Personnel</span>
+                <h3 class="text-primary">{{ people_count }}</h3>
+                <div class="data-log mt-2">
+                    Status: {{ 'Active' if people_count > 0 else 'Idle' }}
                 </div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="sensor-card text-center">
-                <div class="status-led {{ 'yellow' if threat_score > 60 else 'green' }}"></div>
-                <span class="text-uppercase small">Threat Level</span>
-                <h3 class="glow-text" style="color: {{ 'red' if threat_score > 60 else 'yellow' if threat_score > 30 else 'green' }};">
+                <div class="status-indicator {{ 'yellow' if threat_score > 60 else 'green' }}"></div>
+                <span class="text-muted small">Threat Level</span>
+                <h3 class="text-{{ 'danger' if threat_score > 60 else 'warning' if threat_score > 30 else 'success' }}">
                     {{ threat_level }}
                 </h3>
-                <div class="data-stream mt-2">
-                    SCORE: {{ "%.1f"|format(threat_score) }}/100
+                <div class="data-log mt-2">
+                    Score: {{ "%.1f"|format(threat_score) }}/100
                 </div>
             </div>
         </div>
@@ -440,23 +277,23 @@
         <div class="col-md-6">
             <div class="sensor-card">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h4 class="glow-text" style="color: var(--glow-color);">
-                        <i class="bi bi-radar"></i> QUANTUM RADAR ARRAY
+                    <h4 class="mb-0 text-primary">
+                        <i class="bi bi-geo-alt"></i> Personnel Tracking
                     </h4>
-                    <span class="badge bg-dark" style="border: 1px solid var(--glow-color);">
-                        <span class="status-led blue"></span> 3D TRACKING
+                    <span class="badge bg-primary">
+                        <span class="status-indicator blue"></span> Active Monitoring
                     </span>
                 </div>
                 
                 <!-- Radar Visualization -->
-                <div class="holo-display" style="height: 300px; position: relative;">
+                <div class="data-display" style="height: 300px; position: relative; background: #f8f9fa;">
                     <canvas id="radarCanvas" width="600" height="280" style="width: 100%; height: 100%;"></canvas>
                     
                     <!-- Target info overlay -->
                     <div class="position-absolute top-0 start-0 p-2">
                         {% for target in targets %}
-                        <div class="small mb-1" style="background: rgba(0,0,0,0.7); padding: 2px 8px; border-radius: 12px; border-left: 3px solid {{ 'red' if target.abnormal_breathing else 'cyan' }};">
-                            <span class="status-led {{ 'red' if target.abnormal_breathing else 'blue' }}"></span>
+                        <div class="small mb-1 bg-white p-1 rounded" style="border-left: 3px solid {{ 'danger' if target.abnormal_breathing else 'primary' }}; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                            <span class="status-indicator {{ 'red' if target.abnormal_breathing else 'blue' }}"></span>
                             {{ target.id }}: {{ "%.1f"|format(target.distance) }}m 
                             {% if target.activity %}({{ target.activity }}){% endif %}
                         </div>
@@ -467,16 +304,16 @@
                 <!-- Target Stats -->
                 <div class="row mt-3">
                     <div class="col-4 text-center">
-                        <div class="small text-uppercase text-secondary">COUNT</div>
-                        <div class="h3 glow-text">{{ people_count }}</div>
+                        <div class="text-muted small">Count</div>
+                        <div class="h4">{{ people_count }}</div>
                     </div>
                     <div class="col-4 text-center">
-                        <div class="small text-uppercase text-secondary">ACTIVE</div>
-                        <div class="h3 glow-text">{{ active_targets }}</div>
+                        <div class="text-muted small">Active</div>
+                        <div class="h4">{{ active_targets }}</div>
                     </div>
                     <div class="col-4 text-center">
-                        <div class="small text-uppercase text-secondary">ABNORMAL</div>
-                        <div class="h3 glow-text" style="color: {{ 'red' if abnormal_count > 0 else 'green' }};">
+                        <div class="text-muted small">Alerts</div>
+                        <div class="h4 text-{{ 'danger' if abnormal_count > 0 else 'success' }}">
                             {{ abnormal_count }}
                         </div>
                     </div>
@@ -488,11 +325,11 @@
         <div class="col-md-6">
             <div class="sensor-card">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h4 class="glow-text" style="color: var(--glow-color-secondary);">
-                        <i class="bi bi-wind"></i> ATMOSPHERIC ANALYSIS
+                    <h4 class="mb-0 text-success">
+                        <i class="bi bi-wind"></i> Air Quality
                     </h4>
-                    <span class="badge bg-dark" style="border: 1px solid var(--glow-color-secondary);">
-                        <span class="status-led purple"></span> REAL-TIME
+                    <span class="badge bg-success">
+                        <span class="status-indicator green"></span> Real-time
                     </span>
                 </div>
                 
@@ -528,20 +365,20 @@
                 </div>
                 
                 <!-- Odor Analysis -->
-                <div class="holo-display mt-3 p-3">
+                <div class="data-display mt-3 p-3">
                     <div class="d-flex justify-content-between">
                         <div>
-                            <span class="text-uppercase small text-secondary">Odor Signature</span>
-                            <h4 class="glow-text" style="color: #ffaa00;">{{ odor_type }}</h4>
+                            <span class="text-muted small">Odor Detection</span>
+                            <h5 class="text-warning">{{ odor_type }}</h5>
                         </div>
                         <div class="text-end">
-                            <span class="text-uppercase small text-secondary">Confidence</span>
-                            <h4>{{ "%.0f"|format(odor_confidence * 100) }}%</h4>
+                            <span class="text-muted small">Confidence</span>
+                            <h5>{{ "%.0f"|format(odor_confidence * 100) }}%</h5>
                         </div>
                     </div>
-                    <div class="progress mt-2" style="height: 20px; background: rgba(0,0,0,0.5);">
-                        <div class="progress-bar bg-info" role="progressbar" 
-                             style="width: {{ odor_intensity * 10 }}%; box-shadow: 0 0 10px cyan;">
+                    <div class="progress mt-2" style="height: 8px;">
+                        <div class="progress-bar bg-warning" role="progressbar" 
+                             style="width: {{ odor_intensity * 10 }}%;">
                             Intensity: {{ "%.1f"|format(odor_intensity) }}/10
                         </div>
                     </div>
@@ -555,37 +392,38 @@
         <!-- Sound Analysis -->
         <div class="col-md-4">
             <div class="sensor-card">
-                <h4 class="glow-text mb-3" style="color: #00ffaa;">
-                    <i class="bi bi-soundwave"></i> ACOUSTIC MONITOR
+                <h4 class="mb-3 text-primary">
+                    <i class="bi bi-soundwave"></i> Acoustic Monitor
                 </h4>
                 
                 <div class="text-center">
-                    <div style="font-size: 4rem; font-family: 'Orbitron', sans-serif; text-shadow: 0 0 20px cyan;">
+                    <div class="display-4 fw-bold text-info">
                         {{ "%.1f"|format(sound_db) }}
-                        <small style="font-size: 1rem;">dB</small>
+                        <small class="fs-6 text-muted">dB</small>
                     </div>
                     
-                    <!-- Waveform Animation -->
-                    <div class="waveform my-3">
-                        {% for i in range(20) %}
-                        <div class="waveform-bar" style="animation-delay: {{ i * 0.05 }}s; height: {{ 20 + (sound_db * 0.5) }}px;"></div>
-                        {% endfor %}
+                    <!-- Simple Level Indicator -->
+                    <div class="my-3">
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-{{ 'danger' if sound_db > 80 else 'warning' if sound_db > 60 else 'info' }}" 
+                                 style="width: {{ sound_db }}%"></div>
+                        </div>
                     </div>
                     
                     <div class="row mt-3">
                         <div class="col-6">
-                            <span class="text-uppercase small text-secondary">Event</span>
-                            <h5 class="glow-text">{{ sound_event }}</h5>
+                            <span class="text-muted small">Event</span>
+                            <h6 class="fw-normal">{{ sound_event }}</h6>
                         </div>
                         <div class="col-6">
-                            <span class="text-uppercase small text-secondary">Baseline</span>
-                            <h5>{{ "%.1f"|format(sound_baseline) }} dB</h5>
+                            <span class="text-muted small">Baseline</span>
+                            <h6 class="fw-normal">{{ "%.1f"|format(sound_baseline) }} dB</h6>
                         </div>
                     </div>
                     
                     {% if sound_spike %}
-                    <div class="alert alert-danger mt-2 py-2" style="background: rgba(255,0,0,0.2); border: 1px solid red;">
-                        <span class="blink">⚠️ AUDIO SPIKE DETECTED</span>
+                    <div class="alert alert-warning mt-3 py-2">
+                        <small>⚠️ Audio Spike Detected</small>
                     </div>
                     {% endif %}
                 </div>
@@ -807,7 +645,7 @@
             ctx.clearRect(0, 0, width, height);
             
             // Draw grid
-            ctx.strokeStyle = 'rgba(0, 255, 255, 0.2)';
+            ctx.strokeStyle = '#dee2e6';
             ctx.lineWidth = 1;
             
             // Distance rings
@@ -838,7 +676,7 @@
             ctx.moveTo(centerX, centerY);
             ctx.lineTo(centerX + Math.cos(sweepRad) * maxRadius, 
                       centerY + Math.sin(sweepRad) * maxRadius);
-            ctx.strokeStyle = 'cyan';
+            ctx.strokeStyle = '#007bff';
             ctx.lineWidth = 2;
             ctx.stroke();
             
@@ -851,20 +689,20 @@
                 const rad = (angle - 90) * Math.PI / 180;
                 const r = (distance / 10) * maxRadius;
                 const x = centerX + Math.cos(rad) * r;
-                const y = centerY + Math.sin(rad) * r;
+                const y = centerY + Math.sin(rad) * maxRadius;
                 
                 // Target dot
                 ctx.beginPath();
-                ctx.arc(x, y, 5, 0, Math.PI * 2);
-                ctx.fillStyle = {{ 'true' if target.abnormal_breathing else 'false' }} ? '#ff0000' : '#00ffff';
-                ctx.shadowColor = {{ 'true' if target.abnormal_breathing else 'false' }} ? '#ff0000' : '#00ffff';
-                ctx.shadowBlur = 10;
+                ctx.arc(x, y, 6, 0, Math.PI * 2);
+                ctx.fillStyle = {{ 'true' if target.abnormal_breathing else 'false' }} ? '#dc3545' : '#007bff';
                 ctx.fill();
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
                 
                 // Target label
-                ctx.shadowBlur = 0;
-                ctx.font = '10px Orbitron';
-                ctx.fillStyle = '#ffffff';
+                ctx.font = '12px system-ui';
+                ctx.fillStyle = '#333';
                 ctx.fillText('{{ target.id }}', x + 10, y - 10);
             }
             {% endfor %}
@@ -876,16 +714,7 @@
     }
     
     function initParticles() {
-        const container = document.querySelector('.main-content');
-        for (let i = 0; i < 50; i++) {
-            const particle = document.createElement('div');
-            particle.className = 'particle';
-            particle.style.left = Math.random() * 100 + '%';
-            particle.style.top = Math.random() * 100 + '%';
-            particle.style.animationDelay = Math.random() * 10 + 's';
-            particle.style.animationDuration = 10 + Math.random() * 20 + 's';
-            container.appendChild(particle);
-        }
+        // Disabled - no particles in professional mode
     }
     
     function toggleFakeMode() {
