@@ -18,3 +18,11 @@ show snippet of person exiting or entering and create timestamps based off these
 list out all organic compounds and concentration of human detection, extreme vs normal, ventilation system, intensity of the event
 
 work with different sizes of washrooms for average calculation
+
+add like a tab for each bathroom cause schools have multiple bathrooms
+
+change the temperature of the summary based on the score, suggest an approach where observe activity or confront
+
+create a webpage with js code and create a summary for each section of code and make it look good and add a chatbot to ask
+
+add an authentication system
