@@ -28,3 +28,5 @@ create a webpage with js code and create a summary for each section of code and 
 add an authentication system
 
 create a feature to create a scenario for fake scenarios and change the value of the sensors to fit that on the fake data page for the website
+
+can you fix the ui in the sensors page to make it look better

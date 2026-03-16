@@ -6,6 +6,8 @@ Provides live visual readings, threat scores, and event history
 
 from flask import Flask, render_template, request, redirect, session, jsonify, flash, url_for, Response
 from flask_session import Session
+from werkzeug.security import generate_password_hash, check_password_hash
+from functools import wraps
 from datetime import datetime, timedelta
 import pytz
 import os
@@ -420,7 +422,336 @@ def generate_recent_logs(count=10):
         })
     return logs
 
-# ==================== ROUTES ====================
+# ==================== AUTHENTICATION FUNCTIONS ====================
+
+def login_required(f):
+    """Decorator to require login for routes"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            flash('Please log in to access this page.', 'warning')
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+def admin_required(f):
+    """Decorator to require admin privileges"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            flash('Please log in to access this page.', 'warning')
+            return redirect(url_for('login'))
+        if session.get('role') != 'admin':
+            flash('Admin access required for this page.', 'error')
+            return redirect(url_for('dashboard'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+def create_user(username, password, email, role='user'):
+    """Create a new user account"""
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Check if user already exists
+        cursor.execute("SELECT id FROM users WHERE username = ?", (username,))
+        if cursor.fetchone():
+            return False, "Username already exists"
+        
+        cursor.execute("SELECT id FROM users WHERE emailAddress = ?", (email,))
+        if cursor.fetchone():
+            return False, "Email already exists"
+        
+        # Create new user
+        password_hash = generate_password_hash(password)
+        cursor.execute("""
+            INSERT INTO users (username, password, emailAddress, role, dateJoined, accountStatus)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (username, password_hash, email, role, datetime.now().isoformat(), 'active'))
+        
+        conn.commit()
+        return True, "User created successfully"
+    except Exception as e:
+        app.logger.error(f"Error creating user: {e}")
+        return False, f"Error: {e}"
+    finally:
+        if conn:
+            conn.close()
+
+def authenticate_user(username, password):
+    """Authenticate user credentials"""
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT id, username, password, emailAddress, role, accountStatus
+            FROM users
+            WHERE username = ? OR emailAddress = ?
+        """, (username, username))
+        
+        user = cursor.fetchone()
+        if user and check_password_hash(user['password'], password):
+            if user['accountStatus'] == 'active':
+                return dict(user)
+            else:
+                return None  # Account inactive
+        return None
+    except Exception as e:
+        app.logger.error(f"Error authenticating user: {e}")
+        return None
+    finally:
+        if conn:
+            conn.close()
+
+def get_user_by_id(user_id):
+    """Get user information by ID"""
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT id, username, emailAddress, role, accountStatus, lastLogin
+            FROM users
+            WHERE id = ?
+        """, (user_id,))
+        
+        user = cursor.fetchone()
+        return dict(user) if user else None
+    except Exception as e:
+        app.logger.error(f"Error fetching user: {e}")
+        return None
+    finally:
+        if conn:
+            conn.close()
+
+def update_last_login(user_id):
+    """Update user's last login time"""
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            UPDATE users
+            SET lastLogin = ?
+            WHERE id = ?
+        """, (datetime.now().isoformat(), user_id))
+        
+        conn.commit()
+    except Exception as e:
+        app.logger.error(f"Error updating last login: {e}")
+    finally:
+        if conn:
+            conn.close()
+
+def get_all_users():
+    """Get all users for admin management"""
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT id, username, emailAddress, role, accountStatus, dateJoined, lastLogin
+            FROM users
+            ORDER BY dateJoined DESC
+        """)
+        
+        users = cursor.fetchall()
+        return [dict(user) for user in users]
+    except Exception as e:
+        app.logger.error(f"Error fetching users: {e}")
+        return []
+    finally:
+        if conn:
+            conn.close()
+
+def update_user_status(user_id, status):
+    """Update user account status"""
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            UPDATE users
+            SET accountStatus = ?
+            WHERE id = ?
+        """, (status, user_id))
+        
+        conn.commit()
+        return True
+    except Exception as e:
+        app.logger.error(f"Error updating user status: {e}")
+        return False
+    finally:
+        if conn:
+            conn.close()
+
+def delete_user(user_id):
+    """Delete a user account"""
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("DELETE FROM users WHERE id = ?", (user_id,))
+        conn.commit()
+        return True
+    except Exception as e:
+        app.logger.error(f"Error deleting user: {e}")
+        return False
+    finally:
+        if conn:
+            conn.close()
+
+# ==================== AUTHENTICATION ROUTES ====================
+
+@app.route("/login", methods=['GET', 'POST'])
+def login():
+    """Login page"""
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '')
+        
+        if not username or not password:
+            flash('Please enter both username and password.', 'error')
+            return render_template('login.html')
+        
+        user = authenticate_user(username, password)
+        if user:
+            session['user_id'] = user['id']
+            session['username'] = user['username']
+            session['email'] = user['emailAddress']
+            session['role'] = user['role']
+            session.permanent = True
+            
+            update_last_login(user['id'])
+            flash(f'Welcome back, {user["username"]}!', 'success')
+            return redirect(url_for('dashboard'))
+        else:
+            flash('Invalid username or password.', 'error')
+    
+    return render_template('login.html')
+
+@app.route("/logout")
+def logout():
+    """Logout user"""
+    session.clear()
+    flash('You have been logged out.', 'info')
+    return redirect(url_for('login'))
+
+@app.route("/register", methods=['GET', 'POST'])
+def register():
+    """User registration page"""
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        email = request.form.get('email', '').strip()
+        password = request.form.get('password', '')
+        confirm_password = request.form.get('confirm_password', '')
+        
+        # Validation
+        if not username or not email or not password:
+            flash('All fields are required.', 'error')
+            return render_template('register.html')
+        
+        if len(username) < 3:
+            flash('Username must be at least 3 characters.', 'error')
+            return render_template('register.html')
+        
+        if len(password) < 6:
+            flash('Password must be at least 6 characters.', 'error')
+            return render_template('register.html')
+        
+        if password != confirm_password:
+            flash('Passwords do not match.', 'error')
+            return render_template('register.html')
+        
+        if not re.match(r'^[^@\s]+@[^@\s]+\.[^@\s]+$', email):
+            flash('Please enter a valid email address.', 'error')
+            return render_template('register.html')
+        
+        # Create user
+        success, message = create_user(username, password, email)
+        if success:
+            flash('Account created successfully! Please log in.', 'success')
+            return redirect(url_for('login'))
+        else:
+            flash(message, 'error')
+    
+    return render_template('register.html')
+
+@app.route("/profile")
+@login_required
+def profile():
+    """User profile page"""
+    user = get_user_by_id(session['user_id'])
+    return render_template('profile.html', user=user)
+
+@app.route("/users")
+@admin_required
+def users():
+    """User management page for admins"""
+    all_users = get_all_users()
+    return render_template('users.html', users=all_users)
+
+@app.route("/users/create", methods=['POST'])
+@admin_required
+def create_user_route():
+    """Create new user (admin only)"""
+    username = request.form.get('username', '').strip()
+    email = request.form.get('email', '').strip()
+    password = request.form.get('password', '')
+    role = request.form.get('role', 'user')
+    
+    if not username or not email or not password:
+        flash('All fields are required.', 'error')
+        return redirect(url_for('users'))
+    
+    success, message = create_user(username, password, email, role)
+    if success:
+        flash(f'User {username} created successfully!', 'success')
+    else:
+        flash(message, 'error')
+    
+    return redirect(url_for('users'))
+
+@app.route("/users/<int:user_id>/status", methods=['POST'])
+@admin_required
+def update_user_status_route(user_id):
+    """Update user status (admin only)"""
+    status = request.form.get('status')
+    if status in ['active', 'inactive', 'suspended']:
+        if update_user_status(user_id, status):
+            flash(f'User status updated to {status}.', 'success')
+        else:
+            flash('Failed to update user status.', 'error')
+    else:
+        flash('Invalid status.', 'error')
+    
+    return redirect(url_for('users'))
+
+@app.route("/users/<int:user_id>/delete", methods=['POST'])
+@admin_required
+def delete_user_route(user_id):
+    """Delete user (admin only)"""
+    # Prevent self-deletion
+    if user_id == session['user_id']:
+        flash('You cannot delete your own account.', 'error')
+        return redirect(url_for('users'))
+    
+    if delete_user(user_id):
+        flash('User deleted successfully.', 'success')
+    else:
+        flash('Failed to delete user.', 'error')
+    
+    return redirect(url_for('users'))
+
+# ==================== PROTECTED ROUTES ====================
 
 @app.route("/")
 def index():
@@ -428,14 +759,16 @@ def index():
     return redirect(url_for('dashboard'))
 
 @app.route("/dashboard")
+@login_required
 def dashboard():
     """Live monitoring dashboard"""
     return render_template('dashboard.html',
                          current_time=datetime.now().isoformat())
 
 @app.route("/sensors")
+@login_required
 def sensors():
-    """Futuristic sensor dashboard"""
+    """Person tracking sensor dashboard"""
     # Get fake mode from query parameter
     fake_mode = request.args.get('fake', '1') == '1'
     
@@ -456,6 +789,7 @@ def sensors():
     return render_template('sensors.html', **data)
 
 @app.route("/history")
+@login_required
 def history():
     """Event history page"""
     events = get_recent_events(100)
@@ -492,6 +826,7 @@ def history():
                          current_time=datetime.now().isoformat())
 
 @app.route("/analytics")
+@login_required
 def analytics():
     """Analytics and charts page"""
     timeline = get_threat_timeline(24)
@@ -502,14 +837,16 @@ def analytics():
                          current_time=datetime.now().isoformat())
 
 @app.route("/targets")
+@login_required
 def targets_view():
-    """Target tracking view"""
+    """Person tracking view"""
     targets = get_target_history(30)
     return render_template('targets.html',
                          targets=targets,
                          current_time=datetime.now().isoformat())
 
 @app.route("/settings")
+@login_required
 def settings():
     """Settings page"""
     return render_template('settings.html',
