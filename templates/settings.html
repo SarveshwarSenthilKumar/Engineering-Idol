@@ -2,14 +2,47 @@
 
 {% block title %}Settings - Environmental Monitoring{% endblock %}
 
+{% block extra_css %}
+<style>
+    .settings-card {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .settings-card h5 {
+        color: #007bff;
+        font-weight: 600;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #007bff;
+        padding-bottom: 10px;
+    }
+    
+    .table td {
+        border-color: #dee2e6;
+    }
+    
+    .table td:first-child {
+        font-weight: 500;
+        color: #495057;
+        width: 200px;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">System Settings</h1>
+    <h1 class="h2">
+        <i class="bi bi-gear"></i> System Settings
+    </h1>
 </div>
 
 <div class="row">
     <div class="col-md-6">
-        <div class="stat-card">
+        <div class="settings-card">
             <h5>Alert Thresholds</h5>
             <form id="thresholds-form">
                 <div class="mb-3">
@@ -38,7 +71,7 @@
     </div>
     
     <div class="col-md-6">
-        <div class="stat-card">
+        <div class="settings-card">
             <h5>System Configuration</h5>
             <form id="config-form">
                 <div class="mb-3">
@@ -69,12 +102,12 @@
 
 <div class="row mt-4">
     <div class="col-12">
-        <div class="stat-card">
+        <div class="settings-card">
             <h5>System Status</h5>
             <table class="table">
                 <tr>
                     <td>Database Location</td>
-                    <td><code>{{ app.config['DATABASE_PATH'] }}</code></td>
+                    <td><code class="bg-light p-1 rounded">{{ app.config.get('DATABASE_PATH', 'N/A') }}</code></td>
                 </tr>
                 <tr>
                     <td>Last Database Write</td>
@@ -99,7 +132,7 @@
 
 <div class="row mt-4">
     <div class="col-12">
-        <div class="stat-card">
+        <div class="settings-card">
             <h5>Data Management</h5>
             <div class="btn-group" role="group">
                 <button class="btn btn-outline-primary" onclick="exportData()">
