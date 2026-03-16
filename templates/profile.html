@@ -78,6 +78,36 @@
         color: white;
     }
     
+    /* Username display with responsive font size */
+    .username-display {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 15px;
+        word-break: break-word;
+        max-width: 100%;
+        overflow-wrap: break-word;
+        hyphens: auto;
+    }
+    
+    /* Responsive username font size */
+    @media (max-width: 768px) {
+        .username-display {
+            font-size: 1.2rem;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .username-display {
+            font-size: 1rem;
+        }
+    }
+    
+    /* For very long usernames */
+    .username-display.long-username {
+        font-size: 1rem;
+        line-height: 1.2;
+    }
+    
     /* Status badges */
     .status-badge {
         padding: 6px 12px;
@@ -265,7 +295,7 @@
                 <div class="profile-avatar">
                     <i class="bi bi-person-fill"></i>
                 </div>
-                <h3>{{ user.get('username', 'Unknown User') }}</h3>
+                <h3 class="username-display">{{ user.get('username', 'Unknown User') }}</h3>
                 <div class="mb-3">
                     <span class="role-badge {{ user.get('role', 'user') }}">
                         {{ user.get('role', 'user').title() }}
@@ -512,4 +542,33 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Dynamic username font size adjustment
+    document.addEventListener('DOMContentLoaded', function() {
+        const usernameElement = document.querySelector('.username-display');
+        if (usernameElement) {
+            const username = usernameElement.textContent;
+            
+            // Check if username is too long and adjust font size
+            if (username.length > 15) {
+                usernameElement.classList.add('long-username');
+            }
+            
+            // Further adjust for very long usernames
+            if (username.length > 25) {
+                usernameElement.style.fontSize = '0.9rem';
+                usernameElement.style.lineHeight = '1.1';
+            }
+            
+            // For extremely long usernames
+            if (username.length > 35) {
+                usernameElement.style.fontSize = '0.8rem';
+                usernameElement.style.lineHeight = '1.0';
+            }
+        }
+    });
+</script>
 {% endblock %}
