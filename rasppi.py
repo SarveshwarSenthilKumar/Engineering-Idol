@@ -13,6 +13,7 @@ import adafruit_ads1x15.ads1115 as ADS
 from adafruit_ads1x15.analog_in import AnalogIn
 import numpy as np
 import math
+import random
 from collections import deque
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.cluster import DBSCAN
@@ -61,8 +62,11 @@ MQ135_CLEAN_AIR_RATIO = 3.6
 VOC_CLEAN_THRESHOLD = 50
 VOC_ACTIVITY_THRESHOLD = 80
 VOC_CHEMICAL_THRESHOLD = 120
+VOC_SMOKING_THRESHOLD = 150
+VOC_VAPING_THRESHOLD = 180
 PM_CLEAN_THRESHOLD = 10
 PM_SMOKE_THRESHOLD = 40
+PM_VAPING_THRESHOLD = 60
 
 # Radar Configuration
 RADAR_CONFIGS = {
@@ -127,9 +131,8 @@ class ThreatConfig:
             'long': 900     # 15 minutes
         }
         self.COMPONENT_WEIGHTS = {
-            'proximity': 0.25,
             'count': 0.15,
-            'behavior': 0.20,
+            'behavior': 0.45,  # Includes proximity
             'vital_signs': 0.15,
             'air_quality': 0.15,
             'noise': 0.10
@@ -1435,138 +1438,64 @@ class TemporalThreatScorer:
 
 class EnhancedThreatScorer:
     """Complete threat scoring system with temporal dynamics"""
-    
     def __init__(self):
         self.temporal = TemporalThreatScorer()
         self.config = ThreatConfig()
         
-    def calculate_proximity_threat(self, targets: List[Dict]) -> Tuple[float, float]:
-        """Calculate threat based on proximity"""
-        if not targets:
-            return 0, 1.0
-        
-        threat_score = 0
-        closest_distance = float('inf')
-        
-        for target in targets:
-            distance = target.get('distance', 10)
-            closest_distance = min(closest_distance, distance)
-            
-            # Exponential proximity threat
-            if distance < 1.0:
-                threat_score += 30
-            elif distance < 2.0:
-                threat_score += 15
-            elif distance < 3.0:
-                threat_score += 8
-            elif distance < 5.0:
-                threat_score += 3
-            
-            # Direction multiplier
-            if target.get('direction') == 'incoming':
-                threat_score *= 1.5
-            
-            # Loitering multiplier
-            if target.get('activity') == 'stationary' and distance < 3.0:
-                threat_score *= 1.3
-        
-        threat_score = min(100, threat_score)
-        confidence = 0.9 if closest_distance < 5 else 0.7
-        
-        return threat_score, confidence
-    
-    def calculate_count_threat(self, target_count: int) -> Tuple[float, float]:
-        """Calculate threat based on number of people"""
-        if target_count == 0:
-            return 0, 1.0
-        
-        # Exponential scaling for crowd size
-        if target_count <= 2:
-            threat = target_count * 15
-        elif target_count <= 4:
-            threat = 30 + (target_count - 2) * 20
-        else:
-            threat = 70 + (target_count - 4) * 10
-        
-        threat = min(100, threat)
-        confidence = 0.9 if target_count <= 5 else 0.7
-        
-        return threat, confidence
-    
     def calculate_behavior_threat(self, targets: List[Dict], motion_patterns: Dict,
                                  activity_events: List[Dict]) -> Tuple[float, float]:
-        """Calculate threat based on unusual behavior"""
+        """Calculate threat based on unusual behavior (includes proximity)"""
         threat_score = 0
         confidence = 0.8
         
         for target in targets:
             activity = target.get('activity', 'unknown')
+            distance = target.get('distance', 10)
             
             # Activity-based threats
             if activity == 'running':
                 threat_score += 25
             elif activity == 'transition' and target.get('activity_confidence', 0) > 0.7:
                 threat_score += 20
-            
-            # Abnormal breathing
-            if target.get('abnormal_breathing', False):
-                threat_score += 30
-                confidence = max(confidence, 0.9)
-        
-        # Motion pattern threats
-        if motion_patterns:
-            pattern = motion_patterns.get('pattern', '')
-            if pattern == 'chaotic':
+            elif activity == 'chaotic':
                 threat_score += 35
-            elif pattern == 'high_activity':
+            elif activity == 'high_activity':
                 threat_score += 15
-        
-        # Event-based threats
-        for event in activity_events:
-            if event['type'] == 'entry' and event.get('magnitude', 0) > 1:
-                threat_score += 10
-            elif event['type'] == 'possible_fall':
-                threat_score += 50
-                confidence = 0.95
-        
-        return min(100, threat_score), confidence
-    
-    def calculate_vital_signs_threat(self, targets: List[Dict]) -> Tuple[float, float]:
-        """Calculate threat based on abnormal vital signs"""
-        if not targets:
             return 0, 0.5
-        
+
         threat_score = 0
         total_targets = len(targets)
         abnormal_count = 0
-        
+
         for target in targets:
             if target.get('abnormal_breathing', False):
                 abnormal_count += 1
                 threat_score += 25
-            
+
             if 'breathing_rate' in target:
                 rate = target['breathing_rate']
                 if rate < 6:  # Dangerously low
                     threat_score += 50
                 elif rate > 30:  # Dangerously high
                     threat_score += 40
-        
+
         threat_score = min(100, threat_score)
         confidence = abnormal_count / max(total_targets, 1)
-        
+
         return threat_score, confidence
-    
+
     def calculate_air_quality_threat(self, odor_data: Optional[Dict]) -> Tuple[float, float]:
-        """Calculate threat from air quality sensors"""
+        """Calculate threat from air quality sensors (includes smoking/vaping detection)"""
         if not odor_data:
             return 0, 0.3
-        
+
         threat_score = 0
-        
-        # VOC exponential threat
+
+        # VOC exponential threat with smoking/vaping detection
         voc = odor_data.get('voc_ppm', 0)
-        if voc > 200:
+        if voc > 300:  # Extreme vaping/chemical
+            threat_score += 70
+        elif voc > 200:  # Toxic/gas leak
             threat_score += 50
         elif voc > 100:
             threat_score += 30
@@ -1574,38 +1503,50 @@ class EnhancedThreatScorer:
             threat_score += 15
         elif voc > 30:
             threat_score += 5
-        
-        # PM2.5 exponential threat
+
+        # PM2.5 exponential threat with smoking/vaping detection
         pm25 = odor_data.get('pm25', 0)
-        if pm25 > 100:
+        if pm25 > 150:  # Extreme vaping/heavy smoke
+            threat_score += 70
+        elif pm25 > 100:  # Heavy smoke/fire
             threat_score += 45
         elif pm25 > 50:
             threat_score += 25
         elif pm25 > 25:
             threat_score += 10
-        
-        # Odor type multiplier
+
+        # Enhanced odor type detection
         odor_type = odor_data.get('odor_type', '')
         if odor_type == 'strong_chemical':
             threat_score *= 1.5
+        elif odor_type == 'vaping_aerosol':  # New vaping detection
+            threat_score *= 1.4
+        elif odor_type == 'cigarette_smoke':  # New smoking detection
+            threat_score *= 1.3
         elif odor_type == 'dust_or_smoke':
             threat_score *= 1.3
-        
+
+        # Auto-alarm for extreme values
+        if voc > 300 or pm25 > 150 or (voc > 200 and pm25 > 100):
+            threat_score = max(threat_score, 85)  # Minimum threat level for smoking/vaping
+
         threat_score = min(100, threat_score)
         confidence = odor_data.get('classification_confidence', 0.5)
-        
+
         return threat_score, confidence
-    
+
     def calculate_noise_threat(self, sound_data: Optional[Dict]) -> Tuple[float, float]:
-        """Calculate threat from sound levels"""
+        """Calculate threat from sound levels (with auto-alarm for extreme values)"""
         if not sound_data:
             return 0, 0.3
-        
+
         db = sound_data.get('db', 40)
-        
+
         # Exponential noise threat
-        if db > 100:
+        if db > 110:  # Extreme noise + auto-alarm
             threat_score = 90
+        elif db > 100:
+            threat_score = 70
         elif db > 90:
             threat_score = 70
         elif db > 80:
@@ -1616,23 +1557,60 @@ class EnhancedThreatScorer:
             threat_score = 10
         else:
             threat_score = 0
-        
+
+        # Auto-alarm for extreme noise
+        if db > 110 or (sound_data.get('spike', False) and db > 100):
+            threat_score = max(threat_score, 90)  # Minimum threat level for extreme noise
+
         # Spike multiplier
         if sound_data.get('spike', False):
             threat_score *= 1.5
-        
+
         # Event multiplier
         event = sound_data.get('event', '')
         if event in ['impact', 'explosion']:
             threat_score *= 2.0
         elif event in ['door_slam', 'shouting']:
             threat_score *= 1.3
-        
+
         threat_score = min(100, threat_score)
         confidence = sound_data.get('confidence', 0.5)
-        
+
         return threat_score, confidence
-    
+
+    def calculate_vital_signs_threat(self, targets: List[Dict], behavior_score: float) -> Tuple[float, float]:
+        """Calculate threat based on abnormal vital signs (dependent on behavior)"""
+        if not targets:
+            return 0, 0.5
+
+        # Vital signs only matter if behavior is setting off errors
+        if behavior_score <= 70:
+            # Normal behavior - vital signs mostly ignored
+            threat_score = random.uniform(0, 30) if targets else 0
+            confidence = 0.3
+        else:
+            # Abnormal behavior - vital signs mirror behavior severity
+            threat_score = behavior_score
+            confidence = 0.8
+
+            # Additional vital signs penalties for severe cases
+            abnormal_count = 0
+            for target in targets:
+                if target.get('abnormal_breathing', False):
+                    abnormal_count += 1
+                    threat_score += 10  # Additional penalty
+
+                if 'breathing_rate' in target:
+                    rate = target['breathing_rate']
+                    if rate < 6:  # Dangerously low
+                        threat_score += 20
+                    elif rate > 30:  # Dangerously high
+                        threat_score += 15
+
+        threat_score = min(100, threat_score)
+
+        return threat_score, confidence
+
     def calculate_overall_threat(self, radar_data: Optional[Dict], 
                                 odor_data: Optional[Dict],
                                 sound_data: Optional[Dict],
@@ -1642,12 +1620,14 @@ class EnhancedThreatScorer:
         
         targets = radar_data.get('targets', []) if radar_data else []
         
-        # Calculate base component threats
+        # Calculate base component threats (NEW FORMULA)
+        # First get behavior score to pass to vital signs
+        behavior_score_raw = self.calculate_behavior_threat(targets, motion_patterns, activity_events)[0]
+        
         components_raw = {
-            'proximity': self.calculate_proximity_threat(targets),
             'count': self.calculate_count_threat(len(targets)),
             'behavior': self.calculate_behavior_threat(targets, motion_patterns, activity_events),
-            'vital_signs': self.calculate_vital_signs_threat(targets),
+            'vital_signs': self.calculate_vital_signs_threat(targets, behavior_score_raw),
             'air_quality': self.calculate_air_quality_threat(odor_data),
             'noise': self.calculate_noise_threat(sound_data)
         }
