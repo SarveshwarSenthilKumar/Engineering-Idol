@@ -57,6 +57,8 @@ The system uses these thresholds:
 - **Detailed Context**: Includes threat components, trends, and sensor data
 - **Professional Formatting**: Rich formatting for both email and Teams
 - **Error Handling**: Graceful fallback if one service fails
+- **Graceful Degradation**: System works without credentials - notifications are simply disabled
+- **Configuration Validation**: Checks credentials on startup and provides clear warnings
 
 ## Testing
 

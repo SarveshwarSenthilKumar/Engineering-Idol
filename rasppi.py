@@ -2181,8 +2181,32 @@ class NotificationManager:
         self.misbehavior_active = False
         self.notification_cooldown = 300  # 5 minutes between same notification type
         
+        # Check if credentials are properly configured
+        self.gmail_configured = (
+            GMAIL_SENDER_EMAIL != "your-email@gmail.com" and 
+            GMAIL_SENDER_PASSWORD != "your-app-password" and
+            GMAIL_RECIPIENT_EMAIL != "front-office@school.edu"
+        )
+        
+        self.teams_configured = (
+            TEAMS_WEBHOOK_URL != "https://your-tenant.webhook.office.com/webhookb3/..."
+        )
+        
+        if not self.gmail_configured:
+            logger.warning("⚠️ Gmail credentials not configured - email notifications disabled")
+        if not self.teams_configured:
+            logger.warning("⚠️ Teams webhook not configured - Teams notifications disabled")
+        if self.gmail_configured or self.teams_configured:
+            logger.info("✅ Notification system initialized")
+        else:
+            logger.warning("⚠️ No notification channels configured - running without notifications")
+        
     def send_gmail_notification(self, subject: str, message: str, is_urgent: bool = False):
         """Send notification via Gmail"""
+        if not self.gmail_configured:
+            logger.debug("Gmail not configured - skipping email notification")
+            return False
+            
         try:
             msg = MimeMultipart()
             msg['From'] = GMAIL_SENDER_EMAIL
@@ -2216,6 +2240,10 @@ class NotificationManager:
     
     def send_teams_notification(self, message: str, is_urgent: bool = False):
         """Send notification via Microsoft Teams webhook"""
+        if not self.teams_configured:
+            logger.debug("Teams not configured - skipping Teams notification")
+            return False
+            
         try:
             payload = {
                 "@type": "MessageCard",
