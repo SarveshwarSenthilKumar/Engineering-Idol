@@ -22,7 +22,13 @@ import json
 from datetime import datetime, timedelta
 from scipy import signal as scipy_signal
 from scipy import ndimage
-from scipy.stats import pearsonr
+import smtplib
+import ssl
+from email.mime.text import MimeText
+from email.mime.multipart import MimeMultipart
+import requests
+import json as json_lib
+from datetime import datetime
 import threading
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
@@ -67,6 +73,19 @@ VOC_VAPING_THRESHOLD = 180
 PM_CLEAN_THRESHOLD = 10
 PM_SMOKE_THRESHOLD = 40
 PM_VAPING_THRESHOLD = 60
+# Notification Configuration
+GMAIL_SMTP_SERVER = "smtp.gmail.com"
+GMAIL_SMTP_PORT = 587
+GMAIL_SENDER_EMAIL = "your-email@gmail.com"  # Update with your email
+GMAIL_SENDER_PASSWORD = "your-app-password"  # Update with your app password
+GMAIL_RECIPIENT_EMAIL = "front-office@school.edu"  # Update with recipient
+
+TEAMS_WEBHOOK_URL = "https://your-tenant.webhook.office.com/webhookb3/..."  # Update with your Teams webhook
+
+# Notification thresholds
+ALARM_NOTIFICATION_THRESHOLD = 80  # Send alarm notification when threat >= this
+MISBEHAVIOR_NOTIFICATION_THRESHOLD = 60  # Track misbehavior above this level
+MISBEHAVIOR_EXIT_THRESHOLD = 40  # Send exit notification when threat drops below this
 
 # Radar Configuration
 RADAR_CONFIGS = {
@@ -2151,6 +2170,216 @@ signal.signal(signal.SIGQUIT, signal_handler)  # Ctrl+\
 radar_processor = RadarProcessor(radar_type=RADAR_TYPE, port=RADAR_PORT)
 threat_scorer = EnhancedThreatScorer()
 quality_scorer = EnvironmentalQualityScorer()
+# ==================== NOTIFICATION MANAGER ====================
+
+class NotificationManager:
+    """Manages notifications via Gmail and Microsoft Teams"""
+    
+    def __init__(self):
+        self.last_alarm_notification = 0
+        self.last_misbehavior_notification = 0
+        self.misbehavior_active = False
+        self.notification_cooldown = 300  # 5 minutes between same notification type
+        
+    def send_gmail_notification(self, subject: str, message: str, is_urgent: bool = False):
+        """Send notification via Gmail"""
+        try:
+            msg = MimeMultipart()
+            msg['From'] = GMAIL_SENDER_EMAIL
+            msg['To'] = GMAIL_RECIPIENT_EMAIL
+            msg['Subject'] = f"{'🚨 URGENT: ' if is_urgent else 'ℹ️ INFO: '}{subject}"
+            
+            body = f"""
+            🕐 Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+            📍 Location: Bathroom Monitoring System
+            📊 System: {SYSTEM_NAME} v{VERSION}
+            
+            {message}
+            
+            ---
+            This is an automated message from the Environmental Monitoring System.
+            """
+            msg.attach(MimeText(body, 'plain'))
+            
+            context = ssl.create_default_context()
+            with smtplib.SMTP(GMAIL_SMTP_SERVER, GMAIL_SMTP_PORT) as server:
+                server.starttls(context=context)
+                server.login(GMAIL_SENDER_EMAIL, GMAIL_SENDER_PASSWORD)
+                server.send_message(msg)
+                
+            logger.info(f"✅ Gmail notification sent: {subject}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to send Gmail notification: {e}")
+            return False
+    
+    def send_teams_notification(self, message: str, is_urgent: bool = False):
+        """Send notification via Microsoft Teams webhook"""
+        try:
+            payload = {
+                "@type": "MessageCard",
+                "@context": "http://schema.org/extensions",
+                "themeColor": "FF0000" if is_urgent else "0078D4",
+                "summary": "{'🚨 ALARM' if is_urgent else 'ℹ️ NOTICE'}: Bathroom Monitor",
+                "sections": [{
+                    "activityTitle": "{'🚨 SECURITY ALERT' if is_urgent else 'ℹ️ SYSTEM NOTICE'}",
+                    "activitySubtitle": f"🕐 {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+                    "facts": [{
+                        "name": "System",
+                        "value": f"{SYSTEM_NAME} v{VERSION}"
+                    }, {
+                        "name": "Location",
+                        "value": "Bathroom Monitoring System"
+                    }, {
+                        "name": "Priority",
+                        "value": "🚨 HIGH" if is_urgent else "ℹ️ Normal"
+                    }],
+                    "text": message
+                }]
+            }
+            
+            response = requests.post(TEAMS_WEBHOOK_URL, 
+                                    json=payload, 
+                                    headers={'Content-Type': 'application/json'},
+                                    timeout=10)
+            
+            if response.status_code == 200:
+                logger.info(f"✅ Teams notification sent successfully")
+                return True
+            else:
+                logger.error(f"❌ Teams notification failed: {response.status_code} - {response.text}")
+                return False
+                
+        except Exception as e:
+            logger.error(f"❌ Failed to send Teams notification: {e}")
+            return False
+    
+    def send_alarm_notification(self, threat_data: Dict, sensor_data: Dict = None):
+        """Send alarm notification when threat level is critical"""
+        current_time = time.time()
+        
+        # Check cooldown and threshold
+        if (current_time - self.last_alarm_notification < self.notification_cooldown or 
+            threat_data['overall_threat'] < ALARM_NOTIFICATION_THRESHOLD):
+            return False
+        
+        # Determine alarm reason
+        alarm_reasons = []
+        
+        # Check component threats
+        if threat_data['components']['air_quality']['score'] > 80:
+            alarm_reasons.append("🚬 Poor air quality/smoking detected")
+        if threat_data['components']['noise']['score'] > 80:
+            alarm_reasons.append("🔊 Extreme noise levels")
+        if threat_data['components']['behavior']['score'] > 75:
+            alarm_reasons.append("🏃 Abnormal behavior detected")
+        if threat_data['components']['vital_signs']['score'] > 70:
+            alarm_reasons.append("😮 Abnormal vital signs")
+        
+        # Create alarm message
+        subject = f"ALARM TRIGGERED - Threat Level: {threat_data['level']} ({threat_data['overall_threat']:.0f}/100)"
+        
+        message = f"""
+🚨 **IMMEDIATE ATTENTION REQUIRED** 🚨
+
+**Threat Level:** {threat_data['level']} ({threat_data['overall_threat']:.0f}/100)
+**Response:** {threat_data['response']}
+
+**Detected Issues:**
+{chr(10).join(f'• {reason}' for reason in alarm_reasons) if alarm_reasons else '• Critical threat level detected'}
+
+**Component Breakdown:**
+• Count: {threat_data['components']['count']['score']:.0f}/100
+• Behavior: {threat_data['components']['behavior']['score']:.0f}/100
+• Vital Signs: {threat_data['components']['vital_signs']['score']:.0f}/100
+• Air Quality: {threat_data['components']['air_quality']['score']:.0f}/100
+• Noise: {threat_data['components']['noise']['score']:.0f}/100
+
+**Trend:** {threat_data['temporal']['trend'].upper()}
+**Confidence:** {threat_data['confidence']*100:.0f}%
+
+📍 **Location:** Bathroom Monitoring System
+🕐 **Time:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+        """
+        
+        # Send notifications
+        gmail_success = self.send_gmail_notification(subject, message, is_urgent=True)
+        teams_success = self.send_teams_notification(message, is_urgent=True)
+        
+        if gmail_success or teams_success:
+            self.last_alarm_notification = current_time
+            return True
+        
+        return False
+    
+    def send_misbehavior_exit_notification(self, threat_data: Dict, duration_minutes: float = 0):
+        """Send notification when misbehaving people have left"""
+        current_time = time.time()
+        
+        # Check cooldown and ensure misbehavior was active
+        if (not self.misbehavior_active or 
+            current_time - self.last_misbehavior_notification < self.notification_cooldown):
+            return False
+        
+        # Create exit message
+        subject = f"MISBEHAVIOR RESOLVED - Threat Level: {threat_data['level']} ({threat_data['overall_threat']:.0f}/100)"
+        
+        message = f"""
+✅ **SITUATION RESOLVED** ✅
+
+**Current Threat Level:** {threat_data['level']} ({threat_data['overall_threat']:.0f}/100)
+**Status:** Normal conditions have resumed
+
+**Event Duration:** {duration_minutes:.1f} minutes
+**Resolution Time:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+
+**Current Component Status:**
+• Count: {threat_data['components']['count']['score']:.0f}/100
+• Behavior: {threat_data['components']['behavior']['score']:.0f}/100
+• Vital Signs: {threat_data['components']['vital_signs']['score']:.0f}/100
+• Air Quality: {threat_data['components']['air_quality']['score']:.0f}/100
+• Noise: {threat_data['components']['noise']['score']:.0f}/100
+
+**Trend:** {threat_data['temporal']['trend'].upper()}
+
+📍 **Location:** Bathroom Monitoring System
+🕐 **Time:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+        """
+        
+        # Send notifications
+        gmail_success = self.send_gmail_notification(subject, message, is_urgent=False)
+        teams_success = self.send_teams_notification(message, is_urgent=False)
+        
+        if gmail_success or teams_success:
+            self.last_misbehavior_notification = current_time
+            self.misbehavior_active = False
+            return True
+        
+        return False
+    
+    def check_and_notify(self, threat_data: Dict, sensor_data: Dict = None):
+        """Check threat levels and send appropriate notifications"""
+        current_threat = threat_data['overall_threat']
+        
+        # Check for alarm conditions
+        if current_threat >= ALARM_NOTIFICATION_THRESHOLD:
+            self.send_alarm_notification(threat_data, sensor_data)
+        
+        # Track misbehavior state
+        elif current_threat >= MISBEHAVIOR_NOTIFICATION_THRESHOLD:
+            if not self.misbehavior_active:
+                self.misbehavior_active = True
+                logger.info(f"🚨 Misbehavior detected - threat level: {current_threat:.0f}")
+        
+        # Check for misbehavior resolution
+        elif current_threat <= MISBEHAVIOR_EXIT_THRESHOLD and self.misbehavior_active:
+            self.send_misbehavior_exit_notification(threat_data)
+            logger.info(f"✅ Misbehavior resolved - threat level: {current_threat:.0f}")
+
+# Initialize notification manager
+notification_manager = NotificationManager()
+
 db_manager = DatabaseManager()
 
 # ==================== MAIN LOOP ====================
@@ -2227,6 +2456,15 @@ def main():
                 threat_data = threat_scorer.calculate_overall_threat(
                     radar_data, odor_analysis, sound_analysis, motion_patterns, activity_events
                 )
+                
+                # ===== NOTIFICATION SYSTEM =====
+                # Check and send notifications based on threat level
+                notification_manager.check_and_notify(threat_data, {
+                    'radar': radar_data,
+                    'odor': odor_analysis,
+                    'sound': sound_analysis,
+                    'motion': motion_patterns
+                })
                 
                 quality_data = quality_scorer.calculate_quality(
                     threat_data, sound_analysis, odor_analysis, radar_data
