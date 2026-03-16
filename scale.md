@@ -18,9 +18,13 @@ Think of it like a thermometer:
 ## 🔴 **THREAT SCORE = 6 COMPONENTS ADDED TOGETHER**
 
 ```
-THREAT = (Proximity × 0.25) + (Count × 0.15) + (Behavior × 0.20) + 
+THREAT = (Proximity × 0.15) + (Count × 0.15) + (Behavior × 0.30) + 
          (Vital Signs × 0.15) + (Air Quality × 0.15) + (Noise × 0.10)
 ```
+
+Weigh down the proximity and tone down the distance thresholds
+Update it so that the vital signs unless behavior is setting off errors
+Not mentioned: if air quality is high enough, the alarm is set off
 
 ### **Component 1: PROXIMITY THREAT** (from RADAR)
 
