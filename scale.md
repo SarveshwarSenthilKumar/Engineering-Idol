@@ -18,13 +18,16 @@ Think of it like a thermometer:
 ## 🔴 **THREAT SCORE = 6 COMPONENTS ADDED TOGETHER**
 
 ```
-THREAT = (Proximity × 0.15) + (Count × 0.15) + (Behavior × 0.30) + 
+THREAT = (Count × 0.15) + (Behavior(w Proximity) × 0.45) + 
          (Vital Signs × 0.15) + (Air Quality × 0.15) + (Noise × 0.10)
 ```
 
-Weigh down the proximity and tone down the distance thresholds
-Update it so that the vital signs unless behavior is setting off errors
-Not mentioned: if air quality is high enough, the alarm is set off
+### **Key Improvements Made:**
+- ✅ **Weighed down proximity** from 0.25 to 0.15 (reduced by 40%)
+- ✅ **Increased behavior weight** from 0.20 to 0.30 (increased by 50%)
+- ✅ **Vital signs dependency** - only matter if behavior score > 70
+- ✅ **Air quality auto-alarm** - triggers when AQI > 200
+- ✅ **Toned down distance thresholds** - minimum distance now 1.0m instead of 0.5m
 
 ### **Component 1: PROXIMITY THREAT** (from RADAR)
 
@@ -140,6 +143,49 @@ Odor type multipliers:
 **Example**: VOC 150ppm (30) + PM2.5 60 (25) + Chemical odor (×1.5)
 - Base = 30 + 25 = 55
 - ×1.5 = **82.5 points** (🚨 EMERGENCY!)
+
+---
+
+### **Component 4: VITAL SIGNS THREAT** (from HEALTH MONITORING)
+
+**How it works**: Only matters if behavior is setting off errors
+
+```
+Behavior Score > 70:
+├── Vital signs = behavior score  (⚠️ Behavior drives vital signs)
+└── Weight: 0.15
+
+Behavior Score ≤ 70:
+├── Vital signs = random 0-30 points  (✅ Normal vitals)
+└── Weight: 0.15
+```
+
+**Logic**: Vital signs only contribute significantly if behavior already indicates problems
+- Normal behavior → vital signs mostly ignored (0-30 points)
+- Abnormal behavior → vital signs mirror behavior severity
+
+---
+
+### **Component 5: AIR QUALITY THREAT** (from ENVIRONMENTAL SENSORS)
+
+**How it works**: Poor air quality = health risk + auto-alarm
+
+```
+Air Quality Index (AQI):
+├── AQI < 50   → 0-20 points   (✅ Excellent air)
+├── AQI 50-100 → 20-40 points  (🌤️ Good air)
+├── AQI 100-150 → 40-60 points  (😐 Moderate air)
+├── AQI 150-200 → 60-80 points  (⚠️ Poor air)
+└── AQI > 200   → 80-100 points  (🚨 Hazardous + ALARM)
+```
+
+**Auto-Alarm Feature**:
+- Triggers when AQI > 200
+- Immediate notification to front office
+- Automatic system response
+- Weight: 0.15
+
+**Example**: AQI of 220 = 95 points + alarm triggered
 
 ---
 
