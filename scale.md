@@ -9,72 +9,29 @@ Your system produces **2 main scores**:
 Think of it like a thermometer:
 - **0-20**: Everything is perfect (🟢)
 - **20-40**: Minor issues (🟡)
-- **40-60**: Getting concerning (🟠)
-- **60-80**: Dangerous (🔴)
-- **80-100**: CRITICAL EMERGENCY (⚫)
 
 ---
 
-## 🔴 **THREAT SCORE = 6 COMPONENTS ADDED TOGETHER**
+## THREAT SCORE = 5 COMPONENTS ADDED TOGETHER
 
 ```
 THREAT = (Count × 0.15) + (Behavior(w Proximity) × 0.45) + 
          (Vital Signs × 0.15) + (Air Quality × 0.15) + (Noise × 0.10)
 ```
 
-### **Key Improvements Made:**
-- ✅ **Weighed down proximity** from 0.25 to 0.15 (reduced by 40%)
-- ✅ **Increased behavior weight** from 0.20 to 0.30 (increased by 50%)
-- ✅ **Vital signs dependency** - only matter if behavior score > 70
-- ✅ **Air quality auto-alarm** - triggers when AQI > 200
-- ✅ **Toned down distance thresholds** - minimum distance now 1.0m instead of 0.5m
-
-### **Component 1: PROXIMITY THREAT** (from RADAR)
-
-**How it works**: The closer someone is, the higher the threat
-
-```
-Distance from radar:
-├── < 1 meter  → +30 points  (🚨 Intruder right next to you!)
-├── 1-2 meters → +15 points  (⚠️ Very close)
-├── 2-3 meters → +8 points   (😐 Getting closer)
-├── 3-5 meters → +3 points   (👤 In the room)
-└── > 5 meters → 0 points    (✅ Safe distance)
-
-Multipliers:
-├── Moving TOWARD radar → ×1.5 (Coming closer = worse)
-├── Standing still near radar (<3m) → ×1.3 (Loitering = suspicious)
-└── Moving AWAY → ×1.0 (Leaving = normal)
-```
-
-**Example**: Someone at 1.5 meters walking toward you
-- Base: 15 points
-- ×1.5 (incoming) = **22.5 points**
+### Key Improvements Made:
+- Combined proximity with behavior - now Behavior(w Proximity) × 0.45
+- Removed separate proximity component - integrated into behavior scoring
+- Vital signs dependency - only matter if behavior score > 70
+- Air quality auto-alarm - triggers when AQI > 200 or extreme values
+- Noise auto-alarm - triggers when > 110dB or spike > 100dB
+- Extreme value protection - high air quality or noise can set off alarm regardless
 
 ---
 
-### **Component 2: COUNT THREAT** (from RADAR)
+### **Component 2: BEHAVIOR THREAT** (from RADAR + ACTIVITY - includes proximity)
 
-**How it works**: More people = exponentially worse
-
-```
-Number of people:
-├── 0 people → 0 points     (Empty room)
-├── 1 person → 15 points    (👤 One person)
-├── 2 people → 30 points    (👥 Two people - normal)
-├── 3 people → 50 points    (👥👤 Three - getting crowded)
-├── 4 people → 70 points    (👥👥 Four - party!)
-├── 5 people → 80 points    (👥👥👤 Five - very crowded)
-└── 6+ people → 90+ points  (👥👥👥 Crowd - chaos!)
-```
-
-**Example**: 4 people in room = **70 points**
-
----
-
-### **Component 3: BEHAVIOR THREAT** (from RADAR + ACTIVITY)
-
-**How it works**: Unusual activities = higher threat
+**How it works**: Unusual activities + proximity = higher threat
 
 ```
 Activity type:
@@ -84,65 +41,42 @@ Activity type:
 ├── High activity   → +15 points  (🏋️ Normal movement)
 └── Normal/Still    → 0 points    (🧘 Relaxed)
 
+Proximity factors (integrated):
+├── < 1 meter  → +15 points  (🚨 Very close)
+├── 1-2 meters → +8 points   (⚠️ Close)
+├── 2-3 meters → +3 points   (😐 Nearby)
+└── > 3 meters → 0 points    (✅ Safe distance)
+
 Special events:
 ├── Possible fall   → +50 points  (😵 Medical emergency!)
 ├── Abnormal breathing → +30 points (😮‍💨 Distressed/panicked)
 └── Normal breathing → 0 points
 ```
 
-**Example**: Someone running (25) with abnormal breathing (30) = **55 points**
+**Weight: 0.45** (includes proximity factor)
+
+**Example**: Someone running 1.5m away (25 + 8) with abnormal breathing (30) = **63 points**
 
 ---
 
-### **Component 4: VITAL SIGNS THREAT** (from RADAR BREATHING)
+### **Component 3: COUNT THREAT** (from RADAR)
 
-**How it works**: Breathing too fast/slow = medical emergency
-
-```
-Breathing rate (breaths per minute):
-├── < 6 bpm  → +50 points  (😴 Unconscious/overdose!)
-├── 6-8 bpm  → +30 points  (😰 Dangerously slow)
-├── 8-12 bpm → +15 points  (😐 Slower than normal)
-├── 12-24 bpm → 0 points   (✅ Normal range)
-├── 24-30 bpm → +20 points (😤 Rapid breathing)
-└── > 30 bpm  → +40 points (😱 Hyperventilating/panic)
-
-Abnormal flag:
-├── Yes → +25 points  (Any abnormal pattern)
-└── No  → 0 points
-```
-
-**Example**: Person breathing 8 bpm (30) + abnormal flag (25) = **55 points**
-
----
-
-### **Component 5: AIR QUALITY THREAT** (from MQ135 + PMS5003)
-
-**How it works**: Bad air = health hazard
+**How it works**: More people = exponentially worse
 
 ```
-VOC (Volatile Organic Compounds) in ppm:
-├── > 200 ppm → +50 points  (☠️ Toxic! Gas leak/chemical spill)
-├── 100-200 ppm → +30 points (⚠️ Dangerous fumes)
-├── 50-100 ppm → +15 points  (😷 Poor air quality)
-├── 30-50 ppm  → +5 points   (😐 Slightly stuffy)
-└── < 30 ppm   → 0 points    (✅ Fresh air)
-
-PM2.5 (Particulate Matter) in µg/m³:
-├── > 100 → +45 points  (🔥 Smoke/fire!)
-├── 50-100 → +25 points (🚬 Heavy pollution)
-├── 25-50  → +10 points (😮‍💨 Moderate pollution)
-└── < 25   → 0 points   (✅ Clean air)
-
-Odor type multipliers:
-├── Strong chemical → ×1.5 (🧪 Gas leak)
-├── Dust/smoke      → ×1.3 (🔥 Fire)
-└── Normal          → ×1.0
+Number of people:
+├── 0 people → 0 points     (Empty room)
+├── 1 person → 15 points    (👤 One person)
+├── 2 people → 30 points    (👥 Two people - normal)
+├── 3 people → 50 points    (👥👤 Three - getting crowded)
+├── 4 people → 70 points    (�👥 Four - party!)
+├── 5 people → 80 points    (👥👥👤 Five - very crowded)
+└── 6+ people → 90+ points  (��👥 Crowd - chaos!)
 ```
 
-**Example**: VOC 150ppm (30) + PM2.5 60 (25) + Chemical odor (×1.5)
-- Base = 30 + 25 = 55
-- ×1.5 = **82.5 points** (🚨 EMERGENCY!)
+**Weight: 0.15**
+
+**Example**: 4 people in room = **70 points**
 
 ---
 
@@ -168,7 +102,7 @@ Behavior Score ≤ 70:
 
 ### **Component 5: AIR QUALITY THREAT** (from ENVIRONMENTAL SENSORS)
 
-**How it works**: Poor air quality = health risk + auto-alarm
+**How it works**: Poor air quality = health risk + auto-alarm + smoking/vaping detection
 
 ```
 Air Quality Index (AQI):
@@ -177,15 +111,29 @@ Air Quality Index (AQI):
 ├── AQI 100-150 → 40-60 points  (😐 Moderate air)
 ├── AQI 150-200 → 60-80 points  (⚠️ Poor air)
 └── AQI > 200   → 80-100 points  (🚨 Hazardous + ALARM)
+
+**Smoking/Vaping Detection**:
+├── VOC > 150ppm + PM2.5 > 40  → Smoking detected (🚬)
+├── VOC > 180ppm + PM2.5 > 60  → Vaping detected (💨)
+├── VOC > 300ppm OR PM2.5 > 150 → Extreme vaping/chemical (☠️)
+└── Combined VOC+PM2.5 thresholds → Enhanced detection
+
+**Odor Type Classification**:
+├── Cigarette smoke → ×1.3 multiplier (🚬)
+├── Vaping aerosol → ×1.4 multiplier (💨)
+├── Strong chemical → ×1.5 multiplier (🧪)
+├── Dust/smoke → ×1.3 multiplier (🔥)
+└── Normal → ×1.0
 ```
 
 **Auto-Alarm Feature**:
-- Triggers when AQI > 200
+- Triggers when AQI > 200 OR VOC > 300 OR PM2.5 > 150
+- Triggers when smoking/vaping detected at high levels
+- Sets minimum threat level to 85 regardless of other factors
 - Immediate notification to front office
-- Automatic system response
 - Weight: 0.15
 
-**Example**: AQI of 220 = 95 points + alarm triggered
+**Example**: Vaping detected (VOC 200ppm + PM2.5 80) = 70 × 1.4 = **98 points + alarm**
 
 ---
 
@@ -195,19 +143,25 @@ Air Quality Index (AQI):
 
 ```
 Sound level in decibels:
-├── > 100 dB → 90 points  (💥 Explosion/gunshot!)
-├── 90-100 dB → 70 points (🔊 Screaming/alarm)
+├── > 110 dB → 90 points  (💥 Explosion/gunshot! + ALARM)
+├── 90-110 dB → 70 points (🔊 Screaming/alarm)
 ├── 80-90 dB  → 45 points (📢 Shouting/loud music)
 ├── 70-80 dB  → 25 points (🗣️ Loud conversation)
 ├── 60-70 dB  → 10 points (💬 Normal conversation)
 └── < 60 dB   → 0 points  (🤫 Quiet)
-
-Multipliers:
-├── Sudden spike → ×1.5 (💥 Bang/crash)
-├── Impact sound → ×2.0 (💢 Breaking glass)
-├── Door slam    → ×1.3 (🚪)
-└── Normal       → ×1.0
 ```
+
+**Auto-Alarm Feature**:
+- Triggers when > 110dB OR spike > 100dB
+- Sets minimum threat level to 90 regardless of other factors
+- Immediate notification to front office
+- Weight: 0.10
+
+**Multipliers**:
+- Sudden spike → ×1.5 (💥 Bang/crash)
+- Impact sound → ×2.0 (💢 Breaking glass)
+- Door slam → ×1.3 (🚪)
+- Normal → ×1.0
 
 **Example**: 95dB scream (70) × spike (1.5) = **105 → capped at 100 points**
 

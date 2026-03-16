@@ -26,3 +26,5 @@ change the temperature of the summary based on the score, suggest an approach wh
 create a webpage with js code and create a summary for each section of code and make it look good and add a chatbot to ask
 
 add an authentication system
+
+send two pings, one when the alarm is triggered as a caution and one when the misbehaving people are left, use both microsoft teams and gmail 
