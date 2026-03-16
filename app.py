@@ -14,6 +14,8 @@ import json
 import sqlite3
 import threading
 import time
+import math
+import random
 from dotenv import load_dotenv
 import queue
 from collections import deque
@@ -28,10 +30,13 @@ app = Flask(__name__)
 app.config["SESSION_PERMANENT"] = True
 app.config["SESSION_TYPE"] = "filesystem"
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', os.urandom(24).hex())
-app.config['DATABASE_PATH'] = os.getenv('DATABASE_PATH', 'events.db')
+app.config['DATABASE_PATH'] = os.getenv('DATABASE_PATH', '../users.db')
 
 # Initialize extensions
 Session(app)
+
+# Start time for uptime calculation
+START_TIME = datetime.now()
 
 # Global data store for live readings
 class LiveDataStore:
@@ -232,6 +237,177 @@ def get_target_history(minutes=30):
         if conn:
             conn.close()
 
+# ==================== FAKE DATA GENERATION ====================
+
+def generate_fake_sensor_data():
+    """Generate fake sensor data for demonstration"""
+    
+    # People count and targets
+    people_count = random.randint(0, 5)
+    targets = []
+    active_targets = 0
+    abnormal_count = 0
+    
+    for i in range(people_count):
+        activity = random.choice(['stationary', 'sitting', 'walking', 'running'])
+        if activity in ['walking', 'running']:
+            active_targets += 1
+            
+        abnormal = random.random() < 0.2
+        if abnormal:
+            abnormal_count += 1
+            
+        targets.append({
+            'id': f"T{random.randint(1,99):02d}",
+            'distance': round(random.uniform(0.5, 8.0), 2),
+            'angle': round(random.uniform(-60, 60), 1),
+            'activity': activity,
+            'abnormal_breathing': abnormal
+        })
+    
+    # Threat data
+    threat_score = random.uniform(10, 95)
+    if threat_score > 80:
+        threat_level = "CRITICAL"
+    elif threat_score > 60:
+        threat_level = "HIGH"
+    elif threat_score > 40:
+        threat_level = "ELEVATED"
+    elif threat_score > 20:
+        threat_level = "MODERATE"
+    else:
+        threat_level = "LOW"
+    
+    # Air quality
+    voc = random.uniform(20, 250)
+    pm25 = random.randint(5, 120)
+    aqi = (voc / 100 * 50) + (pm25 / 35 * 50)
+    
+    odor_types = ['clean_air', 'human_activity', 'moderate_odor', 'strong_chemical', 'dust_or_smoke']
+    odor_type = random.choice(odor_types)
+    
+    # Sound
+    sound_db = random.uniform(30, 95)
+    sound_events = ['quiet', 'background', 'conversation', 'crowd', 'door_slam', 'impact']
+    sound_event = random.choice(sound_events)
+    sound_spike = random.random() < 0.1
+    sound_baseline = sound_db - random.uniform(5, 15)
+    
+    # Component threats
+    components = {
+        'proximity': {
+            'score': random.uniform(0, 100), 
+            'weight': 0.25, 
+            'confidence': random.uniform(0.7, 0.95)
+        },
+        'count': {
+            'score': random.uniform(0, 100), 
+            'weight': 0.15, 
+            'confidence': random.uniform(0.7, 0.95)
+        },
+        'behavior': {
+            'score': random.uniform(0, 100), 
+            'weight': 0.20, 
+            'confidence': random.uniform(0.7, 0.95)
+        },
+        'vital_signs': {
+            'score': random.uniform(0, 100), 
+            'weight': 0.15, 
+            'confidence': random.uniform(0.7, 0.95)
+        },
+        'air_quality': {
+            'score': random.uniform(0, 100), 
+            'weight': 0.15, 
+            'confidence': random.uniform(0.7, 0.95)
+        },
+        'noise': {
+            'score': random.uniform(0, 100), 
+            'weight': 0.10, 
+            'confidence': random.uniform(0.7, 0.95)
+        }
+    }
+    
+    # Temporal dynamics
+    trends = ['stable', 'worsening', 'rapidly_worsening', 'improving', 'rapidly_improving']
+    temporal_trend = random.choice(trends)
+    temporal_slope = random.uniform(-2, 2)
+    temporal_acceleration = random.uniform(-0.2, 0.2)
+    persistence_factor = random.uniform(1.0, 1.8)
+    
+    # Trajectory
+    trajectory_5min = min(100, threat_score + random.uniform(-10, 20))
+    trajectory_15min = min(100, threat_score + random.uniform(-20, 35))
+    trajectory_30min = min(100, threat_score + random.uniform(-30, 50))
+    
+    return {
+        'fake_mode': True,
+        'people_count': people_count,
+        'active_targets': active_targets,
+        'abnormal_count': abnormal_count,
+        'targets': targets,
+        'threat_score': threat_score,
+        'threat_level': threat_level,
+        'voc': voc,
+        'pm25': pm25,
+        'aqi': aqi,
+        'odor_type': odor_type,
+        'odor_confidence': random.uniform(0.6, 0.98),
+        'odor_intensity': random.uniform(1, 8),
+        'sound_db': sound_db,
+        'sound_event': sound_event,
+        'sound_baseline': sound_baseline,
+        'sound_spike': sound_spike,
+        'components': components,
+        'temporal_trend': temporal_trend,
+        'temporal_slope': temporal_slope,
+        'temporal_acceleration': temporal_acceleration,
+        'persistence_factor': persistence_factor,
+        'trajectory_5min': trajectory_5min,
+        'trajectory_15min': trajectory_15min,
+        'trajectory_30min': trajectory_30min,
+        'uptime': (datetime.now() - START_TIME).total_seconds(),
+        'data_rate': random.uniform(10, 50),
+        'packet_count': random.randint(1000, 9999),
+        'last_update': datetime.now().strftime('%H:%M:%S.%f')[:-3]
+    }
+
+def get_realtime_sensor_data():
+    """Get real sensor data from database"""
+    # This would query your actual database for the latest readings
+    # For now, return fake data as fallback
+    data = generate_fake_sensor_data()
+    data['fake_mode'] = False
+    return data
+
+def generate_recent_logs(count=10):
+    """Generate recent log entries"""
+    logs = []
+    messages = [
+        f"SYSTEM: Sensor array synchronized",
+        f"RADAR: Target acquired - distance 2.3m",
+        f"AIR: VOC spike detected - 145ppm",
+        f"THREAT: Level updated to MODERATE",
+        f"SOUND: Audio spike at 82dB",
+        f"VITAL: Abnormal breathing detected - Target T04",
+        f"SYSTEM: Data packet received - 1024 bytes",
+        f"RADAR: Target lost - exiting sector 7",
+        f"AIR: Air quality normalizing",
+        f"THREAT: Trajectory updated - improving",
+        f"RADAR: Multiple targets detected - count: 3",
+        f"AIR: PM2.5 levels elevated - 45μg/m³",
+        f"SOUND: Background noise stable at 52dB",
+        f"VITAL: All vitals normal",
+        f"SYSTEM: Database sync complete"
+    ]
+    
+    for i in range(count):
+        timestamp = (datetime.now() - timedelta(seconds=i*30)).strftime('%H:%M:%S')
+        logs.append({
+            'timestamp': timestamp,
+            'message': random.choice(messages)
+        })
+    return logs
+
 # ==================== ROUTES ====================
 
 @app.route("/")
@@ -245,14 +421,62 @@ def dashboard():
     return render_template('dashboard.html',
                          current_time=datetime.now().isoformat())
 
+@app.route("/sensors")
+def sensors():
+    """Futuristic sensor dashboard"""
+    # Get fake mode from query parameter
+    fake_mode = request.args.get('fake', '1') == '1'
+    
+    if fake_mode:
+        # Generate fake data for demonstration
+        data = generate_fake_sensor_data()
+    else:
+        # Try to get real data from database
+        data = get_realtime_sensor_data()
+    
+    # Add fake mode flag to template
+    data['fake_mode'] = fake_mode
+    
+    # Add recent logs
+    data['recent_logs'] = generate_recent_logs()
+    data['last_update'] = datetime.now().strftime('%H:%M:%S')
+    
+    return render_template('sensors.html', **data)
+
 @app.route("/history")
 def history():
     """Event history page"""
     events = get_recent_events(100)
     stats = get_threat_statistics(24)
+    
+    # Generate timeline data (events per hour for last 24h)
+    timeline_data = [0] * 24
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT strftime('%H', timestamp) as hour, COUNT(*) as count
+            FROM events_log
+            WHERE datetime(timestamp) > datetime('now', '-24 hours')
+            GROUP BY hour
+            ORDER BY hour
+        """)
+        hour_counts = cursor.fetchall()
+        for row in hour_counts:
+            hour = int(row['hour'])
+            timeline_data[hour] = row['count']
+    except Exception as e:
+        app.logger.error(f"Error generating timeline: {e}")
+    finally:
+        if conn:
+            conn.close()
+    
     return render_template('history.html',
                          events=events,
                          stats=stats,
+                         timeline_data=timeline_data,
+                         current_date=datetime.now().strftime('%Y-%m-%d'),
                          current_time=datetime.now().isoformat())
 
 @app.route("/analytics")
