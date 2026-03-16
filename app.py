@@ -382,7 +382,8 @@ def generate_fake_sensor_data():
         'uptime': (datetime.now() - START_TIME).total_seconds(),
         'data_rate': random.uniform(10, 50),
         'packet_count': random.randint(1000, 9999),
-        'last_update': datetime.now().strftime('%H:%M:%S.%f')[:-3]
+        'last_update': datetime.now().strftime('%H:%M:%S.%f')[:-3],
+        'components': components  # Add components to the returned data
     }
 
 def get_realtime_sensor_data():
