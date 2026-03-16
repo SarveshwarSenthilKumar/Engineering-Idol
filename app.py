@@ -278,42 +278,46 @@ def generate_fake_sensor_data():
     else:
         threat_level = "LOW"
     
-    # Air quality with auto-alarm logic
+    # Air quality with auto-alarm logic and extreme value handling
     voc = random.uniform(20, 250)
     pm25 = random.randint(5, 120)
     aqi = (voc / 100 * 50) + (pm25 / 35 * 50)
     
-    # Auto-alarm if air quality is high enough
-    air_quality_alarm = aqi > 200  # Set off alarm if AQI > 200
+    # Auto-alarm if air quality is high enough OR extreme values
+    air_quality_alarm = aqi > 200 or voc > 300 or pm25 > 150
+    
+    # Extreme air quality can set off alarm regardless of other factors
+    if air_quality_alarm:
+        threat_score = max(threat_score, 85)  # Minimum threat level for air quality alarm
     
     odor_types = ['clean_air', 'human_activity', 'moderate_odor', 'strong_chemical', 'dust_or_smoke']
     odor_type = random.choice(odor_types)
     
-    # Sound
+    # Sound with extreme value handling
     sound_db = random.uniform(30, 95)
     sound_events = ['quiet', 'background', 'conversation', 'crowd', 'door_slam', 'impact']
     sound_event = random.choice(sound_events)
     sound_spike = random.random() < 0.1
     sound_baseline = sound_db - random.uniform(5, 15)
     
-    # Generate behavior score first
+    # Extreme noise can set off alarm regardless of other factors
+    noise_alarm = sound_db > 110 or sound_spike and sound_db > 100
+    if noise_alarm:
+        threat_score = max(threat_score, 90)  # Minimum threat level for noise alarm
+    
+    # Generate behavior score first (includes proximity)
     behavior_score = random.uniform(0, 100)
     
     # Component threats with updated weights and logic
     components = {
-        'proximity': {
-            'score': random.uniform(0, 100), 
-            'weight': 0.15,  # Reduced from 0.25
-            'confidence': random.uniform(0.7, 0.95)
-        },
         'count': {
             'score': random.uniform(0, 100), 
             'weight': 0.15, 
             'confidence': random.uniform(0.7, 0.95)
         },
         'behavior': {
-            'score': behavior_score, 
-            'weight': 0.30,  # Increased from 0.20
+            'score': behavior_score,  # This now includes proximity
+            'weight': 0.45,  # Increased from 0.30 to include proximity
             'confidence': random.uniform(0.7, 0.95)
         },
         'vital_signs': {
@@ -365,6 +369,7 @@ def generate_fake_sensor_data():
         'sound_baseline': sound_baseline,
         'sound_spike': sound_spike,
         'air_quality_alarm': air_quality_alarm,  # Add alarm flag to returned data
+        'noise_alarm': noise_alarm,  # Add noise alarm flag
         'temporal_trend': temporal_trend,
         'temporal_slope': temporal_slope,
         'temporal_acceleration': temporal_acceleration,
