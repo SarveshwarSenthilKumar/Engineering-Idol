@@ -120,6 +120,28 @@ class LiveDataStore:
 # Initialize live data store
 live_data = LiveDataStore()
 
+# Global fake data cache for consistency across all pages
+fake_data_cache = {
+    'data': None,
+    'timestamp': None,
+    'cache_duration': 5  # Cache for 5 seconds
+}
+
+def get_cached_fake_data():
+    """Get cached fake data or generate new data if expired"""
+    global fake_data_cache
+    current_time = datetime.now()
+    
+    # Generate new data if cache is empty or expired
+    if (fake_data_cache['data'] is None or 
+        fake_data_cache['timestamp'] is None or 
+        (current_time - fake_data_cache['timestamp']).total_seconds() > fake_data_cache['cache_duration']):
+        
+        fake_data_cache['data'] = generate_fake_sensor_data()
+        fake_data_cache['timestamp'] = current_time
+    
+    return fake_data_cache['data']
+
 # ==================== DATABASE FUNCTIONS ====================
 
 def get_db_connection():
@@ -261,10 +283,19 @@ def generate_fake_sensor_data():
             
         targets.append({
             'id': f"T{random.randint(1,99):02d}",
+            'target_id': f"T{random.randint(1,99):02d}",
             'distance': round(random.uniform(1.0, 8.0), 2),  # Start from 1m instead of 0.5m
+            'target_distance': round(random.uniform(1.0, 8.0), 2),
             'angle': round(random.uniform(-60, 60), 1),
+            'target_angle': round(random.uniform(-60, 60), 1),
             'activity': activity,
-            'abnormal_breathing': abnormal
+            'target_activity': activity,
+            'abnormal_breathing': abnormal,
+            'target_abnormal_breathing': abnormal,
+            'target_velocity': round(random.uniform(0, 2.0), 2) if activity in ['walking', 'running'] else 0,
+            'target_breathing_rate': round(random.uniform(12, 20), 1) if random.random() < 0.7 else None,
+            'target_confidence': round(random.uniform(0.7, 0.95), 2),
+            'event_timestamp': (datetime.now() - timedelta(seconds=random.randint(0, 300))).isoformat()
         })
     
     # Threat data
@@ -791,7 +822,6 @@ def delete_user_route(user_id):
 
 # ==================== PROTECTED ROUTES ====================
 
-@app.route("/")
 def index():
     """Main dashboard page"""
     return redirect(url_for('dashboard'))
@@ -800,8 +830,61 @@ def index():
 @login_required
 def dashboard():
     """Live monitoring dashboard"""
-    return render_template('dashboard.html',
-                         current_time=datetime.now().isoformat())
+    # Get fake mode from session (default to True for demo)
+    fake_mode = session.get('fake_mode', True)
+    
+    if fake_mode:
+        # Use cached fake data for consistency
+        data = get_cached_fake_data()
+    else:
+        # Try to get real data from database
+        data = get_realtime_sensor_data()
+        if not data:
+            data = get_cached_fake_data()
+            data['fake_mode'] = True
+    
+    # Extract top-level variables for template compatibility
+    template_data = {
+        'fake_mode': fake_mode,
+        'current_time': datetime.now().isoformat(),
+        'people_count': data.get('people_count', 0),
+        'active_targets': data.get('active_targets', 0),
+        'abnormal_count': data.get('abnormal_count', 0),
+        'targets': data.get('targets', []),
+        'threat_score': data.get('threat', {}).get('overall_threat', 0),
+        'threat_level': data.get('threat', {}).get('level', 'UNKNOWN'),
+        'temporal_trend': data.get('threat', {}).get('temporal', {}).get('trend', 'stable'),
+        'temporal_slope': data.get('threat', {}).get('temporal', {}).get('slope', 0),
+        'temporal_acceleration': data.get('threat', {}).get('temporal', {}).get('acceleration', 0),
+        'persistence_factor': data.get('threat', {}).get('temporal', {}).get('persistence', 1.0),
+        'trajectory_5min': data.get('threat', {}).get('trajectory', {}).get('5min', 0),
+        'trajectory_15min': data.get('threat', {}).get('trajectory', {}).get('15min', 0),
+        'trajectory_30min': data.get('threat', {}).get('trajectory', {}).get('30min', 0),
+        'components': data.get('components', {}),
+        'aqi': data.get('aqi', 0),
+        'voc': data.get('voc', 0),
+        'pm25': data.get('pm25', 0),
+        'odor_type': data.get('odor_type', 'clean_air'),
+        'odor_confidence': data.get('odor_confidence', 0.8),
+        'odor_intensity': data.get('odor_intensity', 3.0),
+        'sound_db': data.get('sound_db', 0),
+        'sound_event': data.get('sound_event', 'quiet'),
+        'sound_spike': data.get('sound_spike', False),
+        'sound_baseline': data.get('sound_baseline', 40.0),
+        'air_quality_alarm': data.get('air_quality_alarm', False),
+        'noise_alarm': data.get('noise_alarm', False),
+        'uptime': data.get('uptime', (datetime.now() - START_TIME).total_seconds()),
+        'data_rate': data.get('data_rate', 0),
+        'packet_count': data.get('packet_count', 0),
+        # Pass the full data structures for JavaScript
+        'threat': data.get('threat', {}),
+        'radar': data.get('radar', {}),
+        'odor': data.get('odor', {}),
+        'sound': data.get('sound', {}),
+        'quality': data.get('quality', {})
+    }
+    
+    return render_template('dashboard.html', **template_data)
 
 @app.route("/sensors")
 @login_required
@@ -811,11 +894,14 @@ def sensors():
     fake_mode = session.get('fake_mode', True)
     
     if fake_mode:
-        # Generate fake data for demonstration
-        data = generate_fake_sensor_data()
+        # Use cached fake data for consistency
+        data = get_cached_fake_data()
     else:
         # Try to get real data from database
         data = get_realtime_sensor_data()
+        if not data:
+            data = get_cached_fake_data()
+            data['fake_mode'] = True
     
     # Extract top-level variables for template compatibility
     template_data = {
@@ -916,25 +1002,9 @@ def targets_view():
     fake_mode = session.get('fake_mode', True)
     
     if fake_mode:
-        # Generate fake target data
-        targets = []
-        people_count = random.randint(1, 5)
-        
-        for i in range(people_count):
-            activity = random.choice(['stationary', 'sitting', 'walking', 'running'])
-            abnormal = random.random() < 0.2
-            
-            targets.append({
-                'target_id': f"T{random.randint(1,99):02d}",
-                'target_distance': round(random.uniform(1.0, 8.0), 2),
-                'target_angle': round(random.uniform(-60, 60), 1),
-                'target_velocity': round(random.uniform(0, 2.0), 2) if activity in ['walking', 'running'] else 0,
-                'target_activity': activity,
-                'target_breathing_rate': round(random.uniform(12, 20), 1) if random.random() < 0.7 else None,
-                'target_abnormal_breathing': abnormal,
-                'target_confidence': round(random.uniform(0.7, 0.95), 2),
-                'event_timestamp': (datetime.now() - timedelta(seconds=random.randint(0, 300))).isoformat()
-            })
+        # Use cached fake data for consistency
+        data = get_cached_fake_data()
+        targets = data.get('targets', [])
     else:
         # Get real target data from database
         targets = get_target_history(30)
@@ -987,7 +1057,6 @@ def api_targets():
         targets = get_target_history(minutes)
     
     return jsonify(targets)
-
 @app.route("/api/events/recent")
 def api_recent_events():
     """Get recent events"""
@@ -997,20 +1066,21 @@ def api_recent_events():
     fake_mode = session.get('fake_mode', True)
     
     if fake_mode:
-        # Generate fake events
+        # Use cached fake data for consistency - generate events based on cached data
+        data = get_cached_fake_data()
         events = []
         event_types = ['NORMAL', 'MOTION', 'SOUND_SPIKE', 'THREAT_CHANGE', 'PERSON_DETECTED']
-        threat_levels = ['LOW', 'MODERATE', 'ELEVATED', 'HIGH', 'CRITICAL']
         
+        # Generate events based on current cached data
         for i in range(limit):
             events.append({
                 'timestamp': (datetime.now() - timedelta(minutes=random.randint(0, 120))).isoformat(),
                 'event_type': random.choice(event_types),
-                'threat_level': random.choice(threat_levels),
-                'threat_score': random.randint(0, 100),
-                'people_count': random.randint(0, 5),
-                'sound_db': round(random.uniform(30, 80), 1),
-                'air_aqi': random.randint(20, 150)
+                'threat_level': data.get('threat', {}).get('level', 'LOW'),
+                'threat_score': data.get('threat', {}).get('overall_threat', 0),
+                'people_count': data.get('people_count', 0),
+                'sound_db': data.get('sound_db', 40),
+                'air_aqi': data.get('aqi', 50)
             })
     else:
         events = get_recent_events(limit)
@@ -1058,11 +1128,11 @@ def api_live():
     fake_mode = session.get('fake_mode', True)
     
     if fake_mode:
-        data = generate_fake_sensor_data()
+        data = get_cached_fake_data()
     else:
         data = live_data.get_latest()
         if not data:
-            data = generate_fake_sensor_data()
+            data = get_cached_fake_data()
     
     return jsonify(data)
 
@@ -1093,8 +1163,8 @@ def events_stream():
             except queue.Empty:
                 # Send latest data as fallback, using the fake_mode captured above
                 if fake_mode:
-                    # Generate fake data for dashboard
-                    data = generate_fake_sensor_data()
+                    # Use cached fake data for consistency
+                    data = get_cached_fake_data()
                 else:
                     data = live_data.get_latest()
                 
