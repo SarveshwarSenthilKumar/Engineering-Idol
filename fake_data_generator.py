@@ -464,18 +464,18 @@ class FakeDataGenerator:
             '30min': min(100, current_score + random.uniform(-30, 50))
         }
         
-    def generate_events(self, count=1000):
-        """Generate multiple events"""
-        print(f"📊 Generating {count} events...")
+    def generate_events(self, count=1000, hours=24):
+        """Generate multiple events across specified time span"""
+        print(f"📊 Generating {count} events across {hours} hours...")
         
         cursor = self.conn.cursor()
-        start_time = datetime.now() - timedelta(hours=2)  # Start 2 hours ago for recent data
+        start_time = datetime.now() - timedelta(hours=hours)  # Start from specified hours ago
         
         prev_target_count = 0
         for i in range(count):
-            # Calculate timestamp with realistic spacing
+            # Calculate timestamp with realistic spacing across the time span
             time_offset = timedelta(
-                seconds=random.expovariate(1.0 / (86400 / EVENTS_PER_DAY))
+                seconds=random.uniform(0, hours * 3600)  # Distribute across the entire time span
             )
             timestamp = (start_time + time_offset).isoformat()
             
@@ -697,7 +697,7 @@ class FakeDataGenerator:
             
             self.connect()
             self.clear_existing_data()
-            self.generate_events(DAYS_OF_HISTORY * EVENTS_PER_DAY)
+            self.generate_events(DAYS_OF_HISTORY * EVENTS_PER_DAY, DAYS_OF_HISTORY * 24)
             
             # Verify data
             cursor = self.conn.cursor()
