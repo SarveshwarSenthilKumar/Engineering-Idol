@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 
-{% block title %}Target Tracking - Environmental Monitoring{% endblock %}
+{% block title %}Person Tracking - Environmental Monitoring{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">Target Tracking</h1>
+    <h1 class="h2">Person Tracking</h1>
     <div class="btn-toolbar mb-2 mb-md-0">
         <button class="btn btn-sm btn-outline-primary" onclick="refreshTargets()">
             <i class="bi bi-arrow-clockwise"></i> Refresh
@@ -12,18 +12,18 @@
     </div>
 </div>
 
-<!-- Live Target Overview -->
+<!-- Live Person Overview -->
 <div class="row mb-4">
     <div class="col-md-3">
         <div class="stat-card text-center">
-            <h3 class="text-primary" id="total-targets">0</h3>
-            <small>Total Targets</small>
+            <h3 class="text-primary" id="total-people">0</h3>
+            <small>Total People</small>
         </div>
     </div>
     <div class="col-md-3">
         <div class="stat-card text-center">
-            <h3 class="text-success" id="active-targets">0</h3>
-            <small>Active Targets</small>
+            <h3 class="text-success" id="active-people">0</h3>
+            <small>Active People</small>
         </div>
     </div>
     <div class="col-md-3">
@@ -44,7 +44,7 @@
 <div class="row mb-4">
     <div class="col-12">
         <div class="stat-card">
-            <h5>Target Positions (Radar View)</h5>
+            <h5>Person Positions (Radar View)</h5>
             <div class="position-relative" style="height: 400px; background: #1a2634; border-radius: 10px;">
                 <canvas id="radar-canvas" width="800" height="400"></canvas>
             </div>
@@ -56,7 +56,7 @@
 <div class="row mb-4">
     <div class="col-12">
         <div class="stat-card">
-            <h5>Current Targets</h5>
+            <h5>Current People</h5>
             <div class="row" id="target-cards">
                 <div class="col-12 text-center">No targets detected</div>
             </div>
@@ -68,13 +68,13 @@
 <div class="row">
     <div class="col-12">
         <div class="stat-card">
-            <h5>Recent Target Activity</h5>
+            <h5>Recent Person Activity</h5>
             <div class="table-responsive">
                 <table class="table table-hover">
                     <thead>
                         <tr>
                             <th>Timestamp</th>
-                            <th>Target ID</th>
+                            <th>Person ID</th>
                             <th>Distance</th>
                             <th>Angle</th>
                             <th>Velocity</th>
@@ -114,7 +114,7 @@
                         </tr>
                         {% else %}
                         <tr>
-                            <td colspan="8" class="text-center">No target history found</td>
+                            <td colspan="8" class="text-center">No person history found</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -143,24 +143,24 @@
         ctx.strokeStyle = '#2c3e50';
         ctx.lineWidth = 1;
         
-        // Distance rings
+        // Distance rings (scaled for 0-10m range)
         for (let i = 1; i <= 5; i++) {
             ctx.beginPath();
-            ctx.arc(400, 200, i * 60, 0, Math.PI * 2);
+            ctx.arc(400, 200, i * 35, 0, Math.PI * 2);
             ctx.strokeStyle = '#2c3e50';
             ctx.stroke();
             
             // Distance labels
             ctx.fillStyle = '#6c757d';
             ctx.font = '10px Arial';
-            ctx.fillText(i + 'm', 400 + i * 60 + 5, 200);
+            ctx.fillText((i * 2) + 'm', 400 + i * 35 + 5, 200);
         }
         
         // Angle lines
         for (let i = 0; i < 360; i += 30) {
             let rad = (i - 90) * Math.PI / 180;
-            let x = 400 + Math.cos(rad) * 300;
-            let y = 200 + Math.sin(rad) * 300;
+            let x = 400 + Math.cos(rad) * 175;
+            let y = 200 + Math.sin(rad) * 175;
             
             ctx.beginPath();
             ctx.moveTo(400, 200);
@@ -179,24 +179,27 @@
         
         // Draw targets
         targets.forEach(target => {
-            let distance = target.distance || 0;
-            let angle = target.angle || 0;
+            let distance = target.target_distance || 0;
+            let angle = target.target_angle || 0;
+            
+            // Scale distance to fit radar (0-10m maps to 0-175px radius)
+            let scaledDistance = Math.min(distance, 10) * 17.5;
             
             // Convert polar to cartesian
             let rad = (angle - 90) * Math.PI / 180;
-            let x = 400 + Math.cos(rad) * (distance * 60);
-            let y = 200 + Math.sin(rad) * (distance * 60);
+            let x = 400 + Math.cos(rad) * scaledDistance;
+            let y = 200 + Math.sin(rad) * scaledDistance;
             
             // Draw target
             ctx.beginPath();
             ctx.arc(x, y, 8, 0, Math.PI * 2);
             
             // Color based on activity
-            if (target.abnormal_breathing) {
+            if (target.target_abnormal_breathing) {
                 ctx.fillStyle = '#dc3545';
-            } else if (target.activity === 'running') {
+            } else if (target.target_activity === 'running') {
                 ctx.fillStyle = '#fd7e14';
-            } else if (target.activity === 'walking') {
+            } else if (target.target_activity === 'walking') {
                 ctx.fillStyle = '#ffc107';
             } else {
                 ctx.fillStyle = '#28a745';
@@ -210,7 +213,7 @@
             // Target ID
             ctx.fillStyle = '#ffffff';
             ctx.font = 'bold 12px Arial';
-            ctx.fillText(target.id, x + 15, y - 10);
+            ctx.fillText(target.target_id, x + 15, y - 10);
         });
         
         // Draw center point
@@ -230,8 +233,8 @@
                 const avgDist = targets.reduce((sum, t) => sum + (t.target_distance || 0), 0) / total || 0;
                 const abnormal = targets.filter(t => t.target_abnormal_breathing).length;
                 
-                document.getElementById('total-targets').textContent = total;
-                document.getElementById('active-targets').textContent = active;
+                document.getElementById('total-people').textContent = total;
+                document.getElementById('active-people').textContent = active;
                 document.getElementById('avg-distance').textContent = avgDist.toFixed(1) + 'm';
                 document.getElementById('abnormal-count').textContent = abnormal;
                 
@@ -252,7 +255,7 @@
                 // Update target cards
                 const cardsContainer = document.getElementById('target-cards');
                 if (currentList.length === 0) {
-                    cardsContainer.innerHTML = '<div class="col-12 text-center">No targets detected</div>';
+                    cardsContainer.innerHTML = '<div class="col-12 text-center">No people detected</div>';
                 } else {
                     let cardsHtml = '';
                     currentList.forEach((target, i) => {
@@ -260,7 +263,7 @@
                             <div class="col-md-4 mb-3">
                                 <div class="card ${target.target_abnormal_breathing ? 'border-danger' : ''}">
                                     <div class="card-body">
-                                        <h5 class="card-title">Target ${target.target_id}</h5>
+                                        <h5 class="card-title">Person ${target.target_id}</h5>
                                         <h6 class="card-subtitle mb-2 text-muted">
                                             Activity: ${target.target_activity || 'unknown'}
                                         </h6>

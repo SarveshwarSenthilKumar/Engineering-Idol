@@ -107,6 +107,65 @@
         .event-elevated { border-left-color: #fd7e14; }
         .event-moderate { border-left-color: #ffc107; }
         .event-low { border-left-color: #28a745; }
+        
+        /* Toggle Switch Styles */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .toggle-slider {
+            background-color: #ffc107;
+        }
+        
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        .status-indicator.red { background-color: #dc3545; }
+        .status-indicator.yellow { background-color: #ffc107; }
+        .status-indicator.green { background-color: #28a745; }
+        .status-indicator.blue { background-color: #007bff; }
+        .status-indicator.purple { background-color: #6f42c1; }
     </style>
     
     {% block extra_css %}{% endblock %}
@@ -198,6 +257,22 @@
             
             <!-- Main Content -->
             <main class="col-md-10 ms-sm-auto px-md-4 main-content">
+                <!-- Fake Mode Toggle (only for logged-in users) -->
+                {% if session.user_id %}
+                <div class="position-fixed top-0 end-0 m-4" style="z-index: 1000;">
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="text-uppercase small">
+                            <span class="status-indicator {{ 'yellow' if session.get('fake_mode', False) else 'red' }}"></span>
+                            Demo Data: {{ 'ON' if session.get('fake_mode', False) else 'OFF' }}
+                        </span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="fakeToggle" {% if session.get('fake_mode', False) %}checked{% endif %} onchange="toggleFakeMode()">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+                {% endif %}
+                
                 <!-- Flash Messages -->
                 {% with messages = get_flashed_messages(with_categories=true) %}
                     {% if messages %}
@@ -232,8 +307,17 @@
         updateTime();
         
         // EventSource for SSE
+        let eventSource = null;
+        let reconnectAttempts = 0;
+        const maxReconnectAttempts = 5;
+        
         function setupEventSource() {
-            const eventSource = new EventSource("{{ url_for('events_stream') }}");
+            if (eventSource) {
+                eventSource.close();
+            }
+            
+            eventSource = new EventSource("{{ url_for('events_stream') }}");
+            reconnectAttempts = 0;
             
             eventSource.addEventListener('update', function(e) {
                 try {
@@ -250,18 +334,75 @@
             
             eventSource.addEventListener('heartbeat', function(e) {
                 console.log('Heartbeat received');
+                reconnectAttempts = 0; // Reset on successful heartbeat
             });
             
             eventSource.onerror = function(e) {
-                console.error('EventSource failed, reconnecting...');
-                setTimeout(setupEventSource, 5000);
+                console.error('EventSource error:', e);
+                reconnectAttempts++;
+                
+                if (reconnectAttempts >= maxReconnectAttempts) {
+                    console.error('Max reconnect attempts reached, stopping reconnection');
+                    if (eventSource) {
+                        eventSource.close();
+                        eventSource = null;
+                    }
+                    return;
+                }
+                
+                // Exponential backoff
+                const delay = Math.min(5000 * Math.pow(2, reconnectAttempts - 1), 30000);
+                console.log(`Reconnecting in ${delay}ms (attempt ${reconnectAttempts}/${maxReconnectAttempts})`);
+                setTimeout(setupEventSource, delay);
+            };
+            
+            eventSource.onopen = function() {
+                console.log('EventSource connected');
+                reconnectAttempts = 0;
             };
         }
         
-        // Start SSE if not on settings page and endpoint exists
-        {% if request.endpoint and request.endpoint != 'settings' %}
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', function() {
+            if (eventSource) {
+                eventSource.close();
+            }
+        });
+        
+        // Start SSE only on specific pages that need live updates
+        {% if request.endpoint and request.endpoint in ['dashboard', 'sensors'] %}
         document.addEventListener('DOMContentLoaded', setupEventSource);
         {% endif %}
+        
+        // Global fake mode toggle function
+        function toggleFakeMode() {
+            const isChecked = document.getElementById('fakeToggle').checked;
+            
+            // Send request to update session
+            fetch('/api/toggle_fake_mode', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ fake_mode: isChecked })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Reload page to apply new fake mode setting
+                    window.location.reload();
+                } else {
+                    console.error('Failed to toggle fake mode:', data.error);
+                    // Revert toggle state
+                    document.getElementById('fakeToggle').checked = !isChecked;
+                }
+            })
+            .catch(error => {
+                console.error('Error toggling fake mode:', error);
+                // Revert toggle state
+                document.getElementById('fakeToggle').checked = !isChecked;
+            });
+        }
     </script>
     
     {% block extra_js %}{% endblock %}

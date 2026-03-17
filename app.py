@@ -358,27 +358,50 @@ def generate_fake_sensor_data():
         'active_targets': active_targets,
         'abnormal_count': abnormal_count,
         'targets': targets,
-        'threat_score': threat_score,
-        'threat_level': threat_level,
+        'threat': {
+            'overall_threat': threat_score,
+            'level': threat_level,
+            'temporal': {
+                'trend': temporal_trend,
+                'slope': temporal_slope,
+                'persistence': persistence_factor
+            },
+            'trajectory': {
+                '5min': trajectory_5min,
+                '15min': trajectory_15min,
+                '30min': trajectory_30min
+            },
+            'components': components
+        },
+        'radar': {
+            'target_count': people_count,
+            'targets': targets
+        },
+        'odor': {
+            'air_quality_index': aqi,
+            'voc_ppm': voc,
+            'pm25': pm25,
+            'odor_type': odor_type
+        },
+        'sound': {
+            'db': sound_db,
+            'event': sound_event,
+            'spike': sound_spike
+        },
+        'quality': {
+            'quality_score': aqi,
+            'category': odor_type,
+            'trend': temporal_trend
+        },
         'voc': voc,
         'pm25': pm25,
         'aqi': aqi,
         'odor_type': odor_type,
-        'odor_confidence': random.uniform(0.6, 0.98),
-        'odor_intensity': random.uniform(1, 8),
         'sound_db': sound_db,
         'sound_event': sound_event,
-        'sound_baseline': sound_baseline,
         'sound_spike': sound_spike,
-        'air_quality_alarm': air_quality_alarm,  # Add alarm flag to returned data
-        'noise_alarm': noise_alarm,  # Add noise alarm flag
-        'temporal_trend': temporal_trend,
-        'temporal_slope': temporal_slope,
-        'temporal_acceleration': temporal_acceleration,
-        'persistence_factor': persistence_factor,
-        'trajectory_5min': trajectory_5min,
-        'trajectory_15min': trajectory_15min,
-        'trajectory_30min': trajectory_30min,
+        'air_quality_alarm': air_quality_alarm,
+        'noise_alarm': noise_alarm,
         'uptime': (datetime.now() - START_TIME).total_seconds(),
         'data_rate': random.uniform(10, 50),
         'packet_count': random.randint(1000, 9999),
@@ -770,8 +793,8 @@ def dashboard():
 @login_required
 def sensors():
     """Person tracking sensor dashboard"""
-    # Get fake mode from query parameter
-    fake_mode = request.args.get('fake', '1') == '1'
+    # Get fake mode from session (default to True for demo)
+    fake_mode = session.get('fake_mode', True)
     
     if fake_mode:
         # Generate fake data for demonstration
@@ -841,7 +864,32 @@ def analytics():
 @login_required
 def targets_view():
     """Person tracking view"""
-    targets = get_target_history(30)
+    fake_mode = session.get('fake_mode', True)
+    
+    if fake_mode:
+        # Generate fake target data
+        targets = []
+        people_count = random.randint(1, 5)
+        
+        for i in range(people_count):
+            activity = random.choice(['stationary', 'sitting', 'walking', 'running'])
+            abnormal = random.random() < 0.2
+            
+            targets.append({
+                'target_id': f"T{random.randint(1,99):02d}",
+                'target_distance': round(random.uniform(1.0, 8.0), 2),
+                'target_angle': round(random.uniform(-60, 60), 1),
+                'target_velocity': round(random.uniform(0, 2.0), 2) if activity in ['walking', 'running'] else 0,
+                'target_activity': activity,
+                'target_breathing_rate': round(random.uniform(12, 20), 1) if random.random() < 0.7 else None,
+                'target_abnormal_breathing': abnormal,
+                'target_confidence': round(random.uniform(0.7, 0.95), 2),
+                'event_timestamp': (datetime.now() - timedelta(seconds=random.randint(0, 300))).isoformat()
+            })
+    else:
+        # Get real target data from database
+        targets = get_target_history(30)
+    
     return render_template('targets.html',
                          targets=targets,
                          current_time=datetime.now().isoformat())
@@ -857,52 +905,84 @@ def settings():
 
 # ==================== API ROUTES ====================
 
-@app.route("/api/live")
-def api_live():
-    """Get latest live data"""
-    return jsonify(live_data.get_latest())
+@app.route("/api/targets")
+def api_targets():
+    """Get recent target data"""
+    minutes = request.args.get('minutes', 30, type=int)
+    
+    # Check fake mode from session (default to True for demo)
+    fake_mode = session.get('fake_mode', True)
+    
+    if fake_mode:
+        # Generate fake target data
+        targets = []
+        people_count = random.randint(1, 5)
+        
+        for i in range(people_count):
+            activity = random.choice(['stationary', 'sitting', 'walking', 'running'])
+            abnormal = random.random() < 0.2
+            
+            targets.append({
+                'target_id': f"T{random.randint(1,99):02d}",
+                'target_distance': round(random.uniform(1.0, 8.0), 2),
+                'target_angle': round(random.uniform(-60, 60), 1),
+                'target_velocity': round(random.uniform(0, 2.0), 2) if activity in ['walking', 'running'] else 0,
+                'target_activity': activity,
+                'target_breathing_rate': round(random.uniform(12, 20), 1) if random.random() < 0.7 else None,
+                'target_abnormal_breathing': abnormal,
+                'target_confidence': round(random.uniform(0.7, 0.95), 2),
+                'event_timestamp': (datetime.now() - timedelta(seconds=random.randint(0, 300))).isoformat()
+            })
+    else:
+        # Get real target data from database
+        targets = get_target_history(minutes)
+    
+    return jsonify(targets)
 
 @app.route("/api/events/recent")
 def api_recent_events():
     """Get recent events"""
     limit = request.args.get('limit', 50, type=int)
-    events = get_recent_events(limit)
+    
+    # Check fake mode from session (default to True for demo)
+    fake_mode = session.get('fake_mode', True)
+    
+    if fake_mode:
+        # Generate fake events
+        events = []
+        event_types = ['NORMAL', 'MOTION', 'SOUND_SPIKE', 'THREAT_CHANGE', 'PERSON_DETECTED']
+        threat_levels = ['LOW', 'MODERATE', 'ELEVATED', 'HIGH', 'CRITICAL']
+        
+        for i in range(limit):
+            events.append({
+                'timestamp': (datetime.now() - timedelta(minutes=random.randint(0, 120))).isoformat(),
+                'event_type': random.choice(event_types),
+                'threat_level': random.choice(threat_levels),
+                'threat_score': random.randint(0, 100),
+                'people_count': random.randint(0, 5),
+                'sound_db': round(random.uniform(30, 80), 1),
+                'air_aqi': random.randint(20, 150)
+            })
+    else:
+        events = get_recent_events(limit)
+    
     return jsonify(events)
 
-@app.route("/api/stats")
-def api_stats():
-    """Get statistics"""
-    hours = request.args.get('hours', 24, type=int)
-    stats = get_threat_statistics(hours)
-    return jsonify(stats)
-
-@app.route("/api/timeline")
-def api_timeline():
-    """Get timeline data for charts"""
-    hours = request.args.get('hours', 24, type=int)
-    timeline = get_threat_timeline(hours)
-    return jsonify(timeline)
-
-@app.route("/api/history/<metric>")
-def api_history(metric):
-    """Get historical data for a specific metric"""
-    minutes = request.args.get('minutes', 60, type=int)
-    data = live_data.get_history(metric, minutes)
-    
-    # Format for charts
-    formatted = [{
-        'timestamp': ts.isoformat(),
-        'value': val
-    } for ts, val in data]
-    
-    return jsonify(formatted)
-
-@app.route("/api/targets")
-def api_targets():
-    """Get recent target data"""
-    minutes = request.args.get('minutes', 30, type=int)
-    targets = get_target_history(minutes)
-    return jsonify(targets)
+@app.route("/api/toggle_fake_mode", methods=['POST'])
+@login_required
+def toggle_fake_mode():
+    """Toggle fake data mode in session"""
+    try:
+        data = request.get_json()
+        fake_mode = data.get('fake_mode', False)
+        
+        # Update session
+        session['fake_mode'] = fake_mode
+        
+        return jsonify({'success': True, 'fake_mode': fake_mode})
+    except Exception as e:
+        app.logger.error(f"Error toggling fake mode: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route("/api/update", methods=['POST'])
 def api_update():
@@ -926,6 +1006,9 @@ def api_update():
 @app.route("/api/events/stream")
 def events_stream():
     """Server-Sent Events stream for real-time updates"""
+    # Check fake mode outside the generator (in request context)
+    fake_mode = session.get('fake_mode', True)
+    
     def generate():
         last_event_time = time.time()
         while True:
@@ -939,8 +1022,21 @@ def events_stream():
                 event = live_data.event_queue.get(timeout=1)
                 yield f"event: {event.get('type', 'update')}\ndata: {json.dumps(event)}\n\n"
             except queue.Empty:
-                # Send latest data as fallback
-                data = live_data.get_latest()
+                # Send latest data as fallback, using the fake_mode captured above
+                if fake_mode:
+                    # Generate fake data for dashboard
+                    data = generate_fake_sensor_data()
+                    # Add some threat level data
+                    data['threat'] = {
+                        'overall_threat': random.randint(20, 80),
+                        'level': random.choice(['LOW', 'MODERATE', 'ELEVATED', 'HIGH']),
+                        'trend': random.choice(['increasing', 'decreasing', 'stable']),
+                        'slope': round(random.uniform(-5, 5), 1),
+                        'persistence': round(random.uniform(1, 5), 1)
+                    }
+                else:
+                    data = live_data.get_latest()
+                
                 if data:
                     yield f"event: update\ndata: {json.dumps(data)}\n\n"
     
