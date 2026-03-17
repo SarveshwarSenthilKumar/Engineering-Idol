@@ -1,56 +1,352 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard - Environmental Monitoring{% endblock %}
+{% block title %}Advanced Monitoring Dashboard - Environmental System{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Modern Dashboard Styles */
+.dashboard-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 15px;
+    margin-bottom: 2rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.metric-card {
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+    border: 1px solid #e3e8f7;
+    position: relative;
+    overflow: hidden;
+}
+
+.metric-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+}
+
+.metric-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+}
+
+.metric-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #2d3748;
+    margin: 0.5rem 0;
+}
+
+.metric-label {
+    color: #718096;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+}
+
+.metric-change {
+    font-size: 0.875rem;
+    font-weight: 600;
+    padding: 0.25rem 0.5rem;
+    border-radius: 20px;
+    display: inline-block;
+}
+
+.change-positive {
+    background: #c6f6d5;
+    color: #22543d;
+}
+
+.change-negative {
+    background: #fed7d7;
+    color: #742a2a;
+}
+
+.change-neutral {
+    background: #e2e8f0;
+    color: #4a5568;
+}
+
+.threat-gauge-container {
+    position: relative;
+    height: 250px;
+    margin: 1rem 0;
+}
+
+.progress-ring {
+    transform: rotate(-90deg);
+}
+
+.progress-ring-circle {
+    transition: stroke-dashoffset 0.35s;
+    stroke-linecap: round;
+}
+
+.alert-indicator {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+.alert-critical { background: #f56565; }
+.alert-high { background: #ed8936; }
+.alert-elevated { background: #ecc94b; }
+.alert-moderate { background: #4299e1; }
+.alert-low { background: #48bb78; }
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(255, 255, 255, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+}
+
+.sensor-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.mini-chart {
+    height: 28px !important;
+    margin-top: 0.5rem;
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
+    max-height: 28px !important;
+    overflow: hidden !important;
+    display: block !important;
+}
+
+.mini-chart:hover {
+    opacity: 1;
+}
+
+.mini-chart canvas {
+    height: 28px !important;
+    max-height: 28px !important;
+    width: 100% !important;
+}
+
+.status-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 25px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.timeline-item {
+    position: relative;
+    padding-left: 2rem;
+    margin-bottom: 1rem;
+}
+
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.5rem;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #cbd5e0;
+}
+
+.timeline-item.critical::before { background: #f56565; }
+.timeline-item.high::before { background: #ed8936; }
+.timeline-item.elevated::before { background: #ecc94b; }
+.timeline-item.moderate::before { background: #4299e1; }
+.timeline-item.low::before { background: #48bb78; }
+
+.component-bar {
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 0.5rem 0;
+}
+
+.component-segment {
+    height: 100%;
+    display: inline-block;
+    transition: width 0.3s ease;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 1rem;
+    background: #f7fafc;
+    border-radius: 10px;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2d3748;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: #718096;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.prediction-bar {
+    height: 30px;
+    border-radius: 15px;
+    overflow: hidden;
+    margin: 1rem 0;
+    background: #e2e8f0;
+    position: relative;
+}
+
+.prediction-segment {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 0.875rem;
+    transition: width 0.5s ease;
+}
+
+.live-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: rgba(72, 187, 120, 0.1);
+    border: 2px solid #48bb78;
+    border-radius: 25px;
+    color: #22543d;
+    font-weight: 600;
+}
+
+.live-dot {
+    width: 8px;
+    height: 8px;
+    background: #48bb78;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+@media (max-width: 768px) {
+    .sensor-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .metric-value {
+        font-size: 2rem;
+    }
+    
+    .dashboard-header {
+        padding: 1.5rem;
+    }
+}
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">Live Monitoring Dashboard</h1>
-    <div class="btn-toolbar mb-2 mb-md-0">
-        <span class="badge bg-success me-2" id="connection-status">Connected</span>
-        <span class="text-muted" id="last-update"></span>
+<!-- Advanced Dashboard Header -->
+<div class="dashboard-header">
+    <div class="row align-items-center">
+        <div class="col-md-6">
+            <h1 class="mb-2">
+                <i class="bi bi-activity me-2"></i>
+                Advanced Monitoring Dashboard
+            </h1>
+            <p class="mb-0 opacity-90">Real-time environmental threat assessment and analysis</p>
+        </div>
+        <div class="col-md-6 text-md-end">
+            <div class="d-flex align-items-center justify-content-md-end gap-3">
+                <div class="live-indicator">
+                    <div class="live-dot"></div>
+                    <span>LIVE</span>
+                </div>
+                <div class="text-white">
+                    <small>Last Update</small><br>
+                    <span id="last-update" class="fw-bold">--</span>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
-<!-- Threat Overview -->
+<!-- Primary Metrics Row -->
 <div class="row mb-4">
-    <div class="col-md-8">
-        <div class="stat-card">
-            <div class="d-flex justify-content-between align-items-center">
-                <h5>Current Threat Level</h5>
-                <span class="badge" id="threat-badge" style="font-size: 1rem;">Loading...</span>
+    <!-- Threat Assessment Card -->
+    <div class="col-lg-8">
+        <div class="metric-card">
+            <div class="alert-indicator" id="threat-alert"></div>
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <h5 class="mb-1">Threat Assessment</h5>
+                    <p class="text-muted mb-0">Overall security risk evaluation</p>
+                </div>
+                <span class="status-badge" id="threat-status">Loading...</span>
             </div>
-            <div class="row mt-3">
+            
+            <div class="row">
                 <div class="col-md-6">
-                    <canvas id="threat-gauge" class="gauge"></canvas>
+                    <div class="threat-gauge-container">
+                        <canvas id="threat-gauge"></canvas>
+                    </div>
                 </div>
                 <div class="col-md-6">
-                    <div class="value-large" id="threat-score">--</div>
-                    <div class="text-muted" id="threat-response"></div>
+                    <div class="metric-value" id="threat-score">--</div>
+                    <div class="metric-label">Threat Score</div>
+                    <div class="metric-change change-neutral" id="threat-change">--</div>
                     
+                    <!-- Temporal Dynamics -->
                     <div class="mt-4">
-                        <h6>Temporal Dynamics</h6>
-                        <table class="table table-sm">
-                            <tr>
-                                <td>Trend:</td>
-                                <td><span id="trend-value">--</span></td>
-                            </tr>
-                            <tr>
-                                <td>Rate of Change:</td>
-                                <td><span id="slope-value">--</span> pts/min</td>
-                            </tr>
-                            <tr>
-                                <td>Persistence:</td>
-                                <td><span id="persistence-value">--</span>x</td>
-                            </tr>
-                        </table>
+                        <h6 class="metric-label">Temporal Analysis</h6>
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <div class="stat-value" id="trend-value">--</div>
+                                <div class="stat-label">Trend</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="slope-value">--</div>
+                                <div class="stat-label">Rate</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="persistence-value">--</div>
+                                <div class="stat-label">Persistence</div>
+                            </div>
+                        </div>
                     </div>
                     
-                    <div class="mt-3">
-                        <h6>Predictions</h6>
-                        <div class="progress mb-2" style="height: 20px;">
-                            <div class="progress-bar bg-warning" id="pred-5min" style="width: 0%">5min</div>
-                            <div class="progress-bar bg-danger" id="pred-15min" style="width: 0%">15min</div>
-                            <div class="progress-bar bg-dark" id="pred-30min" style="width: 0%">30min</div>
+                    <!-- Predictions -->
+                    <div class="mt-4">
+                        <h6 class="metric-label">Threat Trajectory</h6>
+                        <div class="prediction-bar">
+                            <div class="prediction-segment bg-info" id="pred-5min" style="width: 0%">5m</div>
+                            <div class="prediction-segment bg-warning" id="pred-15min" style="width: 0%">15m</div>
+                            <div class="prediction-segment bg-danger" id="pred-30min" style="width: 0%">30m</div>
                         </div>
                     </div>
                 </div>
@@ -58,114 +354,198 @@
         </div>
     </div>
     
-    <div class="col-md-4">
-        <div class="stat-card">
-            <h5>Environmental Quality</h5>
+    <!-- Environmental Quality Card -->
+    <div class="col-lg-4">
+        <div class="metric-card">
+            <div class="alert-indicator" id="quality-alert"></div>
             <div class="text-center">
-                <canvas id="quality-gauge" class="gauge"></canvas>
-                <h3 id="quality-score">--</h3>
-                <span class="badge bg-info" id="quality-category">--</span>
-                <div class="mt-2" id="quality-trend"></div>
+                <h5 class="mb-3">Environmental Quality</h5>
+                <div class="threat-gauge-container">
+                    <canvas id="quality-gauge"></canvas>
+                </div>
+                <div class="metric-value" id="quality-score">--</div>
+                <div class="metric-label">Quality Index</div>
+                <span class="status-badge" id="quality-category">--</span>
+                <div class="metric-change mt-2" id="quality-trend"></div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Sensor Grid -->
-<div class="row">
-    <!-- Radar / People -->
-    <div class="col-md-3">
-        <div class="stat-card sensor-card">
-            <h5><i class="bi bi-people"></i> Occupancy</h5>
-            <div class="value-large" id="people-count">0</div>
-            <div class="text-muted">people detected</div>
-            <hr>
-            <div id="target-list" class="small">
+<!-- Advanced Sensor Grid -->
+<div class="sensor-grid">
+    <!-- Occupancy Monitoring -->
+    <div class="metric-card">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <div>
+                <h6 class="metric-label">
+                    <i class="bi bi-people me-2"></i>Occupancy Monitoring
+                </h6>
+            </div>
+            <div class="alert-indicator" id="occupancy-alert"></div>
+        </div>
+        <div class="metric-value" id="people-count">0</div>
+        <div class="metric-label">People Detected</div>
+        <div class="metric-change" id="occupancy-change">--</div>
+        
+        <div class="mt-3">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value" id="active-targets">0</div>
+                    <div class="stat-label">Active</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="abnormal-count">0</div>
+                    <div class="stat-label">Abnormal</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-3">
+            <h6 class="metric-label mb-2">Target Details</h6>
+            <div id="target-list" class="small" style="max-height: 150px; overflow-y: auto;">
                 <!-- Filled by JS -->
             </div>
         </div>
     </div>
     
-    <!-- Air Quality -->
-    <div class="col-md-3">
-        <div class="stat-card sensor-card">
-            <h5><i class="bi bi-wind"></i> Air Quality</h5>
-            <div class="value-large" id="aqi-value">--</div>
-            <div class="text-muted">AQI</div>
-            <hr>
-            <table class="table table-sm">
-                <tr>
-                    <td>VOC:</td>
-                    <td><span id="voc-value">--</span> ppm</td>
-                </tr>
-                <tr>
-                    <td>PM2.5:</td>
-                    <td><span id="pm25-value">--</span> µg/m³</td>
-                </tr>
-                <tr>
-                    <td>Odor:</td>
-                    <td><span id="odor-type">--</span></td>
-                </tr>
-            </table>
+    <!-- Air Quality Analysis -->
+    <div class="metric-card">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <div>
+                <h6 class="metric-label">
+                    <i class="bi bi-wind me-2"></i>Air Quality Analysis
+                </h6>
+            </div>
+            <div class="alert-indicator" id="air-alert"></div>
         </div>
-    </div>
-    
-    <!-- Sound -->
-    <div class="col-md-3">
-        <div class="stat-card sensor-card">
-            <h5><i class="bi bi-volume-up"></i> Noise Level</h5>
-            <div class="value-large" id="noise-value">--</div>
-            <div class="text-muted">dB</div>
-            <hr>
-            <div id="sound-event" class="small"></div>
-            <div class="progress mt-2">
-                <div class="progress-bar" id="noise-bar" style="width: 0%"></div>
+        <div class="metric-value" id="aqi-value">--</div>
+        <div class="metric-label">Air Quality Index</div>
+        <div class="metric-change" id="air-change">--</div>
+        
+        <div class="mt-3">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value" id="voc-value">--</div>
+                    <div class="stat-label">VOC (ppm)</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="pm25-value">--</div>
+                    <div class="stat-label">PM2.5 (µg/m³)</div>
+                </div>
             </div>
         </div>
+        
+        <div class="mt-3">
+            <div class="metric-label">Odor Classification</div>
+            <div class="fw-bold text-primary" id="odor-type">--</div>
+            <canvas id="air-chart" class="mini-chart"></canvas>
+        </div>
     </div>
     
-    <!-- Threat Components -->
-    <div class="col-md-3">
-        <div class="stat-card sensor-card">
-            <h5><i class="bi bi-shield"></i> Threat Components</h5>
-            <table class="table table-sm">
-                <tr>
-                    <td>Proximity:</td>
-                    <td><span id="prox-score">--</span></td>
-                </tr>
-                <tr>
-                    <td>Count:</td>
-                    <td><span id="count-score">--</span></td>
-                </tr>
-                <tr>
-                    <td>Behavior:</td>
-                    <td><span id="behave-score">--</span></td>
-                </tr>
-                <tr>
-                    <td>Vital Signs:</td>
-                    <td><span id="vital-score">--</span></td>
-                </tr>
-                <tr>
-                    <td>Air Quality:</td>
-                    <td><span id="air-score">--</span></td>
-                </tr>
-                <tr>
-                    <td>Noise:</td>
-                    <td><span id="noise-score">--</span></td>
-                </tr>
-            </table>
+    <!-- Acoustic Monitoring -->
+    <div class="metric-card">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <div>
+                <h6 class="metric-label">
+                    <i class="bi bi-volume-up me-2"></i>Acoustic Monitoring
+                </h6>
+            </div>
+            <div class="alert-indicator" id="sound-alert"></div>
+        </div>
+        <div class="metric-value" id="noise-value">--</div>
+        <div class="metric-label">Sound Level (dB)</div>
+        <div class="metric-change" id="sound-change">--</div>
+        
+        <div class="mt-3">
+            <div class="component-bar">
+                <div class="component-segment bg-success" id="sound-bar-safe" style="width: 60%"></div>
+                <div class="component-segment bg-warning" id="sound-bar-moderate" style="width: 30%"></div>
+                <div class="component-segment bg-danger" id="sound-bar-high" style="width: 10%"></div>
+            </div>
+        </div>
+        
+        <div class="mt-3">
+            <div class="metric-label">Sound Event</div>
+            <div class="fw-bold" id="sound-event">--</div>
+            <div id="sound-spike" class="text-danger mt-1"></div>
+            <canvas id="sound-chart" class="mini-chart"></canvas>
+        </div>
+    </div>
+    
+    <!-- Threat Components Analysis -->
+    <div class="metric-card">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <div>
+                <h6 class="metric-label">
+                    <i class="bi bi-shield me-2"></i>Threat Components
+                </h6>
+            </div>
+            <div class="alert-indicator" id="components-alert"></div>
+        </div>
+        
+        <div class="mt-3">
+            <div class="component-bar mb-3">
+                <div class="component-segment bg-info" id="comp-proximity" style="width: 15%" title="Proximity"></div>
+                <div class="component-segment bg-primary" id="comp-count" style="width: 15%" title="Count"></div>
+                <div class="component-segment bg-warning" id="comp-behavior" style="width: 45%" title="Behavior"></div>
+                <div class="component-segment bg-success" id="comp-vital" style="width: 15%" title="Vital Signs"></div>
+                <div class="component-segment bg-secondary" id="comp-air" style="width: 15%" title="Air Quality"></div>
+                <div class="component-segment bg-dark" id="comp-noise" style="width: 10%" title="Noise"></div>
+            </div>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-value" id="prox-score">--</div>
+                <div class="stat-label">Proximity</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="count-score">--</div>
+                <div class="stat-label">Count</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="behave-score">--</div>
+                <div class="stat-label">Behavior</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="vital-score">--</div>
+                <div class="stat-label">Vital Signs</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="air-score">--</div>
+                <div class="stat-label">Air Quality</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="noise-score">--</div>
+                <div class="stat-label">Noise</div>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- Recent Events -->
+<!-- Advanced Events Timeline -->
 <div class="row mt-4">
     <div class="col-12">
-        <div class="stat-card">
-                        <h5><i class="bi bi-clock-history"></i> Recent Events</h5>
+        <div class="metric-card">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="mb-0">
+                    <i class="bi bi-clock-history me-2"></i>
+                    Recent Events Timeline
+                </h5>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-outline-primary" onclick="refreshEvents()">
+                        <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+                    </button>
+                    <a href="{{ url_for('history') }}" class="btn btn-sm btn-primary">
+                        View All Events
+                    </a>
+                </div>
+            </div>
+            
             <div class="table-responsive">
                 <table class="table table-hover" id="events-table">
-                    <thead>
+                    <thead class="table-light">
                         <tr>
                             <th>Time</th>
                             <th>Event Type</th>
@@ -174,17 +554,46 @@
                             <th>People</th>
                             <th>Noise (dB)</th>
                             <th>AQI</th>
+                            <th>Status</th>
                         </tr>
                     </thead>
                     <tbody id="events-body">
                         <tr>
-                            <td colspan="7" class="text-center">Loading events...</td>
+                            <td colspan="8" class="text-center py-4">
+                                <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                                Loading events...
+                            </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
-            <div class="text-end mt-2">
-                <a href="{{ url_for('history') }}" class="btn btn-sm btn-outline-primary">View All Events</a>
+            
+            <!-- Event Statistics -->
+            <div class="row mt-4">
+                <div class="col-md-3">
+                    <div class="stat-item">
+                        <div class="stat-value text-success" id="stat-low">0</div>
+                        <div class="stat-label">Low Threat</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-item">
+                        <div class="stat-value text-info" id="stat-moderate">0</div>
+                        <div class="stat-label">Moderate</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-item">
+                        <div class="stat-value text-warning" id="stat-elevated">0</div>
+                        <div class="stat-label">Elevated</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-item">
+                        <div class="stat-value text-danger" id="stat-critical">0</div>
+                        <div class="stat-label">Critical</div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -245,156 +654,357 @@
     function handleLiveUpdate(data) {
         console.log('Updating dashboard with:', data);
         
-        // Update threat score
+        // Update threat assessment
         if (data.threat) {
             const threat = data.threat;
             const score = threat.overall_threat || 0;
             
-            document.getElementById('threat-score').textContent = score + '/100';
-            document.getElementById('threat-response').textContent = threat.response || '';
+            // Update main threat score
+            document.getElementById('threat-score').textContent = Math.round(score);
+            
+            // Update threat status badge
+            const statusBadge = document.getElementById('threat-status');
+            const threatAlert = document.getElementById('threat-alert');
+            
+            const level = threat.level || 'UNKNOWN';
+            statusBadge.textContent = level;
+            
+            // Set colors and alerts
+            const threatConfig = {
+                'CRITICAL': { color: '#742a2a', bg: 'bg-danger', alert: 'alert-critical' },
+                'HIGH': { color: '#c05621', bg: 'bg-warning', alert: 'alert-high' },
+                'ELEVATED': { color: '#d69e2e', bg: 'bg-info', alert: 'alert-elevated' },
+                'MODERATE': { color: '#2b6cb0', bg: 'bg-primary', alert: 'alert-moderate' },
+                'LOW': { color: '#22543d', bg: 'bg-success', alert: 'alert-low' }
+            };
+            
+            const config = threatConfig[level] || threatConfig['LOW'];
+            statusBadge.className = `status-badge ${config.bg}`;
+            threatAlert.className = `alert-indicator ${config.alert}`;
             
             // Update gauge
             threatGauge.data.datasets[0].data = [score, 100 - score];
-            
-            // Set color based on level
-            const colors = {
-                'LOW': '#28a745',
-                'MODERATE': '#ffc107',
-                'ELEVATED': '#fd7e14',
-                'HIGH': '#dc3545',
-                'CRITICAL': '#343a40'
-            };
-            threatGauge.data.datasets[0].backgroundColor[0] = colors[threat.level] || '#28a745';
+            threatGauge.data.datasets[0].backgroundColor[0] = config.color;
             threatGauge.update();
             
-            // Update badge
-            const badge = document.getElementById('threat-badge');
-            badge.textContent = threat.level || 'UNKNOWN';
-            badge.className = `badge bg-${threat.level === 'CRITICAL' ? 'dark' : 
-                                               threat.level === 'HIGH' ? 'danger' :
-                                               threat.level === 'ELEVATED' ? 'warning' :
-                                               threat.level === 'MODERATE' ? 'info' : 'success'}`;
-            
-            // Temporal dynamics
-            if (threat.temporal) {
-                document.getElementById('trend-value').textContent = threat.temporal.trend || '--';
-                document.getElementById('slope-value').textContent = (threat.temporal.slope || 0).toFixed(2);
-                document.getElementById('persistence-value').textContent = (threat.temporal.persistence_factor || 1.0).toFixed(2);
-                
-                // Trend icon
-                const trendEl = document.getElementById('trend-value');
-                if (threat.temporal.trend === 'rapidly_worsening') {
-                    trendEl.innerHTML = '⬆️⬆️ Rapidly Worsening';
-                } else if (threat.temporal.trend === 'worsening') {
-                    trendEl.innerHTML = '⬆️ Worsening';
-                } else if (threat.temporal.trend === 'improving') {
-                    trendEl.innerHTML = '⬇️ Improving';
-                } else if (threat.temporal.trend === 'rapidly_improving') {
-                    trendEl.innerHTML = '⬇️⬇️ Rapidly Improving';
+            // Update threat change indicator
+            const changeEl = document.getElementById('threat-change');
+            if (threat.temporal && threat.temporal.slope) {
+                const slope = threat.temporal.slope;
+                if (slope > 1) {
+                    changeEl.textContent = `⬆️ +${slope.toFixed(1)}`;
+                    changeEl.className = 'metric-change change-negative';
+                } else if (slope < -1) {
+                    changeEl.textContent = `⬇️ ${slope.toFixed(1)}`;
+                    changeEl.className = 'metric-change change-positive';
                 } else {
-                    trendEl.innerHTML = '➡️ Stable';
+                    changeEl.textContent = '➡️ Stable';
+                    changeEl.className = 'metric-change change-neutral';
                 }
             }
             
-            // Trajectory
+            // Temporal dynamics
+            if (threat.temporal) {
+                const trendMap = {
+                    'rapidly_worsening': '⬆️⬆️ Rapidly',
+                    'worsening': '⬆️ Worsening',
+                    'stable': '➡️ Stable',
+                    'improving': '⬇️ Improving',
+                    'rapidly_improving': '⬇️⬇️ Rapidly'
+                };
+                document.getElementById('trend-value').textContent = trendMap[threat.temporal.trend] || '--';
+                document.getElementById('slope-value').textContent = (threat.temporal.slope || 0).toFixed(1);
+                document.getElementById('persistence-value').textContent = (threat.temporal.persistence || 1.0).toFixed(1);
+            }
+            
+            // Trajectory predictions
             if (threat.trajectory) {
-                const setProgress = (id, value, max = 100) => {
+                const updatePrediction = (id, value) => {
                     const el = document.getElementById(id);
-                    if (el && value) {
-                        el.style.width = (value / max * 100) + '%';
-                        el.textContent = value + (id.includes('min') ? '' : '');
+                    if (el && value !== undefined) {
+                        const width = Math.min(Math.max(value, 0), 100);
+                        el.style.width = width + '%';
+                        el.textContent = Math.round(value);
                     }
                 };
-                setProgress('pred-5min', threat.trajectory['5min']);
-                setProgress('pred-15min', threat.trajectory['15min']);
-                setProgress('pred-30min', threat.trajectory['30min']);
+                
+                updatePrediction('pred-5min', threat.trajectory['5min']);
+                updatePrediction('pred-15min', threat.trajectory['15min']);
+                updatePrediction('pred-30min', threat.trajectory['30min']);
             }
             
             // Component scores
             if (threat.components) {
                 const comp = threat.components;
-                document.getElementById('prox-score').textContent = comp.proximity?.score || '--';
-                document.getElementById('count-score').textContent = comp.count?.score || '--';
-                document.getElementById('behave-score').textContent = comp.behavior?.score || '--';
-                document.getElementById('vital-score').textContent = comp.vital_signs?.score || '--';
-                document.getElementById('air-score').textContent = comp.air_quality?.score || '--';
-                document.getElementById('noise-score').textContent = comp.noise?.score || '--';
+                console.log('Updating threat components:', comp); // Debug log
+                
+                // Update individual component scores
+                const updateComp = (id, component) => {
+                    const el = document.getElementById(id);
+                    if (el && component) {
+                        const score = Math.round(component.score || 0);
+                        el.textContent = score;
+                        console.log(`Updated ${id}: ${score}`); // Debug each component
+                    } else {
+                        console.log(`Missing element or component for ${id}:`, el, component);
+                    }
+                };
+                
+                updateComp('prox-score', comp.proximity);
+                updateComp('count-score', comp.count);
+                updateComp('behave-score', comp.behavior);
+                updateComp('vital-score', comp.vital_signs);
+                updateComp('air-score', comp.air_quality);
+                updateComp('noise-score', comp.noise);
+                
+                // Update component bar visualization
+                if (comp.proximity && comp.count && comp.behavior && comp.vital_signs && comp.air_quality && comp.noise) {
+                    const updateBar = (id, component) => {
+                        const el = document.getElementById(id);
+                        if (el && component) {
+                            const width = (component.weight * 100);
+                            el.style.width = width + '%';
+                            el.title = `${component.name || id}: ${Math.round(component.score || 0)} (${(width).toFixed(0)}%)`;
+                            console.log(`Updated bar ${id}: ${width}%`); // Debug bar updates
+                        }
+                    };
+                    
+                    updateBar('comp-proximity', comp.proximity);
+                    updateBar('comp-count', comp.count);
+                    updateBar('comp-behavior', comp.behavior);
+                    updateBar('comp-vital', comp.vital_signs);
+                    updateBar('comp-air', comp.air_quality);
+                    updateBar('comp-noise', comp.noise);
+                } else {
+                    console.log('Missing component data for bar updates');
+                }
+                
+                // Update components alert indicator based on highest component score
+                const componentsAlert = document.getElementById('components-alert');
+                if (componentsAlert) {
+                    const scores = [
+                        comp.proximity?.score || 0,
+                        comp.count?.score || 0,
+                        comp.behavior?.score || 0,
+                        comp.vital_signs?.score || 0,
+                        comp.air_quality?.score || 0,
+                        comp.noise?.score || 0
+                    ];
+                    const maxScore = Math.max(...scores);
+                    console.log('Component scores:', scores, 'Max:', maxScore); // Debug scores
+                    
+                    if (maxScore > 80) {
+                        componentsAlert.className = 'alert-indicator alert-critical';
+                    } else if (maxScore > 60) {
+                        componentsAlert.className = 'alert-indicator alert-high';
+                    } else if (maxScore > 40) {
+                        componentsAlert.className = 'alert-indicator alert-elevated';
+                    } else if (maxScore > 20) {
+                        componentsAlert.className = 'alert-indicator alert-moderate';
+                    } else {
+                        componentsAlert.className = 'alert-indicator alert-low';
+                    }
+                } else {
+                    console.log('Components alert element not found');
+                }
+                
+                // Log component contributions to overall threat
+                const contributions = {};
+                for (const [name, component] of Object.entries(comp)) {
+                    contributions[name] = (component.score || 0) * (component.weight || 0);
+                }
+                console.log('Component contributions to threat:', contributions);
+                console.log('Calculated threat from components:', Object.values(contributions).reduce((a, b) => a + b, 0));
+                
+            } else {
+                console.log('No threat components data available in:', threat); // Debug log
             }
         }
         
-        // Update quality
+        // Update environmental quality
         if (data.quality) {
             const quality = data.quality;
-            document.getElementById('quality-score').textContent = quality.quality_score + '/100';
+            const score = quality.quality_score || 0;
+            
+            document.getElementById('quality-score').textContent = Math.round(score);
             document.getElementById('quality-category').textContent = quality.category || '--';
             
-            qualityGauge.data.datasets[0].data = [quality.quality_score || 0, 100 - (quality.quality_score || 0)];
+            // Update quality gauge
+            qualityGauge.data.datasets[0].data = [score, 100 - score];
             qualityGauge.update();
             
+            // Quality trend
             const trendEl = document.getElementById('quality-trend');
+            const qualityAlert = document.getElementById('quality-alert');
+            
             if (quality.trend === 'improving') {
-                trendEl.innerHTML = '<span class="trend-up">⬆️ Improving</span>';
+                trendEl.innerHTML = '<span class="metric-change change-positive">⬆️ Improving</span>';
+                qualityAlert.className = 'alert-indicator alert-low';
             } else if (quality.trend === 'declining') {
-                trendEl.innerHTML = '<span class="trend-down">⬇️ Declining</span>';
+                trendEl.innerHTML = '<span class="metric-change change-negative">⬇️ Declining</span>';
+                qualityAlert.className = 'alert-indicator alert-elevated';
             } else {
-                trendEl.innerHTML = '<span class="trend-stable">➡️ Stable</span>';
+                trendEl.innerHTML = '<span class="metric-change change-neutral">➡️ Stable</span>';
+                qualityAlert.className = 'alert-indicator alert-moderate';
             }
         }
         
-        // Update radar/people
+        // Update occupancy monitoring
         if (data.radar) {
-            document.getElementById('people-count').textContent = data.radar.target_count || 0;
+            const peopleCount = data.radar.target_count || 0;
+            const activeTargets = data.active_targets || 0;
+            const abnormalCount = data.abnormal_count || 0;
+            
+            document.getElementById('people-count').textContent = peopleCount;
+            document.getElementById('active-targets').textContent = activeTargets;
+            document.getElementById('abnormal-count').textContent = abnormalCount;
+            
+            // Occupancy change indicator
+            const occChange = document.getElementById('occupancy-change');
+            if (peopleCount > 3) {
+                occChange.textContent = '⚠️ High';
+                occChange.className = 'metric-change change-negative';
+            } else if (peopleCount > 0) {
+                occChange.textContent = '✓ Normal';
+                occChange.className = 'metric-change change-positive';
+            } else {
+                occChange.textContent = '— Empty';
+                occChange.className = 'metric-change change-neutral';
+            }
+            
+            // Update occupancy alert
+            const occAlert = document.getElementById('occupancy-alert');
+            if (peopleCount > 5) {
+                occAlert.className = 'alert-indicator alert-critical';
+            } else if (peopleCount > 3) {
+                occAlert.className = 'alert-indicator alert-high';
+            } else if (peopleCount > 0) {
+                occAlert.className = 'alert-indicator alert-moderate';
+            } else {
+                occAlert.className = 'alert-indicator alert-low';
+            }
             
             // Target list
             const targets = data.radar.targets || [];
             let targetHtml = '';
             targets.forEach((t, i) => {
+                const activityIcon = {
+                    'stationary': '🧍',
+                    'sitting': '🪑',
+                    'walking': '🚶',
+                    'running': '🏃'
+                }[t.activity] || '❓';
+                
                 targetHtml += `
-                    <div class="mb-2 p-2 bg-light rounded">
-                        <strong>Target ${i+1}</strong><br>
-                        Distance: ${t.distance?.toFixed(2)}m<br>
-                        Activity: ${t.activity || 'unknown'}<br>
-                        ${t.breathing_rate ? 'Breathing: ' + t.breathing_rate + ' bpm' : ''}
-                        ${t.abnormal_breathing ? ' ⚠️' : ''}
+                    <div class="mb-2 p-2 bg-light rounded border-start border-3 border-${t.abnormal_breathing ? 'danger' : 'primary'}">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <strong>${activityIcon} Target ${i+1}</strong>
+                            <small class="text-muted">${t.distance?.toFixed(1)}m</small>
+                        </div>
+                        <div class="small text-muted">
+                            Activity: ${t.activity || 'unknown'}
+                            ${t.breathing_rate ? ' • Breathing: ' + t.breathing_rate + ' bpm' : ''}
+                            ${t.abnormal_breathing ? ' ⚠️' : ''}
+                        </div>
                     </div>
                 `;
             });
-            document.getElementById('target-list').innerHTML = targets.length ? targetHtml : 'No targets detected';
+            document.getElementById('target-list').innerHTML = targets.length ? targetHtml : '<div class="text-muted text-center py-3">No targets detected</div>';
         }
         
-        // Update air quality
+        // Update air quality analysis
         if (data.odor) {
-            document.getElementById('aqi-value').textContent = data.odor.air_quality_index || '--';
-            document.getElementById('voc-value').textContent = (data.odor.voc_ppm || 0).toFixed(1);
-            document.getElementById('pm25-value').textContent = data.odor.pm25 || '--';
+            const aqi = data.odor.air_quality_index || 0;
+            const voc = data.odor.voc_ppm || 0;
+            const pm25 = data.odor.pm25 || 0;
+            
+            document.getElementById('aqi-value').textContent = Math.round(aqi);
+            document.getElementById('voc-value').textContent = voc.toFixed(1);
+            document.getElementById('pm25-value').textContent = pm25;
             document.getElementById('odor-type').textContent = data.odor.odor_type || '--';
+            
+            // Air quality change indicator
+            const airChange = document.getElementById('air-change');
+            const airAlert = document.getElementById('air-alert');
+            
+            if (aqi > 150) {
+                airChange.textContent = '⚠️ Unhealthy';
+                airChange.className = 'metric-change change-negative';
+                airAlert.className = 'alert-indicator alert-critical';
+            } else if (aqi > 100) {
+                airChange.textContent = '⚠️ Moderate';
+                airChange.className = 'metric-change change-negative';
+                airAlert.className = 'alert-indicator alert-high';
+            } else if (aqi > 50) {
+                airChange.textContent = '— Fair';
+                airChange.className = 'metric-change change-neutral';
+                airAlert.className = 'alert-indicator alert-elevated';
+            } else {
+                airChange.textContent = '✓ Good';
+                airChange.className = 'metric-change change-positive';
+                airAlert.className = 'alert-indicator alert-low';
+            }
         }
         
-        // Update sound
+        // Update acoustic monitoring
         if (data.sound) {
             const db = data.sound.db || 0;
-            document.getElementById('noise-value').textContent = db.toFixed(1);
-            document.getElementById('noise-bar').style.width = (db / 120 * 100) + '%';
-            
             const event = data.sound.event || 'normal';
-            const spike = data.sound.spike ? ' ⚠️ SPIKE' : '';
-            document.getElementById('sound-event').innerHTML = `
-                <span class="badge bg-secondary">${event}</span>${spike}
-            `;
+            const spike = data.sound.spike || false;
+            
+            document.getElementById('noise-value').textContent = db.toFixed(1);
+            
+            // Sound change indicator
+            const soundChange = document.getElementById('sound-change');
+            const soundAlert = document.getElementById('sound-alert');
+            
+            if (db > 85) {
+                soundChange.textContent = '⚠️ Loud';
+                soundChange.className = 'metric-change change-negative';
+                soundAlert.className = 'alert-indicator alert-critical';
+            } else if (db > 70) {
+                soundChange.textContent = '— Moderate';
+                soundChange.className = 'metric-change change-neutral';
+                soundAlert.className = 'alert-indicator alert-elevated';
+            } else {
+                soundChange.textContent = '✓ Quiet';
+                soundChange.className = 'metric-change change-positive';
+                soundAlert.className = 'alert-indicator alert-low';
+            }
+            
+            // Update sound bars
+            const safeWidth = Math.max(0, Math.min((70 - db) / 70 * 100, 100));
+            const moderateWidth = Math.max(0, Math.min((85 - db) / 15 * 100, 100));
+            const highWidth = Math.max(0, Math.min((db - 85) / 35 * 100, 100));
+            
+            document.getElementById('sound-bar-safe').style.width = safeWidth + '%';
+            document.getElementById('sound-bar-moderate').style.width = moderateWidth + '%';
+            document.getElementById('sound-bar-high').style.width = highWidth + '%';
+            
+            // Sound event
+            const eventEl = document.getElementById('sound-event');
+            const spikeEl = document.getElementById('sound-spike');
+            
+            eventEl.innerHTML = `<span class="badge bg-secondary">${event}</span>`;
+            spikeEl.innerHTML = spike ? '<span class="badge bg-danger">⚠️ SPIKE DETECTED</span>' : '';
         }
         
         // Update last update time
-        document.getElementById('last-update').textContent = 'Updated: ' + new Date().toLocaleTimeString();
+        document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
+        
+        // Update mini charts with new data
+        updateMiniCharts(data);
     }
     
-    // Load recent events
+    // Load recent events with enhanced statistics
     function loadEvents() {
         fetch('/api/events/recent?limit=10')
             .then(response => response.json())
             .then(events => {
                 const tbody = document.getElementById('events-body');
                 if (events.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="7" class="text-center">No events found</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4">No events found</td></tr>';
+                    updateEventStats([]);
                     return;
                 }
                 
@@ -406,32 +1016,177 @@
                                event.threat_level === 'ELEVATED' ? 'warning' :
                                event.threat_level === 'MODERATE' ? 'info' : 'success'}` : 'bg-secondary';
                     
+                    const statusIcon = event.threat_level === 'CRITICAL' ? '🚨' :
+                                     event.threat_level === 'HIGH' ? '⚠️' :
+                                     event.threat_level === 'ELEVATED' ? '⚡' :
+                                     event.threat_level === 'MODERATE' ? '📍' :
+                                     event.threat_level === 'LOW' ? '✅' : '❓';
+                    
                     html += `
                         <tr>
-                            <td>${new Date(event.timestamp).toLocaleTimeString()}</td>
-                            <td>${event.event_type || 'NORMAL'}</td>
-                            <td><span class="badge ${threatClass}">${event.threat_level || 'UNKNOWN'}</span></td>
-                            <td>${event.threat_score?.toFixed(0) || '--'}</td>
+                            <td><small class="text-muted">${new Date(event.timestamp).toLocaleTimeString()}</small></td>
+                            <td><span class="badge bg-light text-dark">${event.event_type || 'NORMAL'}</span></td>
+                            <td><span class="badge ${threatClass}">${statusIcon} ${event.threat_level || 'UNKNOWN'}</span></td>
+                            <td><strong>${event.threat_score?.toFixed(0) || '--'}</strong></td>
                             <td>${event.people_count || 0}</td>
                             <td>${event.sound_db?.toFixed(1) || '--'}</td>
                             <td>${event.air_aqi?.toFixed(0) || '--'}</td>
+                            <td><span class="status-badge bg-light text-dark">Active</span></td>
                         </tr>
                     `;
                 });
                 tbody.innerHTML = html;
+                updateEventStats(events);
             })
             .catch(error => {
                 console.error('Error loading events:', error);
                 document.getElementById('events-body').innerHTML = 
-                    '<tr><td colspan="7" class="text-center text-danger">Error loading events</td></tr>';
+                    '<tr><td colspan="8" class="text-center text-danger py-4">📡 Error loading events</td></tr>';
             });
+    }
+    
+    // Update event statistics
+    function updateEventStats(events) {
+        const stats = {
+            low: 0,
+            moderate: 0,
+            elevated: 0,
+            critical: 0
+        };
+        
+        events.forEach(event => {
+            const level = event.threat_level;
+            if (level === 'LOW') stats.low++;
+            else if (level === 'MODERATE') stats.moderate++;
+            else if (level === 'ELEVATED') stats.elevated++;
+            else if (level === 'HIGH' || level === 'CRITICAL') stats.critical++;
+        });
+        
+        document.getElementById('stat-low').textContent = stats.low;
+        document.getElementById('stat-moderate').textContent = stats.moderate;
+        document.getElementById('stat-elevated').textContent = stats.elevated;
+        document.getElementById('stat-critical').textContent = stats.critical;
+    }
+    
+    // Refresh events function
+    function refreshEvents() {
+        const tbody = document.getElementById('events-body');
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4"><div class="spinner-border spinner-border-sm me-2" role="status"></div>Refreshing...</td></tr>';
+        loadEvents();
+    }
+    
+    // Initialize mini charts
+    function initMiniCharts() {
+        // Air quality mini chart
+        const airCtx = document.getElementById('air-chart');
+        if (airCtx) {
+            window.airChart = new Chart(airCtx.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: Array.from({length: 15}, (_, i) => ''),
+                    datasets: [{
+                        data: Array.from({length: 15}, () => Math.random() * 100),
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        borderWidth: 1.5,
+                        tension: 0.6,
+                        pointRadius: 0,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                    scales: {
+                        x: { display: false },
+                        y: { display: false }
+                    },
+                    elements: {
+                        line: {
+                            borderCapStyle: 'round',
+                            borderJoinStyle: 'round'
+                        }
+                    },
+                    resizeDelay: 0,
+                    animation: {
+                        duration: 300
+                    }
+                }
+            });
+        }
+        
+        // Sound mini chart
+        const soundCtx = document.getElementById('sound-chart');
+        if (soundCtx) {
+            window.soundChart = new Chart(soundCtx.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: Array.from({length: 15}, (_, i) => ''),
+                    datasets: [{
+                        data: Array.from({length: 15}, () => Math.random() * 80 + 20),
+                        borderColor: '#48bb78',
+                        backgroundColor: 'rgba(72, 187, 120, 0.1)',
+                        borderWidth: 1.5,
+                        tension: 0.6,
+                        pointRadius: 0,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                    scales: {
+                        x: { display: false },
+                        y: { display: false }
+                    },
+                    elements: {
+                        line: {
+                            borderCapStyle: 'round',
+                            borderJoinStyle: 'round'
+                        }
+                    },
+                    resizeDelay: 0,
+                    animation: {
+                        duration: 300
+                    }
+                }
+            });
+        }
+    }
+    
+    // Update mini charts with new data
+    function updateMiniCharts(data) {
+        // Update air quality chart
+        if (window.airChart && data.odor) {
+            const aqi = data.odor.air_quality_index || 0;
+            const currentData = window.airChart.data.datasets[0].data;
+            currentData.shift();
+            currentData.push(aqi);
+            window.airChart.update('none');
+        }
+        
+        // Update sound chart
+        if (window.soundChart && data.sound) {
+            const db = data.sound.db || 0;
+            const currentData = window.soundChart.data.datasets[0].data;
+            currentData.shift();
+            currentData.push(db);
+            window.soundChart.update('none');
+        }
     }
     
     // Load initial data
     document.addEventListener('DOMContentLoaded', function() {
+        initMiniCharts();
         loadEvents();
+        
         // Refresh events every 30 seconds
         setInterval(loadEvents, 30000);
+        
+        // Initialize dashboard with current time
+        document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
     });
 </script>
 {% endblock %}

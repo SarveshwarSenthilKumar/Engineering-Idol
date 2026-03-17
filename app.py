@@ -312,6 +312,11 @@ def generate_fake_sensor_data():
     
     # Component threats with updated weights and logic
     components = {
+        'proximity': {
+            'score': random.uniform(0, 100), 
+            'weight': 0.15, 
+            'confidence': random.uniform(0.7, 0.95)
+        },
         'count': {
             'score': random.uniform(0, 100), 
             'weight': 0.15, 
@@ -319,7 +324,7 @@ def generate_fake_sensor_data():
         },
         'behavior': {
             'score': behavior_score,  # This now includes proximity
-            'weight': 0.45,  # Increased from 0.30 to include proximity
+            'weight': 0.30,  # Reduced to accommodate proximity
             'confidence': random.uniform(0.7, 0.95)
         },
         'vital_signs': {
@@ -329,16 +334,20 @@ def generate_fake_sensor_data():
             'confidence': random.uniform(0.7, 0.95)
         },
         'air_quality': {
-            'score': random.uniform(0, 100), 
+            'score': min(100, (aqi / 200) * 100),  # Scale AQI to 0-100
             'weight': 0.15, 
             'confidence': random.uniform(0.7, 0.95)
         },
         'noise': {
-            'score': random.uniform(0, 100), 
+            'score': min(100, ((sound_db - 30) / 70) * 100),  # Scale dB to 0-100
             'weight': 0.10, 
             'confidence': random.uniform(0.7, 0.95)
         }
     }
+    
+    # Calculate overall threat score from components
+    calculated_threat = sum(comp['score'] * comp['weight'] for comp in components.values())
+    threat_score = max(threat_score, calculated_threat)  # Use the higher of calculated or random
     
     # Temporal dynamics
     trends = ['stable', 'worsening', 'rapidly_worsening', 'improving', 'rapidly_improving']
