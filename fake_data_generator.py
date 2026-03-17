@@ -15,7 +15,7 @@ import sys
 
 # Configuration
 DB_PATH = 'events.db'
-DAYS_OF_HISTORY = 30  # Generate 30 days of history
+DAYS_OF_HISTORY = 1  # Generate 1 day of history for recent data
 EVENTS_PER_DAY = 50   # Average events per day
 TARGETS_PER_EVENT = 2 # Average targets per event
 
@@ -469,7 +469,7 @@ class FakeDataGenerator:
         print(f"📊 Generating {count} events...")
         
         cursor = self.conn.cursor()
-        start_time = datetime.now() - timedelta(days=DAYS_OF_HISTORY)
+        start_time = datetime.now() - timedelta(hours=2)  # Start 2 hours ago for recent data
         
         prev_target_count = 0
         for i in range(count):

@@ -1446,6 +1446,60 @@ def history():
                          current_environment=current_env,
                          highest_threat_environment=highest_threat_env)
 
+@app.route("/test/analytics")
+def test_analytics():
+    """Test analytics page without login"""
+    timeline = get_threat_timeline(24)
+    stats = get_threat_statistics(24)
+    return render_template('analytics.html',
+                         timeline=json.dumps(timeline),
+                         stats=stats,
+                         current_time=datetime.now().isoformat(),
+                         fake_mode=True,
+                         environments={'primary': {'name': 'Test Environment', 'color': '#007bff', 'icon': 'bi-house'}},
+                         current_environment='primary',
+                         highest_threat_environment=None)
+
+@app.route("/test/history")
+def test_history():
+    """Test history page without login"""
+    events = get_recent_events(100)
+    stats = get_threat_statistics(24)
+    
+    # Generate timeline data (events per hour for last 24h)
+    timeline_data = [0] * 24
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT strftime('%H', timestamp) as hour, COUNT(*) as count
+            FROM events_log
+            WHERE datetime(timestamp) > datetime('now', '-24 hours')
+            GROUP BY hour
+            ORDER BY hour
+        """)
+        hour_counts = cursor.fetchall()
+        for row in hour_counts:
+            hour = int(row['hour'])
+            timeline_data[hour] = row['count']
+    except Exception as e:
+        app.logger.error(f"Error generating timeline: {e}")
+    finally:
+        if conn:
+            conn.close()
+    
+    return render_template('history.html',
+                         events=events,
+                         stats=stats,
+                         timeline_data=timeline_data,
+                         current_date=datetime.now().strftime('%Y-%m-%d'),
+                         current_time=datetime.now().isoformat(),
+                         fake_mode=True,
+                         environments={'primary': {'name': 'Test Environment', 'color': '#007bff', 'icon': 'bi-house'}},
+                         current_environment='primary',
+                         highest_threat_environment=None)
+
 @app.route("/analytics")
 @login_required
 def analytics():
