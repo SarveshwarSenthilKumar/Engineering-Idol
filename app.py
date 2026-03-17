@@ -1012,6 +1012,26 @@ def api_update():
         
         return jsonify({'status': 'ok'})
 
+@app.route("/api/live")
+def api_live():
+    """Get current live sensor data"""
+    fake_mode = session.get('fake_mode', True)
+    
+    if fake_mode:
+        data = generate_fake_sensor_data()
+    else:
+        data = live_data.get_latest()
+        if not data:
+            data = generate_fake_sensor_data()
+    
+    return jsonify(data)
+
+@app.route("/api/timeline")
+def api_timeline():
+    """Get timeline data for analytics"""
+    hours = request.args.get('hours', 24, type=int)
+    return jsonify(get_threat_timeline(hours))
+
 @app.route("/api/events/stream")
 def events_stream():
     """Server-Sent Events stream for real-time updates"""
@@ -1035,14 +1055,6 @@ def events_stream():
                 if fake_mode:
                     # Generate fake data for dashboard
                     data = generate_fake_sensor_data()
-                    # Add some threat level data
-                    data['threat'] = {
-                        'overall_threat': random.randint(20, 80),
-                        'level': random.choice(['LOW', 'MODERATE', 'ELEVATED', 'HIGH']),
-                        'trend': random.choice(['increasing', 'decreasing', 'stable']),
-                        'slope': round(random.uniform(-5, 5), 1),
-                        'persistence': round(random.uniform(1, 5), 1)
-                    }
                 else:
                     data = live_data.get_latest()
                 
