@@ -169,9 +169,10 @@
         
         .pause-button {
             position: fixed;
-            top: 80px;
+            top: 140px;
             right: 20px;
             z-index: 1050;
+            transition: opacity 0.3s ease-in-out;
         }
         
         .pause-button.btn-paused {
@@ -269,49 +270,47 @@
                         <div id="live-time" class="mb-1"></div>
                         <div>Environmental Monitoring System v2.0.0</div>
                     </div>
-                </div>
-            </nav>
-            
-            <!-- Main Content -->
-            <main class="col-md-10 ms-sm-auto px-md-4 main-content">
-                <!-- Global Pause Button (only for logged-in users) -->
-                {% if session.user_id %}
-                <div class="pause-button">
-                    <button id="pauseBtn" class="btn btn-active btn-lg rounded-circle shadow-lg" 
-                            onclick="togglePause()" title="Pause/Resume Data Updates">
-                        <i class="bi bi-pause-fill" id="pauseIcon"></i>
-                    </button>
-                </div>
+                </nav>
                 
-                <!-- Fake Mode Toggle -->
-                <div class="position-fixed top-0 end-0 m-4" style="z-index: 1000; margin-top: 140px !important;">
-                    <div class="d-flex align-items-center gap-3">
-                        <span class="text-uppercase small">
-                            <span class="status-indicator {{ 'yellow' if session.get('fake_mode', False) else 'red' }}"></span>
-                            Demo Data: {{ 'ON' if session.get('fake_mode', False) else 'OFF' }}
-                        </span>
-                        <label class="toggle-switch">
-                            <input type="checkbox" id="fakeToggle" {% if session.get('fake_mode', False) %}checked{% endif %} onchange="toggleFakeMode()">
-                            <span class="toggle-slider"></span>
-                        </label>
+                <!-- Main Content -->
+                <main class="col-md-10 ms-sm-auto px-md-4 main-content">
+                    <!-- Fake Mode Toggle -->
+                    <div class="position-fixed top-0 end-0 m-4 fade-on-scroll" style="z-index: 1000; margin-top: 80px !important; transition: opacity 0.3s ease-in-out;">
+                        <div class="d-flex align-items-center gap-3">
+                            <span class="text-uppercase small">
+                                <span class="status-indicator {{ 'yellow' if session.get('fake_mode', False) else 'red' }}"></span>
+                                Demo Data: {{ 'ON' if session.get('fake_mode', False) else 'OFF' }}
+                            </span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="fakeToggle" {% if session.get('fake_mode', False) %}checked{% endif %} onchange="toggleFakeMode()">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
                     </div>
-                </div>
-                {% endif %}
-                
-                <!-- Flash Messages -->
-                {% with messages = get_flashed_messages(with_categories=true) %}
-                    {% if messages %}
-                        {% for category, message in messages %}
-                            <div class="alert alert-{{ 'danger' if category == 'error' else 'success' if category == 'success' else 'info' }} alert-dismissible fade show mt-3" role="alert">
-                                {{ message }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        {% endfor %}
-                    {% endif %}
-                {% endwith %}
-                
-                {% block content %}{% endblock %}
-            </main>
+                    
+                    <!-- Global Pause Button (only for logged-in users) -->
+                    <div class="pause-button fade-on-scroll">
+                        <button id="pauseBtn" class="btn btn-active btn-lg rounded-circle shadow-lg" 
+                                onclick="togglePause()" title="Pause/Resume Data Updates">
+                            <i class="bi bi-pause-fill" id="pauseIcon"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Flash Messages -->
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ 'danger' if category == 'error' else 'success' if category == 'success' else 'info' }} alert-dismissible fade show mt-3" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    
+                    {% block content %}{% endblock %}
+                </main>
+            </div>
         </div>
     </div>
     
@@ -494,6 +493,26 @@
             if (pauseBtn) {
                 checkPauseStatus();
             }
+            
+            // Add scroll fade functionality
+            let lastScrollTop = 0;
+            const fadeElements = document.querySelectorAll('.fade-on-scroll');
+            
+            window.addEventListener('scroll', function() {
+                const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                
+                fadeElements.forEach(element => {
+                    if (scrollTop > lastScrollTop && scrollTop > 100) {
+                        // Scrolling down - fade out
+                        element.style.opacity = '0.3';
+                    } else {
+                        // Scrolling up - fade in
+                        element.style.opacity = '1';
+                    }
+                });
+                
+                lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
+            });
         });
     </script>
     

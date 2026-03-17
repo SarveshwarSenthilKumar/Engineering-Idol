@@ -828,33 +828,13 @@
     </div>
 </div>
 
-<!-- Fake data indicator that follows mouse -->
-<div id="fakeCursor" class="position-fixed" style="display: none; pointer-events: none; z-index: 9999; font-family: 'Courier New', monospace; background: rgba(0,0,0,0.8); padding: 5px 10px; border: 1px solid yellow; border-radius: 5px; color: yellow; font-size: 12px;">
-    ⚠️ FAKE DATA MODE
-</div>
-
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    // Fake mode state
-    let fakeMode = {{ 'true' if fake_mode else 'false' }};
-    
     // Initialize components
     document.addEventListener('DOMContentLoaded', function() {
         initRadar();
-        
-        // Mouse follower for fake mode
-        if (fakeMode) {
-            document.getElementById('fakeCursor').style.display = 'block';
-            document.addEventListener('mousemove', function(e) {
-                const cursor = document.getElementById('fakeCursor');
-                cursor.style.left = (e.pageX + 20) + 'px';
-                cursor.style.top = (e.pageY - 30) + 'px';
-            });
-        }
-        
-        // Start live updates
         startLiveUpdates();
     });
     
@@ -954,8 +934,6 @@
     
     function toggleFakeMode() {
         fakeMode = !fakeMode;
-        const cursor = document.getElementById('fakeCursor');
-        cursor.style.display = fakeMode ? 'block' : 'none';
         
         // Reload with fake mode parameter
         window.location.href = window.location.pathname + '?fake=' + (fakeMode ? '1' : '0');
