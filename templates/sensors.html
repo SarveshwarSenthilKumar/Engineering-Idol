@@ -1049,29 +1049,7 @@
         
         // Check if no real data is available
         if (data.no_data) {
-            // Show "No Data Available" message
-            const peopleElements = document.querySelectorAll('.people-count');
-            peopleElements.forEach(el => el.textContent = '--');
-            
-            const statusElements = document.querySelectorAll('.people-status');
-            statusElements.forEach(el => el.textContent = 'No Data');
-            
-            // Clear radar visualization
-            const canvas = document.getElementById('radarCanvas');
-            if (canvas) {
-                const ctx = canvas.getContext('2d');
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#666';
-                ctx.font = '16px system-ui';
-                ctx.textAlign = 'center';
-                ctx.fillText('No Real Data Available', canvas.width / 2, canvas.height / 2);
-            }
-            
-            // Update other metrics to show no data
-            document.getElementById('threat-score').textContent = '--';
-            document.getElementById('threat-level').textContent = 'NO DATA';
-            document.getElementById('temporal-trend').textContent = '--';
-            
+            showNoDataState();
             return;
         }
         
@@ -1290,6 +1268,120 @@
         }
         
         console.log('Sensors page updated with new data:', data);
+    }
+    
+    function showNoDataState() {
+        // Show "No Data Available" message for all metrics
+        const peopleElements = document.querySelectorAll('.people-count, .total-people, .active-people, .abnormal-count');
+        peopleElements.forEach(el => el.textContent = '--');
+        
+        const statusElements = document.querySelectorAll('.people-status');
+        if (statusElements.length > 0) {
+            statusElements.forEach(el => el.textContent = 'No Data');
+        }
+        
+        // Clear radar visualization
+        const canvas = document.getElementById('radarCanvas');
+        if (canvas) {
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#666';
+            ctx.font = '16px system-ui';
+            ctx.textAlign = 'center';
+            ctx.fillText('No Real Data Available', canvas.width / 2, canvas.height / 2);
+        }
+        
+        // Show empty state for threat metrics
+        const threatScoreElements = document.querySelectorAll('.threat-score, .threat-score-display');
+        threatScoreElements.forEach(el => {
+            el.textContent = '--';
+        });
+        
+        const threatLevelElements = document.querySelectorAll('.threat-level');
+        threatLevelElements.forEach(el => el.textContent = 'NO DATA');
+        
+        // Reset threat progress bars
+        const threatProgressBars = document.querySelectorAll('.threat-progress-bar');
+        threatProgressBars.forEach(el => {
+            el.style.width = '0%';
+            el.textContent = 'No Data';
+            el.className = 'progress-bar bg-secondary threat-progress-bar';
+        });
+        
+        // Reset threat components
+        const componentBars = document.querySelectorAll('[id^="bar-"]');
+        componentBars.forEach(bar => {
+            bar.style.width = '0%';
+        });
+        
+        const componentBadges = document.querySelectorAll('[id^="badge-"]');
+        componentBadges.forEach(badge => {
+            badge.textContent = '--';
+            badge.className = 'badge bg-secondary';
+        });
+        
+        const matrixScores = document.querySelectorAll('[id^="matrix-score-"]');
+        matrixScores.forEach(score => {
+            score.textContent = '--/100';
+            score.style.color = '#6c757d';
+        });
+        
+        // Show empty state for air quality
+        const vocElements = document.querySelectorAll('.voc-value');
+        vocElements.forEach(el => el.textContent = '0');
+        
+        const pm25Elements = document.querySelectorAll('.pm25-value');
+        pm25Elements.forEach(el => el.textContent = '0');
+        
+        const aqiElements = document.querySelectorAll('.aqi-value');
+        aqiElements.forEach(el => el.textContent = '0');
+        
+        // Reset gauge backgrounds
+        const gaugeCircles = document.querySelectorAll('.gauge-circle');
+        gaugeCircles.forEach(circle => {
+            circle.style.background = '#f6f8fa';
+        });
+        
+        // Reset odor analysis
+        const odorTypeElements = document.querySelectorAll('.odor-type');
+        odorTypeElements.forEach(el => el.textContent = 'no_data');
+        
+        const odorConfElements = document.querySelectorAll('.odor-confidence');
+        odorConfElements.forEach(el => el.textContent = '0%');
+        
+        // Reset odor intensity progress bar
+        const odorProgressBars = document.querySelectorAll('.progress-bar');
+        odorProgressBars.forEach(bar => {
+            if (bar.textContent.includes('Intensity')) {
+                bar.style.width = '0%';
+                bar.textContent = 'Intensity: 0.0/10';
+            }
+        });
+        
+        // Show empty state for sound
+        const soundElements = document.querySelectorAll('.sound-db');
+        soundElements.forEach(el => el.textContent = '0.0');
+        
+        const soundProgressBars = document.querySelectorAll('.progress-bar');
+        soundProgressBars.forEach(bar => {
+            if (bar.closest('.sensor-card')?.querySelector('.sound-db')) {
+                bar.style.width = '0%';
+                bar.className = 'progress-bar bg-secondary';
+            }
+        });
+        
+        // Reset sound event
+        const soundEventElements = document.querySelectorAll('.sound-event');
+        soundEventElements.forEach(el => el.textContent = 'no_data');
+        
+        const soundBaselineElements = document.querySelectorAll('.sound-baseline');
+        soundBaselineElements.forEach(el => el.textContent = '0.0');
+        
+        // Update status indicators
+        const statusIndicators = document.querySelectorAll('.status-indicator');
+        statusIndicators.forEach(el => {
+            el.className = 'status-indicator gray';
+        });
     }
 </script>
 {% endblock %}
