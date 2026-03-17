@@ -79,8 +79,14 @@
                     <input type="number" class="form-control" id="log-interval" value="60" min="5" max="3600">
                 </div>
                 <div class="mb-3">
+                    <label class="form-label">Data Refresh Rate (seconds)</label>
+                    <input type="number" class="form-control" id="data-refresh-rate" value="5" min="1" max="60">
+                    <small class="form-text text-muted">How often new sensor data is generated (1-60 seconds)</small>
+                </div>
+                <div class="mb-3">
                     <label class="form-label">Dashboard Refresh Rate (seconds)</label>
                     <input type="number" class="form-control" id="refresh-rate" value="5" min="1" max="60">
+                    <small class="form-text text-muted">How often the dashboard UI updates (1-60 seconds)</small>
                 </div>
                 <div class="mb-3">
                     <label class="form-label">History Retention (days)</label>
@@ -156,8 +162,26 @@
     // Load settings
     document.addEventListener('DOMContentLoaded', function() {
         loadSystemStatus();
+        loadCurrentSettings();
         setInterval(loadSystemStatus, 30000);
     });
+
+    function loadCurrentSettings() {
+        // Load current refresh rate from session or API
+        fetch('/api/config')
+            .then(response => response.json())
+            .then(settings => {
+                if (settings.data_refresh_rate) {
+                    document.getElementById('data-refresh-rate').value = settings.data_refresh_rate;
+                }
+                if (settings.dashboard_refresh_rate) {
+                    document.getElementById('refresh-rate').value = settings.dashboard_refresh_rate;
+                }
+            })
+            .catch(error => {
+                console.log('Using default settings');
+            });
+    }
 
     function loadSystemStatus() {
         fetch('/api/stats')
@@ -189,8 +213,37 @@
 
     document.getElementById('config-form').addEventListener('submit', function(e) {
         e.preventDefault();
-        // Save config (implement actual save logic)
-        alert('Configuration saved (demo)');
+        
+        const dataRefreshRate = document.getElementById('data-refresh-rate').value;
+        const dashboardRefreshRate = document.getElementById('refresh-rate').value;
+        
+        // Save settings via API
+        fetch('/api/config', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                data_refresh_rate: parseInt(dataRefreshRate),
+                dashboard_refresh_rate: parseInt(dashboardRefreshRate)
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Configuration saved successfully!');
+                // Update the fake data cache duration globally
+                if (window.updateRefreshRate) {
+                    window.updateRefreshRate(dataRefreshRate);
+                }
+            } else {
+                alert('Error saving configuration: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error saving configuration');
+        });
     });
 
     function exportData() {

@@ -533,8 +533,8 @@
             <div class="sensor-card text-center">
                 <div class="status-indicator purple"></div>
                 <span class="text-muted small">Active People</span>
-                <h3 class="text-primary">{{ people_count }}</h3>
-                <div class="data-log mt-2">
+                <h3 class="text-primary people-count">{{ people_count }}</h3>
+                <div class="data-log mt-2 people-status">
                     Status: {{ 'Active' if people_count > 0 else 'Idle' }}
                 </div>
             </div>
@@ -543,11 +543,11 @@
             <div class="sensor-card text-center">
                 <div class="status-indicator {{ 'yellow' if threat_score > 60 else 'green' }}"></div>
                 <span class="text-muted small">Threat Level</span>
-                <h3 class="text-{{ 'danger' if threat_score > 60 else 'warning' if threat_score > 30 else 'success' }}">
+                <h3 class="text-{{ 'danger' if threat_score > 60 else 'warning' if threat_score > 30 else 'success' }} threat-level">
                     {{ threat_level }}
                 </h3>
                 <div class="data-log mt-2">
-                    Score: {{ "%.1f"|format(threat_score) }}/100
+                    Score: <span class="threat-score">{{ "%.1f"|format(threat_score) }}</span>/100
                 </div>
             </div>
         </div>
@@ -587,15 +587,15 @@
                 <div class="row mt-3">
                     <div class="col-4 text-center">
                         <div class="text-muted small">Count</div>
-                        <div class="h4">{{ people_count }}</div>
+                        <div class="h4 people-count">{{ people_count }}</div>
                     </div>
                     <div class="col-4 text-center">
                         <div class="text-muted small">Active</div>
-                        <div class="h4">{{ active_targets }}</div>
+                        <div class="h4 active-targets">{{ active_targets }}</div>
                     </div>
                     <div class="col-4 text-center">
                         <div class="text-muted small">Alerts</div>
-                        <div class="h4 text-{{ 'danger' if abnormal_count > 0 else 'success' }}">
+                        <div class="h4 text-{{ 'danger' if abnormal_count > 0 else 'success' }} abnormal-count">
                             {{ abnormal_count }}
                         </div>
                     </div>
@@ -621,7 +621,7 @@
                         <div class="gauge-simple">
                             <div class="gauge-circle" style="background: conic-gradient(#0969da {{ (voc / 200 * 360) }}deg, #f6f8fa {{ (voc / 200 * 360) }}deg);">
                                 <div class="gauge-center">
-                                    <div class="gauge-number">{{ "%.0f"|format(voc) }}</div>
+                                    <div class="gauge-number voc-value">{{ "%.0f"|format(voc) }}</div>
                                     <div class="gauge-unit">ppm</div>
                                 </div>
                             </div>
@@ -632,7 +632,7 @@
                         <div class="gauge-simple">
                             <div class="gauge-circle" style="background: conic-gradient(#1f883d {{ (pm25 / 100 * 360) }}deg, #f6f8fa {{ (pm25 / 100 * 360) }}deg);">
                                 <div class="gauge-center">
-                                    <div class="gauge-number">{{ pm25 }}</div>
+                                    <div class="gauge-number pm25-value">{{ pm25 }}</div>
                                     <div class="gauge-unit">μg/m³</div>
                                 </div>
                             </div>
@@ -643,7 +643,7 @@
                         <div class="gauge-simple">
                             <div class="gauge-circle" style="background: conic-gradient(#d29922 {{ (aqi / 500 * 360) }}deg, #f6f8fa {{ (aqi / 500 * 360) }}deg);">
                                 <div class="gauge-center">
-                                    <div class="gauge-number">{{ "%.0f"|format(aqi) }}</div>
+                                    <div class="gauge-number aqi-value">{{ "%.0f"|format(aqi) }}</div>
                                     <div class="gauge-unit">AQI</div>
                                 </div>
                             </div>
@@ -657,11 +657,11 @@
                     <div class="d-flex justify-content-between">
                         <div>
                             <span class="text-muted small">Odor Detection</span>
-                            <h5 class="text-warning">{{ odor_type }}</h5>
+                            <h5 class="text-warning odor-type">{{ odor_type }}</h5>
                         </div>
                         <div class="text-end">
                             <span class="text-muted small">Confidence</span>
-                            <h5>{{ "%.0f"|format(odor_confidence * 100) }}%</h5>
+                            <h5 class="odor-confidence">{{ "%.0f"|format(odor_confidence * 100) }}%</h5>
                         </div>
                     </div>
                     <div class="progress mt-2" style="height: 8px;">
@@ -685,7 +685,7 @@
                 </h4>
                 
                 <div class="text-center">
-                    <div class="display-4 fw-bold text-info">
+                    <div class="display-4 fw-bold text-info sound-db">
                         {{ "%.1f"|format(sound_db) }}
                         <small class="fs-6 text-muted">dB</small>
                     </div>
@@ -701,11 +701,11 @@
                     <div class="row mt-3">
                         <div class="col-6">
                             <span class="text-muted small">Event</span>
-                            <h6 class="fw-normal">{{ sound_event }}</h6>
+                            <h6 class="fw-normal sound-event">{{ sound_event }}</h6>
                         </div>
                         <div class="col-6">
                             <span class="text-muted small">Baseline</span>
-                            <h6 class="fw-normal">{{ "%.1f"|format(sound_baseline) }} dB</h6>
+                            <h6 class="fw-normal sound-baseline">{{ "%.1f"|format(sound_baseline) }} dB</h6>
                         </div>
                     </div>
                     
@@ -821,7 +821,7 @@
                     {% endfor %}
                 </div>
                 <div class="text-end mt-2">
-                    <span class="small text-secondary">LAST UPDATE: {{ last_update }}</span>
+                    <span class="small text-secondary">LAST UPDATE: <span class="last-update">{{ last_update }}</span></span>
                 </div>
             </div>
         </div>
@@ -951,13 +951,107 @@
     }
     
     function handleLiveUpdate(data) {
-        // Update dashboard with new data
-        if (data.threat) {
-            const threatElement = document.querySelector('[data-threat-score]');
-            if (threatElement) {
-                threatElement.textContent = data.threat.overall_threat;
-            }
+        // Update people count
+        if (data.people_count !== undefined) {
+            const peopleElements = document.querySelectorAll('.people-count');
+            peopleElements.forEach(el => el.textContent = data.people_count);
+            
+            // Update people status
+            const statusElements = document.querySelectorAll('.people-status');
+            statusElements.forEach(el => el.textContent = data.people_count > 0 ? 'Active' : 'Idle');
         }
+        
+        // Update threat level and score
+        if (data.threat) {
+            const threatScoreElements = document.querySelectorAll('.threat-score');
+            threatScoreElements.forEach(el => el.textContent = data.threat.overall_threat?.toFixed(1) || '0.0');
+            
+            const threatLevelElements = document.querySelectorAll('.threat-level');
+            threatLevelElements.forEach(el => el.textContent = data.threat.level || 'LOW');
+            
+            // Update threat indicator colors
+            const threatIndicators = document.querySelectorAll('.threat-indicator');
+            threatIndicators.forEach(el => {
+                el.className = 'status-indicator ' + (
+                    data.threat.overall_threat > 60 ? 'red' : 
+                    data.threat.overall_threat > 30 ? 'yellow' : 'green'
+                );
+            });
+        }
+        
+        // Update air quality data
+        if (data.odor) {
+            // Update VOC
+            const vocElements = document.querySelectorAll('.voc-value');
+            vocElements.forEach(el => el.textContent = data.odor.voc_ppm?.toFixed(0) || '0');
+            
+            // Update PM2.5
+            const pm25Elements = document.querySelectorAll('.pm25-value');
+            pm25Elements.forEach(el => el.textContent = data.odor.pm25 || '0');
+            
+            // Update AQI
+            const aqiElements = document.querySelectorAll('.aqi-value');
+            aqiElements.forEach(el => el.textContent = data.odor.air_quality_index?.toFixed(0) || '0');
+            
+            // Update odor type
+            const odorTypeElements = document.querySelectorAll('.odor-type');
+            odorTypeElements.forEach(el => el.textContent = data.odor_type || 'clean_air');
+            
+            // Update odor confidence
+            const odorConfElements = document.querySelectorAll('.odor-confidence');
+            odorConfElements.forEach(el => el.textContent = (data.odor_confidence * 100)?.toFixed(0) || '0');
+        }
+        
+        // Update sound data
+        if (data.sound) {
+            const soundElements = document.querySelectorAll('.sound-db');
+            soundElements.forEach(el => el.textContent = data.sound.db?.toFixed(1) || '0.0');
+            
+            const soundEventElements = document.querySelectorAll('.sound-event');
+            soundEventElements.forEach(el => el.textContent = data.sound_event || 'quiet');
+            
+            const soundBaselineElements = document.querySelectorAll('.sound-baseline');
+            soundBaselineElements.forEach(el => el.textContent = data.sound_baseline?.toFixed(1) || '40.0');
+        }
+        
+        // Update radar/target data
+        if (data.targets && data.targets.length > 0) {
+            // Update target count
+            const targetCountElements = document.querySelectorAll('.target-count');
+            targetCountElements.forEach(el => el.textContent = data.targets.length);
+            
+            // Update active targets
+            const activeTargetElements = document.querySelectorAll('.active-targets');
+            activeTargetElements.forEach(el => el.textContent = data.active_targets || 0);
+            
+            // Update abnormal count
+            const abnormalElements = document.querySelectorAll('.abnormal-count');
+            abnormalElements.forEach(el => el.textContent = data.abnormal_count || 0);
+        }
+        
+        // Update data stream logs
+        if (data.last_update) {
+            const lastUpdateElements = document.querySelectorAll('.last-update');
+            lastUpdateElements.forEach(el => el.textContent = data.last_update);
+        }
+        
+        // Update system status
+        if (data.uptime !== undefined) {
+            const uptimeElements = document.querySelectorAll('.uptime');
+            uptimeElements.forEach(el => el.textContent = data.uptime?.toFixed(2) || '0.00');
+        }
+        
+        if (data.data_rate !== undefined) {
+            const dataRateElements = document.querySelectorAll('.data-rate');
+            dataRateElements.forEach(el => el.textContent = data.data_rate?.toFixed(1) || '0.0');
+        }
+        
+        if (data.packet_count !== undefined) {
+            const packetElements = document.querySelectorAll('.packet-count');
+            packetElements.forEach(el => el.textContent = data.packet_count || 0);
+        }
+        
+        console.log('Sensors page updated with new data:', data);
     }
 </script>
 {% endblock %}

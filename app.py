@@ -1153,6 +1153,51 @@ def pause_status():
         app.logger.error(f"Error getting pause status: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@app.route("/api/config", methods=['GET', 'POST'])
+@login_required
+def api_config():
+    """Handle system settings"""
+    global fake_data_cache
+    
+    if request.method == 'GET':
+        # Get current settings
+        return jsonify({
+            'data_refresh_rate': fake_data_cache['cache_duration'],
+            'dashboard_refresh_rate': session.get('dashboard_refresh_rate', 5)
+        })
+    
+    elif request.method == 'POST':
+        # Update settings
+        try:
+            data = request.get_json()
+            data_refresh_rate = data.get('data_refresh_rate', 5)
+            dashboard_refresh_rate = data.get('dashboard_refresh_rate', 5)
+            
+            # Validate inputs
+            if not (1 <= data_refresh_rate <= 60):
+                return jsonify({'success': False, 'error': 'Data refresh rate must be between 1 and 60 seconds'})
+            
+            if not (1 <= dashboard_refresh_rate <= 60):
+                return jsonify({'success': False, 'error': 'Dashboard refresh rate must be between 1 and 60 seconds'})
+            
+            # Update fake data cache duration globally
+            fake_data_cache['cache_duration'] = data_refresh_rate
+            
+            # Store dashboard refresh rate in session
+            session['dashboard_refresh_rate'] = dashboard_refresh_rate
+            
+            app.logger.info(f"Settings updated: data_refresh_rate={data_refresh_rate}s, dashboard_refresh_rate={dashboard_refresh_rate}s")
+            
+            return jsonify({
+                'success': True,
+                'data_refresh_rate': data_refresh_rate,
+                'dashboard_refresh_rate': dashboard_refresh_rate
+            })
+            
+        except Exception as e:
+            app.logger.error(f"Error updating settings: {e}")
+            return jsonify({'success': False, 'error': str(e)}), 500
+
 @app.route("/api/update", methods=['POST'])
 def api_update():
     """Endpoint for the main system to push updates"""
@@ -1197,29 +1242,39 @@ def events_stream():
     """Server-Sent Events stream for real-time updates"""
     # Check fake mode outside the generator (in request context)
     fake_mode = session.get('fake_mode', True)
+    dashboard_refresh_rate = session.get('dashboard_refresh_rate', 5)
     
     def generate():
         last_event_time = time.time()
+        last_data_time = time.time()
+        
         while True:
+            current_time = time.time()
+            
             # Send heartbeat every 30 seconds
-            if time.time() - last_event_time > 30:
+            if current_time - last_event_time > 30:
                 yield f"event: heartbeat\ndata: {json.dumps({'time': datetime.now().isoformat()})}\n\n"
-                last_event_time = time.time()
+                last_event_time = current_time
             
             # Check for new events
             try:
-                event = live_data.event_queue.get(timeout=1)
+                event = live_data.event_queue.get(timeout=0.1)
                 yield f"event: {event.get('type', 'update')}\ndata: {json.dumps(event)}\n\n"
             except queue.Empty:
-                # Send latest data as fallback, using the fake_mode captured above
-                if fake_mode:
-                    # Use cached fake data for consistency
-                    data = get_cached_fake_data()
+                # Send latest data at dashboard refresh rate intervals
+                if current_time - last_data_time >= dashboard_refresh_rate:
+                    if fake_mode:
+                        # Use cached fake data for consistency
+                        data = get_cached_fake_data()
+                    else:
+                        data = live_data.get_latest()
+                    
+                    if data:
+                        yield f"event: update\ndata: {json.dumps(data)}\n\n"
+                    last_data_time = current_time
                 else:
-                    data = live_data.get_latest()
-                
-                if data:
-                    yield f"event: update\ndata: {json.dumps(data)}\n\n"
+                    # Sleep briefly to prevent high CPU usage
+                    time.sleep(0.1)
     
     return Response(generate(), mimetype="text/event-stream")
 

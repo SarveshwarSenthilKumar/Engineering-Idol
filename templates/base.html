@@ -393,8 +393,8 @@
             }
         });
         
-        // Start SSE only on specific pages that need live updates
-        {% if request.endpoint and request.endpoint in ['dashboard', 'sensors'] %}
+        // Start SSE on all pages that need live updates
+        {% if request.endpoint and request.endpoint in ['dashboard', 'sensors', 'targets_view', 'analytics', 'history'] %}
         document.addEventListener('DOMContentLoaded', setupEventSource);
         {% endif %}
         
