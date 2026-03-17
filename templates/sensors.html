@@ -496,19 +496,6 @@
 
 {% block content %}
 <div class="position-relative" style="min-height: 100vh;">
-    <!-- Fake data toggle -->
-    <div class="position-fixed top-0 end-0 m-4" style="z-index: 1000;">
-        <div class="d-flex align-items-center gap-3">
-            <span class="text-uppercase small">
-                <span class="status-indicator {{ 'yellow' if fake_mode else 'red' }}"></span>
-                Demo Data: {{ 'ON' if fake_mode else 'OFF' }}
-            </span>
-            <label class="toggle-switch">
-                <input type="checkbox" id="fakeToggle" {% if fake_mode %}checked{% endif %} onchange="toggleFakeMode()">
-                <span class="toggle-slider"></span>
-            </label>
-        </div>
-    </div>
 
     <!-- Header -->
     <div class="professional-header">
