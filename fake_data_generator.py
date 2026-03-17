@@ -15,7 +15,7 @@ import sys
 
 # Configuration
 DB_PATH = 'events.db'
-DAYS_OF_HISTORY = 1  # Generate 1 day of history for recent data
+DAYS_OF_HISTORY = 7  # Generate 7 days of history to support all time intervals (6h, 12h, 24h, 48h, 168h)
 EVENTS_PER_DAY = 50   # Average events per day
 TARGETS_PER_EVENT = 2 # Average targets per event
 
