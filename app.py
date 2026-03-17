@@ -206,8 +206,9 @@ class LiveDataStore:
         highest_env = 'primary'
         
         for env_id, env_data in self.environments.items():
-            if env_data['threat_score'] > max_threat:
-                max_threat = env_data['threat_score']
+            current_threat = env_data.get('threat_score', 0)
+            if current_threat > max_threat:
+                max_threat = current_threat
                 highest_env = env_id
         
         self.highest_threat_environment = highest_env
@@ -1093,6 +1094,9 @@ def dashboard():
         
         # Refresh environments data after updates
         all_environments = live_data.get_all_environments()
+        # Ensure highest threat environment is updated after all environments are processed
+        live_data._update_highest_threat_environment()
+        highest_threat_env = live_data.get_highest_threat_environment()
         
         # Get current environment data for display
         data = live_data.get_environment_data(current_env)
@@ -1543,8 +1547,14 @@ def events_stream():
                 # Send latest data at dashboard refresh rate intervals
                 if current_time - last_data_time >= dashboard_refresh_rate:
                     if fake_mode:
-                        # Use cached fake data for consistency
-                        data = get_cached_fake_data()
+                        # Generate fresh data for ALL environments to keep monitoring up-to-date
+                        all_envs = live_data.get_all_environments()
+                        for env_id in all_envs.keys():
+                            env_data = generate_fake_sensor_data(env_id)
+                            live_data.update(env_data, env_id)
+                        
+                        # Get current environment data for the stream
+                        data = live_data.get_environment_data(live_data.get_current_environment())
                     else:
                         data = get_realtime_sensor_data()
                     
