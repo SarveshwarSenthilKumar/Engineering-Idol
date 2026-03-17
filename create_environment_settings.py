@@ -8,7 +8,7 @@ import os
 
 def create_environment_settings_table():
     """Create table for storing environment settings"""
-    db_path = os.getenv('DATABASE_PATH', '../users.db')
+    db_path = 'events.db'
     
     try:
         conn = sqlite3.connect(db_path)

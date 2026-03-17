@@ -11,6 +11,36 @@ if os.path.exists(database_path):
 connection = sqlite3.connect(database_path)
 crsr = connection.cursor()
 
+# ==================== ENVIRONMENT SETTINGS TABLE ====================
+# Add environment settings table after users table
+environment_settings_fields = [
+    "environment_id TEXT PRIMARY KEY",
+    "name TEXT NOT NULL",
+    "description TEXT",
+    "color TEXT DEFAULT '#007bff'",
+    "icon TEXT DEFAULT 'bi-house'",
+    "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
+    "updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
+]
+
+environment_settings_create = "CREATE TABLE environment_settings (" + ", ".join(environment_settings_fields) + ")"
+crsr.execute(environment_settings_create)
+
+# Insert default environment settings
+default_environments = [
+    ('primary', 'Primary Environment', 'Main monitoring area', '#007bff', 'bi-house'),
+    ('secondary', 'Secondary Environment', 'Secondary monitoring area', '#28a745', 'bi-building'),
+    ('warehouse', 'Warehouse Environment', 'Warehouse and storage area', '#ffc107', 'bi-box-seam'),
+    ('outdoor', 'Outdoor Environment', 'Outdoor perimeter monitoring', '#17a2b8', 'bi-tree')
+]
+
+for env in default_environments:
+    crsr.execute("""
+        INSERT OR REPLACE INTO environment_settings 
+        (environment_id, name, description, color, icon) 
+        VALUES (?, ?, ?, ?, ?)
+    """, env)
+
 # ==================== USERS TABLE ====================
 users_fields = [
     # Personal Information for Account Setup and Maintenance
@@ -222,6 +252,7 @@ events_log_fields = [
     "air_aqi REAL",
     "event_type TEXT",  # Type of significant event
     "description TEXT",
+    "temperature REAL"  # Add temperature field
 ]
 
 events_log_create = "CREATE TABLE events_log (id INTEGER PRIMARY KEY AUTOINCREMENT, " + ", ".join(events_log_fields) + ")"

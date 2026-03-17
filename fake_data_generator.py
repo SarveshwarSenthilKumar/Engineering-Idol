@@ -666,8 +666,8 @@ class FakeDataGenerator:
             cursor.execute("""
                 INSERT INTO events_log (
                     timestamp, threat_level, threat_score, quality_score,
-                    people_count, sound_db, air_aqi, event_type, description
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    people_count, sound_db, air_aqi, event_type, description, temperature
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 timestamp,
                 threat_level,
@@ -677,7 +677,8 @@ class FakeDataGenerator:
                 sound_data['db'],
                 odor_data['air_quality_index'],
                 random.choices(list(EVENT_TYPES.keys()), weights=list(EVENT_TYPES.values()))[0],
-                f"{threat_level} threat detected with {people_count} people"
+                f"{threat_level} threat detected with {people_count} people",
+                odor_data.get('temperature', 20)  # Add temperature
             ))
             
             if i % 100 == 0:

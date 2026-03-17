@@ -32,7 +32,7 @@ app = Flask(__name__)
 app.config["SESSION_PERMANENT"] = True
 app.config["SESSION_TYPE"] = "filesystem"
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', os.urandom(24).hex())
-app.config['DATABASE_PATH'] = os.getenv('DATABASE_PATH', '../users.db')
+app.config['DATABASE_PATH'] = os.getenv('DATABASE_PATH', 'events.db')
 
 # Initialize extensions
 Session(app)
@@ -44,7 +44,7 @@ START_TIME = datetime.now()
 
 def get_db_connection():
     """Get database connection"""
-    conn = sqlite3.connect(app.config['DATABASE_PATH'])
+    conn = sqlite3.connect('events.db')
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -386,7 +386,7 @@ def get_cached_fake_data():
 
 def get_db_connection():
     """Get database connection"""
-    conn = sqlite3.connect(app.config['DATABASE_PATH'])
+    conn = sqlite3.connect('events.db')
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -1834,6 +1834,13 @@ def update_environment_settings(environment_id):
     except Exception as e:
         app.logger.error(f"Error updating environment settings: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route("/api/timeline")
+def api_timeline():
+    """Get threat timeline data for analytics"""
+    hours = request.args.get('hours', 24, type=int)
+    timeline = get_threat_timeline(hours)
+    return jsonify(timeline)
 
 @app.route("/api/events/stream")
 def events_stream():

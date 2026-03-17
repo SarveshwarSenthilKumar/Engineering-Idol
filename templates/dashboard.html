@@ -507,22 +507,8 @@
                             </div>
                             <div class="stat-item">
                                 <div class="stat-value" id="slope-value">--</div>
-                                <div class="stat-label">Rate</div>
+                                <div class="stat-label">Slope</div>
                             </div>
-                            <div class="stat-item">
-                                <div class="stat-value" id="persistence-value">--</div>
-                                <div class="stat-label">Persistence</div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Predictions -->
-                    <div class="mt-4">
-                        <h6 class="metric-label">Threat Trajectory</h6>
-                        <div class="prediction-bar">
-                            <div class="prediction-segment bg-info" id="pred-5min" style="width: 0%">5m</div>
-                            <div class="prediction-segment bg-warning" id="pred-15min" style="width: 0%">15m</div>
-                            <div class="prediction-segment bg-danger" id="pred-30min" style="width: 0%">30m</div>
                         </div>
                     </div>
                 </div>
@@ -1429,6 +1415,120 @@
     });
 
 // Function to update environment scores grid
+function generateIntelligentAnalysis(data) {
+    const temp = data.temperature || 20;
+    const people = data.people_count || 0;
+    const threat = data.threat?.overall_threat || 0;
+    const aqi = data.odor?.air_quality_index || 50;
+    const sound = data.sound?.db || 40;
+    
+    let recommendations = [];
+    let riskLevel = 'LOW';
+    let actions = [];
+    
+    // Temperature-based analysis
+    if (temp > 30) {
+        recommendations.push('🌡️ High temperature detected - Ensure adequate ventilation');
+        riskLevel = 'MODERATE';
+    } else if (temp > 25) {
+        recommendations.push('🌡️ Warm environment - Monitor for heat stress indicators');
+    } else if (temp < 18) {
+        recommendations.push('❄️ Cold environment - Check heating system efficiency');
+    }
+    
+    // People-based analysis
+    if (people > 3) {
+        recommendations.push('👥 High occupancy - Consider crowd management measures');
+        riskLevel = 'ELEVATED';
+    } else if (people > 1) {
+        recommendations.push('👥 Multiple occupants - Maintain situational awareness');
+    }
+    
+    // Environment quality analysis
+    if (aqi > 100) {
+        recommendations.push('🌫️ Poor air quality - Activate air purification systems');
+        riskLevel = 'HIGH';
+    } else if (aqi > 70) {
+        recommendations.push('⚠️ Moderate air pollution - Increase fresh air circulation');
+    }
+    
+    // Sound level analysis
+    if (sound > 80) {
+        recommendations.push('🔊 Excessive noise - Implement noise reduction measures');
+        riskLevel = 'ELEVATED';
+    } else if (sound > 60) {
+        recommendations.push('🔊 Elevated noise levels - Consider acoustic dampening');
+    }
+    
+    // Threat-based actions
+    if (threat > 70) {
+        actions.push('🚨 Activate security protocols');
+        actions.push('📹 Notify security personnel');
+        actions.push('🔍 Lock down sensitive areas');
+    } else if (threat > 50) {
+        actions.push('⚠️ Increase surveillance frequency');
+        actions.push('👁 Verify access credentials');
+    } else if (threat > 30) {
+        actions.push('📋 Document unusual activities');
+        actions.push('🔍 Check perimeter security');
+    }
+    
+    // General recommendations
+    if (riskLevel === 'HIGH') {
+        recommendations.push('🚨 IMMEDIATE ATTENTION REQUIRED');
+    } else if (riskLevel === 'ELEVATED') {
+        recommendations.push('⚠️ Increased monitoring recommended');
+    }
+    
+    const summary = recommendations.length > 0 ? recommendations.join('<br>') : '✅ All systems normal';
+    
+    return {
+        summary,
+        riskLevel,
+        actions,
+        temperature: temp.toFixed(1),
+        people,
+        threat: threat.toFixed(1),
+        aqi: aqi.toFixed(0),
+        sound: sound.toFixed(1)
+    };
+}
+
+function updateIntelligentDisplay(data) {
+    const analysis = generateIntelligentAnalysis(data);
+    
+    // Update AI summary
+    document.getElementById('recommendations').innerHTML = analysis.summary;
+    
+    // Update conditions display
+    document.getElementById('temperature-value').textContent = analysis.temperature + '°C';
+    document.getElementById('people-condition').textContent = analysis.people;
+    document.getElementById('air-quality-condition').textContent = getAirQualityLevel(analysis.aqi);
+    
+    // Update risk indicators
+    updateRiskIndicators(analysis.riskLevel);
+}
+
+function getAirQualityLevel(aqi) {
+    if (aqi > 150) return 'HAZARDOUS';
+    if (aqi > 100) return 'POOR';
+    if (aqi > 50) return 'MODERATE';
+    return 'GOOD';
+}
+
+function updateRiskIndicators(riskLevel) {
+    const alertElement = document.getElementById('ai-summary');
+    alertElement.className = 'alert';
+    
+    if (riskLevel === 'HIGH') {
+        alertElement.classList.add('alert-danger');
+    } else if (riskLevel === 'ELEVATED') {
+        alertElement.classList.add('alert-warning');
+    } else {
+        alertElement.classList.add('alert-info');
+    }
+}
+
 function updateEnvironmentScores() {
     fetch('/api/environments')
         .then(response => response.json())
@@ -1440,14 +1540,11 @@ function updateEnvironmentScores() {
             let highestThreatEnv = null;
             let highestThreatScore = -1;
             
-            Object.keys(environments).forEach(envId => {
-                const env = environments[envId];
-                const score = Math.round(env.threat_score || 0);
-                const level = env.data?.threat?.level || 'LOW';
+            Object.entries(environments).forEach(([envId, envData]) => {
+                const threatScore = envData.threat_score || 0;
                 
-                // Track highest threat
-                if (score > highestThreatScore) {
-                    highestThreatScore = score;
+                if (threatScore > highestThreatScore) {
+                    highestThreatScore = threatScore;
                     highestThreatEnv = envId;
                 }
                 
@@ -1461,32 +1558,54 @@ function updateEnvironmentScores() {
                 }
                 
                 // Determine threat level class
-                const levelClass = `threat-${level.toLowerCase()}`;
+                const levelClass = `threat-${getThreatLevel(threatScore).toLowerCase()}`;
                 
                 html += `
                     <div class="${cardClass}" data-environment-id="${envId}">
                         <div class="env-score-name">
-                            <i class="bi ${env.icon}" style="color: ${env.color}"></i>
-                            <span class="env-name-text" onclick="editEnvironmentName('${envId}', '${env.name.replace(/'/g, "\\'")}')">${env.name}</span>
-                            <i class="bi bi-pencil-square edit-env-icon" onclick="editEnvironmentName('${envId}', '${env.name.replace(/'/g, "\\'")}')" title="Edit environment name"></i>
+                            <i class="bi ${envData.icon || 'bi-house'}" style="color: ${envData.color || '#007bff'}"></i>
+                            <span class="env-name-text" onclick="editEnvironmentName('${envId}', '${(envData.name || '').replace(/'/g, "\\'")}')">${envData.name || 'Unknown'}</span>
                         </div>
-                        <div class="env-score-value">${score}%</div>
-                        <div class="env-score-level ${levelClass}">${level}</div>
+                        <div class="env-score-value">${threatScore.toFixed(1)}</div>
+                        <div class="env-score-level ${levelClass}">${getThreatLevel(threatScore)}</div>
                     </div>
                 `;
             });
             
             grid.innerHTML = html;
             
-            // Update dashboard highest threat display
-            const dashboardHighestName = document.getElementById('dashboard-highest-name');
-            if (dashboardHighestName && highestThreatEnv && environments[highestThreatEnv]) {
-                dashboardHighestName.textContent = environments[highestThreatEnv].name;
+            // Update highest threat display
+            const highestNameElement = document.getElementById('dashboard-highest-name');
+            const highestThreatElement = document.getElementById('dashboard-highest-threat');
+            
+            if (highestThreatEnv) {
+                const highestEnv = environments[highestThreatEnv];
+                highestNameElement.textContent = highestEnv.name || 'Unknown';
+                highestThreatElement.textContent = `Highest: ${getThreatLevel(highestThreatScore)}`;
+            } else {
+                highestNameElement.textContent = 'No active threats';
+                highestThreatElement.textContent = 'System Stable';
             }
+        })
+        .then(() => {
+            // Update intelligent analysis with current data
+            fetch('/api/live')
+                .then(response => response.json())
+                .then(data => {
+                    updateIntelligentDisplay(data);
+                });
         })
         .catch(error => {
             console.error('Error updating environment scores:', error);
         });
+}
+
+function getThreatLevel(score) {
+    if (score >= 80) return 'CRITICAL';
+    if (score >= 60) return 'HIGH';
+    if (score >= 40) return 'ELEVATED';
+    if (score >= 20) return 'MODERATE';
+    return 'LOW';
 }
 
 // Function to edit environment name
