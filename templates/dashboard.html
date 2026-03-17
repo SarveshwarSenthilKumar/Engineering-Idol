@@ -750,6 +750,7 @@
                     }
                 };
                 
+                // Update all component scores
                 updateComp('prox-score', comp.proximity);
                 updateComp('count-score', comp.count);
                 updateComp('behave-score', comp.behavior);
@@ -764,7 +765,7 @@
                         if (el && component) {
                             const width = (component.weight * 100);
                             el.style.width = width + '%';
-                            el.title = `${component.name || id}: ${Math.round(component.score || 0)} (${(width).toFixed(0)}%)`;
+                            el.title = `${id}: ${Math.round(component.score || 0)} (${width.toFixed(0)}%)`;
                             console.log(`Updated bar ${id}: ${width}%`); // Debug bar updates
                         }
                     };
@@ -1184,6 +1185,18 @@
         
         // Refresh events every 30 seconds
         setInterval(loadEvents, 30000);
+        
+        // Fetch live data every 2 seconds
+        setInterval(function() {
+            fetch('/api/live')
+                .then(response => response.json())
+                .then(data => {
+                    handleLiveUpdate(data);
+                })
+                .catch(error => {
+                    console.error('Error fetching live data:', error);
+                });
+        }, 2000);
         
         // Initialize dashboard with current time
         document.getElementById('last-update').textContent = new Date().toLocaleTimeString();

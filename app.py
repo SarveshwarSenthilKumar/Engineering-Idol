@@ -407,9 +407,24 @@ def generate_fake_sensor_data():
         }
     }
     
-    # Calculate overall threat score from components
+    # Calculate overall threat score from components first
     calculated_threat = sum(comp['score'] * comp['weight'] for comp in components.values())
-    threat_score = max(threat_score, calculated_threat)  # Use the higher of calculated or random
+    
+    # Use the calculated threat as the primary score, with some random variation
+    threat_score = calculated_threat + random.uniform(-5, 5)
+    threat_score = max(0, min(100, threat_score))  # Clamp to 0-100 range
+    
+    # Update threat level based on final score
+    if threat_score > 80:
+        threat_level = "CRITICAL"
+    elif threat_score > 60:
+        threat_level = "HIGH"
+    elif threat_score > 40:
+        threat_level = "ELEVATED"
+    elif threat_score > 20:
+        threat_level = "MODERATE"
+    else:
+        threat_level = "LOW"
     
     # Temporal dynamics
     trends = ['stable', 'worsening', 'rapidly_worsening', 'improving', 'rapidly_improving']

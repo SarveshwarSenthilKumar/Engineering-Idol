@@ -726,22 +726,22 @@
                 </h4>
                 
                 {% for component, data in components.items() %}
-                <div class="mb-2">
+                <div class="mb-2" id="matrix-component-{{ component }}">
                     <div class="d-flex justify-content-between">
                         <span class="text-uppercase small">{{ component|replace('_', ' ') }}</span>
-                        <span class="glow-text" style="color: {{ 'red' if data.score > 60 else 'yellow' if data.score > 30 else 'green' }};">
+                        <span class="glow-text" id="matrix-score-{{ component }}" style="color: {{ 'red' if data.score > 60 else 'yellow' if data.score > 30 else 'green' }};">
                             {{ "%.0f"|format(data.score) }}/100
                         </span>
                     </div>
                     <div class="progress" style="height: 8px; background: rgba(0,0,0,0.5);">
-                        <div class="progress-bar" role="progressbar" 
+                        <div class="progress-bar" id="matrix-bar-{{ component }}" role="progressbar" 
                              style="width: {{ data.score }}%; background: linear-gradient(90deg, cyan, magenta);"
                              aria-valuenow="{{ data.score }}" aria-valuemin="0" aria-valuemax="100">
                         </div>
                     </div>
                     <div class="d-flex justify-content-between small text-secondary">
-                        <span>Weight: {{ "%.2f"|format(data.weight) }}</span>
-                        <span>Conf: {{ "%.0f"|format(data.confidence * 100) }}%</span>
+                        <span>Weight: <span id="matrix-weight-{{ component }}">{{ "%.2f"|format(data.weight) }}</span></span>
+                        <span>Conf: <span id="matrix-conf-{{ component }}">{{ "%.0f"|format(data.confidence * 100) }}%</span></span>
                     </div>
                 </div>
                 {% endfor %}
@@ -799,10 +799,10 @@
                         <div class="progress-bar bg-warning" style="width: {{ trajectory_5min }}%">
                             {{ "%.0f"|format(trajectory_5min) }} (5m)
                         </div>
-                        <div class="progress-bar bg-danger" style="width: {{ trajectory_15min - trajectory_5min }}%">
+                        <div class="progress-bar bg-danger" style="width: {{ (trajectory_15min - trajectory_5min) }}%">
                             {{ "%.0f"|format(trajectory_15min) }} (15m)
                         </div>
-                        <div class="progress-bar bg-dark" style="width: {{ trajectory_30min - trajectory_15min }}%">
+                        <div class="progress-bar bg-dark" style="width: {{ (trajectory_30min - trajectory_15min) }}%">
                             {{ "%.0f"|format(trajectory_30min) }} (30m)
                         </div>
                     </div>
@@ -852,15 +852,16 @@
                         <div class="threat-details">
                             <h6 class="text-muted mb-3">Threat Components:</h6>
                             {% for component, data in components.items() %}
-                            <div class="mb-2">
+                            <div class="mb-2" id="component-{{ component }}">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <span class="small text-uppercase">{{ component|replace('_', ' ') }}</span>
-                                    <span class="badge bg-{{ 'danger' if data.score > 60 else 'warning' if data.score > 30 else 'success' }}">
+                                    <span class="badge bg-{{ 'danger' if data.score > 60 else 'warning' if data.score > 30 else 'success' }}" id="badge-{{ component }}">
                                         {{ "%.0f"|format(data.score) }}
                                     </span>
                                 </div>
                                 <div class="progress" style="height: 4px;">
-                                    <div class="progress-bar" style="width: {{ data.score }}%; background: linear-gradient(90deg, #ff6b6b, #ffd93d, #6bcf7f);"></div>
+                                    {% set score_width = data.score %}
+                                    <div class="progress-bar" id="bar-{{ component }}" style="width: {{ score_width }}%; background: linear-gradient(90deg, #ff6b6b, #ffd93d, #6bcf7f);"></div>
                                 </div>
                             </div>
                             {% endfor %}
@@ -1000,8 +1001,20 @@
     }
     
     function startLiveUpdates() {
+        // Fetch live data every 2 seconds
         setInterval(function() {
-            // Animate waveform
+            fetch('/api/live')
+                .then(response => response.json())
+                .then(data => {
+                    handleLiveUpdate(data);
+                })
+                .catch(error => {
+                    console.error('Error fetching live data:', error);
+                });
+        }, 2000);
+        
+        // Animate waveform
+        setInterval(function() {
             const bars = document.querySelectorAll('.waveform-bar');
             bars.forEach(bar => {
                 const newHeight = 20 + Math.random() * 30;
@@ -1011,6 +1024,8 @@
     }
     
     function handleLiveUpdate(data) {
+        console.log('Received data:', data);
+        
         // Update people count
         if (data.people_count !== undefined) {
             const peopleElements = document.querySelectorAll('.people-count');
@@ -1022,31 +1037,107 @@
         }
         
         // Update threat level and score
+        console.log('Threat data:', data.threat);
         if (data.threat) {
+            const threatScore = data.threat.overall_threat || 0;
+            const threatLevel = data.threat.level || 'LOW';
+            
+            console.log('Updating threat score:', threatScore, 'level:', threatLevel);
+            
+            // Update all threat score displays to use the same value
             const threatScoreElements = document.querySelectorAll('.threat-score');
-            threatScoreElements.forEach(el => el.textContent = data.threat.overall_threat?.toFixed(1) || '0.0');
+            threatScoreElements.forEach(el => {
+                el.textContent = threatScore.toFixed(1);
+            });
             
             const threatScoreDisplayElements = document.querySelectorAll('.threat-score-display');
-            threatScoreDisplayElements.forEach(el => el.textContent = data.threat.overall_threat?.toFixed(1) || '0.0');
+            threatScoreDisplayElements.forEach(el => {
+                el.textContent = threatScore.toFixed(1);
+                el.className = 'display-1 fw-bold text-' + (
+                    threatScore > 60 ? 'danger' : 
+                    threatScore > 30 ? 'warning' : 'success'
+                ) + ' threat-score-display';
+            });
             
             const threatLevelElements = document.querySelectorAll('.threat-level');
-            threatLevelElements.forEach(el => el.textContent = data.threat.level || 'LOW');
+            threatLevelElements.forEach(el => el.textContent = threatLevel);
             
             // Update threat indicator colors
             const threatIndicators = document.querySelectorAll('.threat-indicator');
             threatIndicators.forEach(el => {
                 el.className = 'status-indicator ' + (
-                    data.threat.overall_threat > 60 ? 'red' : 
-                    data.threat.overall_threat > 30 ? 'yellow' : 'green'
+                    threatScore > 60 ? 'red' : 
+                    threatScore > 30 ? 'yellow' : 'green'
                 );
             });
             
-            // Update threat progress bar
+            // Update threat progress bar with consistent value
             const threatProgressBars = document.querySelectorAll('.threat-progress-bar');
             threatProgressBars.forEach(el => {
-                el.style.width = data.threat.overall_threat + '%';
-                el.setAttribute('aria-valuenow', data.threat.overall_threat);
+                el.style.width = threatScore + '%';
+                el.setAttribute('aria-valuenow', threatScore);
+                el.textContent = `Threat Score: ${threatScore.toFixed(1)}/100`;
+                
+                // Update progress bar color class
+                el.className = 'progress-bar bg-' + (
+                    threatScore > 60 ? 'danger' : 
+                    threatScore > 30 ? 'warning' : 'success'
+                ) + ' threat-progress-bar';
             });
+            
+            // Update threat components if available
+            if (data.threat.components) {
+                const components = data.threat.components;
+                console.log('Updating threat components:', components);
+                
+                // Update each component using specific IDs
+                Object.keys(components).forEach(componentName => {
+                    const component = components[componentName];
+                    const score = Math.round(component.score || 0);
+                    
+                    // Update threat details section (bottom right)
+                    const badge = document.getElementById(`badge-${componentName}`);
+                    if (badge) {
+                        badge.textContent = score;
+                        badge.className = 'badge bg-' + (
+                            score > 60 ? 'danger' : 
+                            score > 30 ? 'warning' : 'success'
+                        );
+                    }
+                    
+                    const bar = document.getElementById(`bar-${componentName}`);
+                    if (bar) {
+                        bar.style.width = score + '%';
+                    }
+                    
+                    // Update threat matrix section (middle)
+                    const matrixScore = document.getElementById(`matrix-score-${componentName}`);
+                    if (matrixScore) {
+                        matrixScore.textContent = score + '/100';
+                        matrixScore.style.color = score > 60 ? 'red' : score > 30 ? 'yellow' : 'green';
+                    }
+                    
+                    const matrixBar = document.getElementById(`matrix-bar-${componentName}`);
+                    if (matrixBar) {
+                        matrixBar.style.width = score + '%';
+                        matrixBar.setAttribute('aria-valuenow', score);
+                    }
+                    
+                    const matrixWeight = document.getElementById(`matrix-weight-${componentName}`);
+                    if (matrixWeight) {
+                        matrixWeight.textContent = (component.weight || 0).toFixed(2);
+                    }
+                    
+                    const matrixConf = document.getElementById(`matrix-conf-${componentName}`);
+                    if (matrixConf) {
+                        matrixConf.textContent = Math.round((component.confidence || 0) * 100) + '%';
+                    }
+                    
+                    console.log(`Updated component ${componentName}: score=${score}, weight=${component.weight}, conf=${component.confidence}`);
+                });
+            }
+        } else {
+            console.log('No threat data found in update');
         }
         
         // Update air quality data
