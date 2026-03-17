@@ -1039,15 +1039,33 @@ def register():
 @login_required
 def profile():
     """User profile page"""
+    # Get environment data for consistency
+    all_environments = live_data.get_all_environments()
+    current_env = live_data.get_current_environment()
+    highest_threat_env = live_data.get_highest_threat_environment()
+    
     user = get_user_by_id(session['user_id'])
-    return render_template('profile.html', user=user)
+    return render_template('profile.html', 
+                         user=user,
+                         environments=all_environments,
+                         current_environment=current_env,
+                         highest_threat_environment=highest_threat_env)
 
 @app.route("/users")
 @admin_required
 def users():
     """User management page for admins"""
+    # Get environment data for consistency
+    all_environments = live_data.get_all_environments()
+    current_env = live_data.get_current_environment()
+    highest_threat_env = live_data.get_highest_threat_environment()
+    
     all_users = get_all_users()
-    return render_template('users.html', users=all_users)
+    return render_template('users.html', 
+                         users=all_users,
+                         environments=all_environments,
+                         current_environment=current_env,
+                         highest_threat_environment=highest_threat_env)
 
 @app.route("/users/create", methods=['POST'])
 @admin_required
@@ -1189,6 +1207,11 @@ def sensors():
     # Get fake mode from session (default to True for demo)
     fake_mode = session.get('fake_mode', True)
     
+    # Get environment data for consistency
+    all_environments = live_data.get_all_environments()
+    current_env = live_data.get_current_environment()
+    highest_threat_env = live_data.get_highest_threat_environment()
+    
     if fake_mode:
         # Use cached fake data for consistency
         data = get_cached_fake_data()
@@ -1242,7 +1265,11 @@ def sensors():
         # Pass the full data structures for JavaScript
         'threat': data.get('threat', {}),
         'radar': data.get('radar', {}),
-        'quality': data.get('quality', {})
+        'quality': data.get('quality', {}),
+        # Add environment data for consistency
+        'environments': all_environments,
+        'current_environment': current_env,
+        'highest_threat_environment': highest_threat_env
     }
     
     return render_template('sensors.html', **template_data)
