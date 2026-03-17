@@ -4,6 +4,73 @@
 
 {% block extra_css %}
 <style>
+/* Environment Scores Section */
+.environment-scores {
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+    margin-bottom: 2rem;
+    border: 1px solid #e3e8f7;
+}
+
+.environment-scores-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.env-score-card {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 1rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    position: relative;
+}
+
+.env-score-card.active {
+    background: #e3f2fd;
+    border-color: #007bff;
+    transform: scale(1.05);
+}
+
+.env-score-card.highest-threat {
+    background: #fff3cd;
+    border-color: #ffc107;
+    animation: pulse-threat 2s infinite;
+}
+
+.env-score-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+    color: #2d3748;
+}
+
+.env-score-value {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0.5rem 0;
+}
+
+.env-score-level {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.25rem 0.75rem;
+    border-radius: 15px;
+}
+
+@keyframes pulse-threat {
+    0% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(255, 193, 7, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0); }
+}
+
 /* Modern Dashboard Styles */
 .dashboard-header {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -293,6 +360,45 @@
                 </div>
             </div>
         </div>
+    </div>
+</div>
+
+<!-- Environment Scores Section -->
+<div class="environment-scores">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">
+            <i class="bi bi-layers me-2"></i>
+            Multi-Environment Threat Monitor
+        </h5>
+        <small class="text-muted">
+            <i class="bi bi-info-circle me-1"></i>
+            Click environment switcher to focus on specific area
+        </small>
+    </div>
+    
+    <div class="environment-scores-grid">
+        {% for env_id, env_data in environments.items() %}
+        <div class="env-score-card {% if env_id == current_environment %}active{% endif %} {% if env_id == highest_threat_environment %}highest-threat{% endif %}" 
+             onclick="switchEnvironment('{{ env_id }}')" style="cursor: pointer;">
+            <div class="env-score-name">
+                <i class="bi {{ env_data.icon }} me-1" style="color: {{ env_data.color }}"></i>
+                {{ env_data.name }}
+            </div>
+            <div class="env-score-value" style="color: {{ env_data.color }}">
+                {{ env_data.threat_score|round|int }}%
+            </div>
+            <div class="env-score-level {% if env_data.data.threat.level == 'CRITICAL' %}alert-critical{% elif env_data.data.threat.level == 'HIGH' %}alert-high{% elif env_data.data.threat.level == 'ELEVATED' %}alert-elevated{% elif env_data.data.threat.level == 'MODERATE' %}alert-moderate{% else %}alert-low{% endif %}">
+                {{ env_data.data.threat.level or 'LOW' }}
+            </div>
+            {% if env_id == highest_threat_environment %}
+            <div class="mt-2">
+                <small class="text-warning">
+                    <i class="bi bi-exclamation-triangle"></i> Highest Threat
+                </small>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
     </div>
 </div>
 

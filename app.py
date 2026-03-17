@@ -62,14 +62,72 @@ class LiveDataStore:
         self.connected_clients = 0
         self.paused = False
         self.paused_data = None  # Store data when paused
+        
+        # Multi-environment support
+        self.environments = {
+            'primary': {
+                'name': 'Primary Environment',
+                'description': 'Main monitoring area',
+                'color': '#007bff',
+                'icon': 'bi-house',
+                'data': {},
+                'threat_score': 0,
+                'last_update': None
+            },
+            'secondary': {
+                'name': 'Secondary Environment', 
+                'description': 'Secondary monitoring area',
+                'color': '#28a745',
+                'icon': 'bi-building',
+                'data': {},
+                'threat_score': 0,
+                'last_update': None
+            },
+            'warehouse': {
+                'name': 'Warehouse Environment',
+                'description': 'Warehouse and storage area',
+                'color': '#ffc107',
+                'icon': 'bi-box-seam',
+                'data': {},
+                'threat_score': 0,
+                'last_update': None
+            },
+            'outdoor': {
+                'name': 'Outdoor Environment',
+                'description': 'Outdoor perimeter monitoring',
+                'color': '#17a2b8',
+                'icon': 'bi-tree',
+                'data': {},
+                'threat_score': 0,
+                'last_update': None
+            }
+        }
+        self.current_environment = 'primary'
+        self.highest_threat_environment = 'primary'
     
-    def update(self, data):
-        """Update with latest sensor data"""
+    def update(self, data, environment_id=None):
+        """Update with latest sensor data for specific environment"""
         with self.lock:
             # If paused, don't update the data
             if self.paused:
                 return
             
+            # Determine which environment to update
+            if environment_id is None:
+                environment_id = self.current_environment
+            
+            if environment_id not in self.environments:
+                environment_id = 'primary'
+            
+            # Update environment-specific data
+            self.environments[environment_id]['data'] = data.copy()
+            self.environments[environment_id]['threat_score'] = data.get('threat', {}).get('overall_threat', 0)
+            self.environments[environment_id]['last_update'] = datetime.now()
+            
+            # Update highest threat environment
+            self._update_highest_threat_environment()
+            
+            # Update legacy data for backward compatibility
             self.latest = data
             self.timestamps.append(datetime.now())
             
@@ -141,6 +199,52 @@ class LiveDataStore:
                 self.event_queue.put_nowait(event)
             except:
                 pass
+    
+    def _update_highest_threat_environment(self):
+        """Update which environment has the highest threat level"""
+        max_threat = -1
+        highest_env = 'primary'
+        
+        for env_id, env_data in self.environments.items():
+            if env_data['threat_score'] > max_threat:
+                max_threat = env_data['threat_score']
+                highest_env = env_id
+        
+        self.highest_threat_environment = highest_env
+    
+    def get_environment_data(self, environment_id=None):
+        """Get data for specific environment"""
+        with self.lock:
+            if environment_id is None:
+                environment_id = self.current_environment
+            
+            if environment_id not in self.environments:
+                environment_id = 'primary'
+            
+            return self.environments[environment_id]['data'].copy()
+    
+    def get_all_environments(self):
+        """Get all environments data"""
+        with self.lock:
+            return {k: v.copy() for k, v in self.environments.items()}
+    
+    def set_current_environment(self, environment_id):
+        """Set the current active environment"""
+        with self.lock:
+            if environment_id in self.environments:
+                self.current_environment = environment_id
+                return True
+            return False
+    
+    def get_current_environment(self):
+        """Get current environment ID"""
+        with self.lock:
+            return self.current_environment
+    
+    def get_highest_threat_environment(self):
+        """Get environment with highest threat level"""
+        with self.lock:
+            return self.highest_threat_environment
 
 # Initialize live data store
 live_data = LiveDataStore()
@@ -291,8 +395,21 @@ def get_target_history(minutes=30):
 
 # ==================== FAKE DATA GENERATION ====================
 
-def generate_fake_sensor_data():
-    """Generate fake sensor data for demonstration"""
+def generate_fake_sensor_data(environment_id=None):
+    """Generate fake sensor data for demonstration with environment variations"""
+    
+    # Environment-specific variations
+    env_multipliers = {
+        'primary': {'people_base': 2, 'threat_base': 30, 'noise_base': 40},
+        'secondary': {'people_base': 1, 'threat_base': 20, 'noise_base': 35},
+        'warehouse': {'people_base': 3, 'threat_base': 40, 'noise_base': 60},
+        'outdoor': {'people_base': 1, 'threat_base': 25, 'noise_base': 45}
+    }
+    
+    if environment_id is None:
+        environment_id = live_data.get_current_environment()
+    
+    env_config = env_multipliers.get(environment_id, env_multipliers['primary'])
     
     # People count and targets
     people_count = random.randint(0, 5)
@@ -959,22 +1076,39 @@ def index():
 @app.route("/dashboard")
 @login_required
 def dashboard():
-    """Live monitoring dashboard"""
+    """Live monitoring dashboard with multi-environment support"""
     # Get fake mode from session (default to True for demo)
     fake_mode = session.get('fake_mode', True)
     
+    # Get all environments data
+    all_environments = live_data.get_all_environments()
+    current_env = live_data.get_current_environment()
+    highest_threat_env = live_data.get_highest_threat_environment()
+    
+    # Generate fake data for all environments if in fake mode
     if fake_mode:
-        # Use cached fake data for consistency
-        data = get_cached_fake_data()
+        for env_id in all_environments.keys():
+            env_data = generate_fake_sensor_data(env_id)
+            live_data.update(env_data, env_id)
+        
+        # Refresh environments data after updates
+        all_environments = live_data.get_all_environments()
+        
+        # Get current environment data for display
+        data = live_data.get_environment_data(current_env)
     else:
         # Try to get real data from database
-        data = get_realtime_sensor_data()
-        # Don't fall back to fake data - show blank/empty when no real data available
+        data = live_data.get_environment_data(current_env)
+        if not data:
+            data = {'no_data': True}
     
     # Extract top-level variables for template compatibility
     template_data = {
         'fake_mode': fake_mode,
         'current_time': datetime.now().isoformat(),
+        'environments': all_environments,
+        'current_environment': current_env,
+        'highest_threat_environment': highest_threat_env,
         'people_count': data.get('people_count', 0),
         'active_targets': data.get('active_targets', 0),
         'abnormal_count': data.get('abnormal_count', 0),
@@ -1329,6 +1463,52 @@ def api_live():
         # Don't fall back to fake data - return empty data when no real data available
     
     return jsonify(data)
+
+@app.route("/api/environments")
+def api_environments():
+    """Get all environments data"""
+    return jsonify(live_data.get_all_environments())
+
+@app.route("/api/environment/current", methods=['GET', 'POST'])
+def api_current_environment():
+    """Get or set current environment"""
+    if request.method == 'GET':
+        return jsonify({
+            'current': live_data.get_current_environment(),
+            'highest_threat': live_data.get_highest_threat_environment()
+        })
+    elif request.method == 'POST':
+        try:
+            data = request.get_json()
+            environment_id = data.get('environment_id')
+            
+            if live_data.set_current_environment(environment_id):
+                return jsonify({
+                    'success': True, 
+                    'current': environment_id,
+                    'highest_threat': live_data.get_highest_threat_environment()
+                })
+            else:
+                return jsonify({'success': False, 'error': 'Invalid environment ID'}), 400
+        except Exception as e:
+            app.logger.error(f"Error setting current environment: {e}")
+            return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route("/api/environment/<environment_id>/data")
+def api_environment_data(environment_id):
+    """Get data for specific environment"""
+    fake_mode = session.get('fake_mode', True)
+    
+    if fake_mode:
+        # Generate environment-specific fake data
+        data = generate_fake_sensor_data(environment_id)
+        # Update the live data store for this environment
+        live_data.update(data, environment_id)
+        return jsonify(data)
+    else:
+        # Get real environment data
+        data = live_data.get_environment_data(environment_id)
+        return jsonify(data or {})
 
 @app.route("/api/timeline")
 def api_timeline():
