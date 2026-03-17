@@ -294,6 +294,8 @@ def generate_fake_sensor_data():
     
     odor_types = ['clean_air', 'human_activity', 'moderate_odor', 'strong_chemical', 'dust_or_smoke']
     odor_type = random.choice(odor_types)
+    odor_confidence = random.uniform(0.7, 0.95)
+    odor_intensity = random.uniform(1, 8)
     
     # Sound with extreme value handling
     sound_db = random.uniform(30, 95)
@@ -406,9 +408,12 @@ def generate_fake_sensor_data():
         'pm25': pm25,
         'aqi': aqi,
         'odor_type': odor_type,
+        'odor_confidence': odor_confidence,
+        'odor_intensity': odor_intensity,
         'sound_db': sound_db,
         'sound_event': sound_event,
         'sound_spike': sound_spike,
+        'sound_baseline': sound_baseline,
         'air_quality_alarm': air_quality_alarm,
         'noise_alarm': noise_alarm,
         'uptime': (datetime.now() - START_TIME).total_seconds(),
@@ -812,14 +817,49 @@ def sensors():
         # Try to get real data from database
         data = get_realtime_sensor_data()
     
-    # Add fake mode flag to template
-    data['fake_mode'] = fake_mode
+    # Extract top-level variables for template compatibility
+    template_data = {
+        'fake_mode': fake_mode,
+        'recent_logs': generate_recent_logs(),
+        'last_update': datetime.now().strftime('%H:%M:%S'),
+        'people_count': data.get('people_count', 0),
+        'active_targets': data.get('active_targets', 0),
+        'abnormal_count': data.get('abnormal_count', 0),
+        'targets': data.get('targets', []),
+        'threat_score': data.get('threat', {}).get('overall_threat', 0),
+        'threat_level': data.get('threat', {}).get('level', 'UNKNOWN'),
+        'temporal_trend': data.get('threat', {}).get('temporal', {}).get('trend', 'stable'),
+        'temporal_slope': data.get('threat', {}).get('temporal', {}).get('slope', 0),
+        'temporal_acceleration': data.get('threat', {}).get('temporal', {}).get('acceleration', 0),
+        'persistence_factor': data.get('threat', {}).get('temporal', {}).get('persistence', 1.0),
+        'trajectory_5min': data.get('threat', {}).get('trajectory', {}).get('5min', 0),
+        'trajectory_15min': data.get('threat', {}).get('trajectory', {}).get('15min', 0),
+        'trajectory_30min': data.get('threat', {}).get('trajectory', {}).get('30min', 0),
+        'components': data.get('components', {}),
+        'aqi': data.get('aqi', 0),
+        'voc': data.get('voc', 0),
+        'pm25': data.get('pm25', 0),
+        'odor_type': data.get('odor_type', 'clean_air'),
+        'odor_confidence': data.get('odor_confidence', 0.8),
+        'odor_intensity': data.get('odor_intensity', 3.0),
+        'sound_db': data.get('sound_db', 0),
+        'sound_event': data.get('sound_event', 'quiet'),
+        'sound_spike': data.get('sound_spike', False),
+        'sound_baseline': data.get('sound_baseline', 40.0),
+        'air_quality_alarm': data.get('air_quality_alarm', False),
+        'noise_alarm': data.get('noise_alarm', False),
+        'uptime': data.get('uptime', (datetime.now() - START_TIME).total_seconds()),
+        'data_rate': data.get('data_rate', 0),
+        'packet_count': data.get('packet_count', 0),
+        # Pass the full data structures for JavaScript
+        'threat': data.get('threat', {}),
+        'radar': data.get('radar', {}),
+        'odor': data.get('odor', {}),
+        'sound': data.get('sound', {}),
+        'quality': data.get('quality', {})
+    }
     
-    # Add recent logs
-    data['recent_logs'] = generate_recent_logs()
-    data['last_update'] = datetime.now().strftime('%H:%M:%S')
-    
-    return render_template('sensors.html', **data)
+    return render_template('sensors.html', **template_data)
 
 @app.route("/history")
 @login_required
