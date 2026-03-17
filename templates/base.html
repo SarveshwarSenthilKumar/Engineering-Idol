@@ -418,19 +418,20 @@
                         {% endif %}
                     </ul>
                     
-                    <!-- Environment Monitor (only for logged-in users on dashboard) -->
-                    {% if session.user_id and request.endpoint == 'dashboard' and environments is defined %}
+                    <!-- Environment Monitor (only for logged-in users) -->
+                    {% if session.user_id and environments is defined %}
                     <div class="mt-4 pt-3 border-top border-secondary">
                         <h6 class="text-white-50 text-uppercase small fw-bold mb-3">Environment Monitor</h6>
                         <div id="sidebarEnvironmentList" class="small">
                             {% for env_id, env_data in environments.items() %}
                             <div class="environment-sidebar-item {% if env_id == current_environment %}active{% endif %} {% if env_id == highest_threat_environment %}highest-threat{% endif %}" 
-                                 onclick="switchEnvironment('{{ env_id }}')" data-env-id="{{ env_id }}"
+                                 data-env-id="{{ env_id }}"
                                  style="display: flex; align-items: center; padding: 8px; margin: 4px 0; border-radius: 6px; cursor: pointer; transition: all 0.2s ease; border: 2px solid transparent;">
-                                <div class="environment-icon" style="width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 8px; font-size: 12px; color: white; background-color: {{ env_data.color }}">
+                                <div class="environment-icon" style="width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 8px; font-size: 12px; color: white; background-color: {{ env_data.color }}"
+                                     onclick="switchEnvironment('{{ env_id }}')">
                                     <i class="bi {{ env_data.icon }}"></i>
                                 </div>
-                                <div class="environment-info" style="flex: 1;">
+                                <div class="environment-info" style="flex: 1;" onclick="switchEnvironment('{{ env_id }}')">
                                     <div class="environment-name text-white fw-semibold" style="font-size: 0.8rem;">{{ env_data.name }}</div>
                                     <div class="environment-desc text-white-50" style="font-size: 0.7rem;">{{ env_data.description }}</div>
                                 </div>
@@ -438,6 +439,12 @@
                                      style="padding: 2px 6px; border-radius: 8px; font-size: 0.65rem; font-weight: 600; text-align: center; min-width: 35px;">
                                     {{ env_data.threat_score|round|int if env_data.threat_score is defined else 0 }}%
                                 </div>
+                                <button class="btn btn-sm btn-outline-light ms-2" 
+                                        onclick="event.stopPropagation(); toggleEnvironmentPause('{{ env_id }}')"
+                                        title="Pause/Resume this environment"
+                                        style="padding: 2px 6px; font-size: 0.6rem;">
+                                    <i class="bi bi-pause-fill" id="pause-icon-{{ env_id }}"></i>
+                                </button>
                             </div>
                             {% endfor %}
                         </div>
@@ -721,6 +728,87 @@
             });
         }
         
+        // Environment-specific pause functionality
+        function toggleEnvironmentPause(environmentId) {
+            // Check current pause status first
+            fetch(`/api/environment/${environmentId}/pause_status`)
+            .then(response => response.json())
+            .then(statusData => {
+                const isPaused = statusData.paused;
+                const endpoint = isPaused ? 
+                    `/api/environment/${environmentId}/resume` : 
+                    `/api/environment/${environmentId}/pause`;
+                
+                fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        updateEnvironmentPauseStatus(environmentId, !isPaused);
+                        console.log(`${environmentId} ${!isPaused ? 'paused' : 'resumed'}`);
+                    } else {
+                        console.error('Failed to toggle environment pause:', data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error toggling environment pause:', error);
+                });
+            })
+            .catch(error => {
+                console.error('Error getting environment pause status:', error);
+            });
+        }
+        
+        function updateEnvironmentPauseStatus(environmentId, isPaused) {
+            const item = document.querySelector(`[data-env-id="${environmentId}"]`);
+            const icon = document.getElementById(`pause-icon-${environmentId}`);
+            if (item) {
+                // Update visual indicator for pause status
+                if (isPaused) {
+                    item.style.opacity = '0.6';
+                    item.title = `${environmentId} - Paused`;
+                    if (icon) {
+                        icon.classList.remove('bi-pause-fill');
+                        icon.classList.add('bi-play-fill');
+                    }
+                } else {
+                    item.style.opacity = '1';
+                    item.title = `${environmentId} - Active`;
+                    if (icon) {
+                        icon.classList.remove('bi-play-fill');
+                        icon.classList.add('bi-pause-fill');
+                    }
+                }
+            }
+        }
+        
+        // Initialize environment pause states on page load
+        function initializeEnvironmentPauseStates() {
+            {% if session.user_id and environments is defined %}
+            {% for env_id, env_data in environments.items() %}
+            fetch(`/api/environment/{{ env_id }}/pause_status`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.paused !== undefined) {
+                    updateEnvironmentPauseStatus('{{ env_id }}', data.paused);
+                }
+            })
+            .catch(error => {
+                console.error('Error getting initial pause status for {{ env_id }}:', error);
+            });
+            {% endfor %}
+            {% endif %}
+        }
+        
+        // Initialize environment pause states on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeEnvironmentPauseStates();
+        });
+        
         function updateEnvironmentUI(currentEnvId, highestThreatEnvId) {
             // Update both old floating switcher and new sidebar items
             const items = document.querySelectorAll('.environment-item, .environment-sidebar-item');
@@ -734,6 +822,28 @@
                     item.classList.add('highest-threat');
                 }
             });
+            
+            // Update highest threat display text
+            updateHighestThreatDisplay(highestThreatEnvId);
+        }
+        
+        function updateHighestThreatDisplay(highestThreatEnvId) {
+            const highestDisplay = document.querySelector('.text-warning small');
+            if (highestDisplay) {
+                fetch('/api/environments')
+                .then(response => response.json())
+                .then(environments => {
+                    if (environments && environments[highestThreatEnvId]) {
+                        highestDisplay.innerHTML = `
+                            <i class="bi bi-exclamation-triangle"></i> 
+                            Highest: ${environments[highestThreatEnvId].name}
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating highest threat display:', error);
+                });
+            }
         }
         
         function updateEnvironmentThreatLevels() {
@@ -756,6 +866,18 @@
                         }
                     }
                 });
+                
+                // Update highest threat display
+                const highestThreatEnv = Object.keys(environments).reduce((highest, envId) => {
+                    if (!highest || environments[envId].threat_score > environments[highest].threat_score) {
+                        return envId;
+                    }
+                    return highest;
+                }, null);
+                
+                if (highestThreatEnv) {
+                    updateHighestThreatDisplay(highestThreatEnv);
+                }
             })
             .catch(error => {
                 console.error('Error updating environment threat levels:', error);

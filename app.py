@@ -62,6 +62,8 @@ class LiveDataStore:
         self.connected_clients = 0
         self.paused = False
         self.paused_data = None  # Store data when paused
+        self.paused_environments = set()  # Track which environments are paused
+        self.environment_paused_data = {}  # Store paused data for each environment
         
         # Multi-environment support
         self.environments = {
@@ -108,7 +110,7 @@ class LiveDataStore:
     def update(self, data, environment_id=None):
         """Update with latest sensor data for specific environment"""
         with self.lock:
-            # If paused, don't update the data
+            # If paused globally, don't update the data
             if self.paused:
                 return
             
@@ -118,6 +120,10 @@ class LiveDataStore:
             
             if environment_id not in self.environments:
                 environment_id = 'primary'
+            
+            # If this specific environment is paused, don't update it
+            if environment_id in self.paused_environments:
+                return
             
             # Update environment-specific data
             self.environments[environment_id]['data'] = data.copy()
@@ -151,6 +157,29 @@ class LiveDataStore:
             if self.paused and self.paused_data:
                 return self.paused_data.copy()
             return self.latest.copy()
+    
+    def pause_environment(self, environment_id):
+        """Pause data updates for specific environment"""
+        with self.lock:
+            if environment_id in self.environments:
+                self.paused_environments.add(environment_id)
+                # Store current data for this environment
+                self.environment_paused_data[environment_id] = self.environments[environment_id]['data'].copy()
+                return True
+            return False
+    
+    def resume_environment(self, environment_id):
+        """Resume data updates for specific environment"""
+        with self.lock:
+            self.paused_environments.discard(environment_id)
+            # Clear stored paused data for this environment
+            self.environment_paused_data.pop(environment_id, None)
+            return True
+    
+    def is_environment_paused(self, environment_id):
+        """Check if data updates are paused for specific environment"""
+        with self.lock:
+            return environment_id in self.paused_environments
     
     def pause(self):
         """Pause data updates and store current data"""
@@ -221,6 +250,10 @@ class LiveDataStore:
             
             if environment_id not in self.environments:
                 environment_id = 'primary'
+            
+            # If this environment is paused, return the paused data
+            if environment_id in self.paused_environments and environment_id in self.environment_paused_data:
+                return self.environment_paused_data[environment_id].copy()
             
             return self.environments[environment_id]['data'].copy()
     
@@ -1218,6 +1251,12 @@ def sensors():
 @login_required
 def history():
     """Event history page"""
+    # Get environment data for consistency
+    fake_mode = session.get('fake_mode', True)
+    all_environments = live_data.get_all_environments()
+    current_env = live_data.get_current_environment()
+    highest_threat_env = live_data.get_highest_threat_environment()
+    
     events = get_recent_events(100)
     stats = get_threat_statistics(24)
     
@@ -1250,25 +1289,42 @@ def history():
                          timeline_data=timeline_data,
                          current_date=datetime.now().strftime('%Y-%m-%d'),
                          current_time=datetime.now().isoformat(),
-                         fake_mode=session.get('fake_mode', True))
+                         fake_mode=fake_mode,
+                         environments=all_environments,
+                         current_environment=current_env,
+                         highest_threat_environment=highest_threat_env)
 
 @app.route("/analytics")
 @login_required
 def analytics():
     """Analytics and charts page"""
+    # Get environment data for consistency
+    fake_mode = session.get('fake_mode', True)
+    all_environments = live_data.get_all_environments()
+    current_env = live_data.get_current_environment()
+    highest_threat_env = live_data.get_highest_threat_environment()
+    
     timeline = get_threat_timeline(24)
     stats = get_threat_statistics(24)
     return render_template('analytics.html',
                          timeline=json.dumps(timeline),
                          stats=stats,
                          current_time=datetime.now().isoformat(),
-                         fake_mode=session.get('fake_mode', True))
+                         fake_mode=fake_mode,
+                         environments=all_environments,
+                         current_environment=current_env,
+                         highest_threat_environment=highest_threat_env)
 
 @app.route("/targets")
 @login_required
 def targets_view():
     """Person tracking view"""
     fake_mode = session.get('fake_mode', True)
+    
+    # Get environment data for consistency
+    all_environments = live_data.get_all_environments()
+    current_env = live_data.get_current_environment()
+    highest_threat_env = live_data.get_highest_threat_environment()
     
     if fake_mode:
         # Use cached fake data for consistency
@@ -1281,17 +1337,29 @@ def targets_view():
     return render_template('targets.html',
                          targets=targets,
                          current_time=datetime.now().isoformat(),
-                         fake_mode=fake_mode)
+                         fake_mode=fake_mode,
+                         environments=all_environments,
+                         current_environment=current_env,
+                         highest_threat_environment=highest_threat_env)
 
 @app.route("/settings")
 @login_required
 def settings():
     """Settings page"""
+    # Get environment data for consistency
+    fake_mode = session.get('fake_mode', True)
+    all_environments = live_data.get_all_environments()
+    current_env = live_data.get_current_environment()
+    highest_threat_env = live_data.get_highest_threat_environment()
+    
     return render_template('settings.html',
                          current_time=datetime.now().isoformat(),
                          database_path=app.config.get('DATABASE_PATH', 'N/A'),
                          other_config_values=app.config.get('OTHER_CONFIG_VALUES', 'N/A'),
-                         fake_mode=session.get('fake_mode', True))
+                         fake_mode=fake_mode,
+                         environments=all_environments,
+                         current_environment=current_env,
+                         highest_threat_environment=highest_threat_env)
 
 # ==================== API ROUTES ====================
 
@@ -1391,6 +1459,53 @@ def pause_status():
         app.logger.error(f"Error getting pause status: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@app.route("/api/environment/<environment_id>/pause", methods=['POST'])
+@login_required
+def pause_environment(environment_id):
+    """Pause data updates for specific environment"""
+    try:
+        if live_data.pause_environment(environment_id):
+            return jsonify({
+                'success': True, 
+                'environment_id': environment_id,
+                'paused': True
+            })
+        else:
+            return jsonify({'success': False, 'error': 'Invalid environment ID'}), 400
+    except Exception as e:
+        app.logger.error(f"Error pausing environment {environment_id}: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route("/api/environment/<environment_id>/resume", methods=['POST'])
+@login_required
+def resume_environment(environment_id):
+    """Resume data updates for specific environment"""
+    try:
+        if live_data.resume_environment(environment_id):
+            return jsonify({
+                'success': True, 
+                'environment_id': environment_id,
+                'paused': False
+            })
+        else:
+            return jsonify({'success': False, 'error': 'Invalid environment ID'}), 400
+    except Exception as e:
+        app.logger.error(f"Error resuming environment {environment_id}: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route("/api/environment/<environment_id>/pause_status")
+def environment_pause_status(environment_id):
+    """Get pause status for specific environment"""
+    try:
+        is_paused = live_data.is_environment_paused(environment_id)
+        return jsonify({
+            'environment_id': environment_id,
+            'paused': is_paused
+        })
+    except Exception as e:
+        app.logger.error(f"Error getting environment pause status: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @app.route("/api/config", methods=['GET', 'POST'])
 @login_required
 def api_config():
@@ -1461,7 +1576,15 @@ def api_live():
     fake_mode = session.get('fake_mode', True)
     
     if fake_mode:
-        data = get_cached_fake_data()
+        # Get current environment data
+        current_env = live_data.get_current_environment()
+        data = live_data.get_environment_data(current_env)
+        
+        # If no data exists, generate some for the current environment
+        if not data or not data.get('people_count'):
+            data = generate_fake_sensor_data(current_env)
+            live_data.update(data, current_env)
+            data = live_data.get_environment_data(current_env)
     else:
         data = get_realtime_sensor_data()
         # Don't fall back to fake data - return empty data when no real data available
