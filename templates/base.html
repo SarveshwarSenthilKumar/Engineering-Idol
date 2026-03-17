@@ -424,27 +424,37 @@
                         <h6 class="text-white-50 text-uppercase small fw-bold mb-3">Environment Monitor</h6>
                         <div id="sidebarEnvironmentList" class="small">
                             {% for env_id, env_data in environments.items() %}
-                            <div class="environment-sidebar-item {% if env_id == current_environment %}active{% endif %} {% if env_id == highest_threat_environment %}highest-threat{% endif %}" 
+                            {% set is_active = session.get('fake_mode', True) or env_id == 'primary' %}
+                            <div class="environment-sidebar-item {% if env_id == current_environment %}active{% endif %} {% if env_id == highest_threat_environment %}highest-threat{% endif %} {% if not is_active %}inactive{% endif %}" 
                                  data-env-id="{{ env_id }}"
-                                 style="display: flex; align-items: center; padding: 8px; margin: 4px 0; border-radius: 6px; cursor: pointer; transition: all 0.2s ease; border: 2px solid transparent;">
-                                <div class="environment-icon" style="width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 8px; font-size: 12px; color: white; background-color: {{ env_data.color }}"
-                                     onclick="switchEnvironment('{{ env_id }}')">
+                                 style="display: flex; align-items: center; padding: 8px; margin: 4px 0; border-radius: 6px; cursor: {% if is_active %}pointer{% else %}not-allowed{% endif %}; transition: all 0.2s ease; border: 2px solid transparent; {% if not is_active %}opacity: 0.4;{% endif %}">
+                                <div class="environment-icon" style="width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 8px; font-size: 12px; color: white; background-color: {{ env_data.color }}; {% if not is_active %}filter: grayscale(100%);{% endif %}"
+                                     {% if is_active %}onclick="switchEnvironment('{{ env_id }}')"{% endif %}>
                                     <i class="bi {{ env_data.icon }}"></i>
                                 </div>
-                                <div class="environment-info" style="flex: 1;" onclick="switchEnvironment('{{ env_id }}')">
+                                <div class="environment-info" style="flex: 1;" {% if is_active %}onclick="switchEnvironment('{{ env_id }}')"{% endif %}>
                                     <div class="environment-name text-white fw-semibold" style="font-size: 0.8rem;">{{ env_data.name }}</div>
                                     <div class="environment-desc text-white-50" style="font-size: 0.7rem;">{{ env_data.description }}</div>
+                                    {% if not is_active %}
+                                    <div class="text-warning" style="font-size: 0.65rem; font-weight: 600;">— NO DATA —</div>
+                                    {% endif %}
                                 </div>
                                 <div class="threat-sidebar-badge threat-{{ env_data.data.threat.level|lower if env_data.data and env_data.data.threat and env_data.data.threat.level else 'low' }}" 
-                                     style="padding: 2px 6px; border-radius: 8px; font-size: 0.65rem; font-weight: 600; text-align: center; min-width: 35px;">
-                                    {{ env_data.threat_score|round|int if env_data.threat_score is defined else 0 }}%
+                                     style="padding: 2px 6px; border-radius: 8px; font-size: 0.65rem; font-weight: 600; text-align: center; min-width: 35px; {% if not is_active %}background: rgba(108, 117, 125, 0.8);{% endif %}">
+                                    {% if is_active %}
+                                        {{ env_data.threat_score|round|int if env_data.threat_score is defined else 0 }}%
+                                    {% else %}
+                                        ---
+                                    {% endif %}
                                 </div>
+                                {% if is_active %}
                                 <button class="btn btn-sm btn-outline-light ms-2" 
                                         onclick="event.stopPropagation(); toggleEnvironmentPause('{{ env_id }}')"
                                         title="Pause/Resume this environment"
                                         style="padding: 2px 6px; font-size: 0.6rem;">
                                     <i class="bi bi-pause-fill" id="pause-icon-{{ env_id }}"></i>
                                 </button>
+                                {% endif %}
                             </div>
                             {% endfor %}
                         </div>
