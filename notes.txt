@@ -14,6 +14,10 @@ fix the previous events section in dashboard
 allow the user to change the name of the various environments
 if its real data mode, turn the rest off and make sure it shows the only working one
 
+can you make sure that if the user clicks on an environment, it pauses on that specific dataset until the user unpauses it with the button and also make sure that the scores match up exactly
+
+make sure that the sensors page shows empty blank graphs if fake data mode is turned off
+
 change the temperature of the summary based on the score, suggest an approach where observe activity or confront
 
 create a webpage with js code and create a summary for each section of code and make it look good and add a chatbot to ask, a documentation page to cover everything including every advantage and everything fof the webapp and also add a feature where you can play with the scoring system
