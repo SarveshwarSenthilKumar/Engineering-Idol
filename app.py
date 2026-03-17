@@ -906,8 +906,8 @@ def sensors():
     # Extract top-level variables for template compatibility
     template_data = {
         'fake_mode': fake_mode,
-        'recent_logs': generate_recent_logs(),
-        'last_update': datetime.now().strftime('%H:%M:%S'),
+        'recent_logs': generate_recent_logs(),  # This is fine to be random
+        'last_update': data.get('last_update', datetime.now().strftime('%H:%M:%S')),
         'people_count': data.get('people_count', 0),
         'active_targets': data.get('active_targets', 0),
         'abnormal_count': data.get('abnormal_count', 0),
@@ -1033,30 +1033,15 @@ def api_targets():
     fake_mode = session.get('fake_mode', True)
     
     if fake_mode:
-        # Generate fake target data
-        targets = []
-        people_count = random.randint(1, 5)
-        
-        for i in range(people_count):
-            activity = random.choice(['stationary', 'sitting', 'walking', 'running'])
-            abnormal = random.random() < 0.2
-            
-            targets.append({
-                'target_id': f"T{random.randint(1,99):02d}",
-                'target_distance': round(random.uniform(1.0, 8.0), 2),
-                'target_angle': round(random.uniform(-60, 60), 1),
-                'target_velocity': round(random.uniform(0, 2.0), 2) if activity in ['walking', 'running'] else 0,
-                'target_activity': activity,
-                'target_breathing_rate': round(random.uniform(12, 20), 1) if random.random() < 0.7 else None,
-                'target_abnormal_breathing': abnormal,
-                'target_confidence': round(random.uniform(0.7, 0.95), 2),
-                'event_timestamp': (datetime.now() - timedelta(seconds=random.randint(0, 300))).isoformat()
-            })
+        # Use cached fake data for consistency
+        data = get_cached_fake_data()
+        targets = data.get('targets', [])
     else:
         # Get real target data from database
         targets = get_target_history(minutes)
     
     return jsonify(targets)
+
 @app.route("/api/events/recent")
 def api_recent_events():
     """Get recent events"""
