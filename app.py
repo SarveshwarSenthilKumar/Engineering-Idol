@@ -40,6 +40,67 @@ Session(app)
 # Start time for uptime calculation
 START_TIME = datetime.now()
 
+# ==================== DATABASE FUNCTIONS ====================
+
+def get_db_connection():
+    """Get database connection"""
+    conn = sqlite3.connect(app.config['DATABASE_PATH'])
+    conn.row_factory = sqlite3.Row
+    return conn
+
+def get_environment_settings():
+    """Get all environment settings from database"""
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT environment_id, name, description, color, icon
+            FROM environment_settings
+            ORDER BY environment_id
+        """)
+        
+        settings = cursor.fetchall()
+        return {row['environment_id']: dict(row) for row in settings}
+    except Exception as e:
+        app.logger.error(f"Error fetching environment settings: {e}")
+        return {}
+    finally:
+        if conn:
+            conn.close()
+
+def update_environment_setting(environment_id, name, description=None):
+    """Update environment name and optionally description"""
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        if description:
+            cursor.execute("""
+                UPDATE environment_settings 
+                SET name = ?, description = ?, updated_at = CURRENT_TIMESTAMP
+                WHERE environment_id = ?
+            """, (name, description, environment_id))
+        else:
+            cursor.execute("""
+                UPDATE environment_settings 
+                SET name = ?, updated_at = CURRENT_TIMESTAMP
+                WHERE environment_id = ?
+            """, (name, environment_id))
+        
+        conn.commit()
+        return cursor.rowcount > 0
+    except Exception as e:
+        app.logger.error(f"Error updating environment setting: {e}")
+        return False
+    finally:
+        if conn:
+            conn.close()
+
+# ==================== LIVE DATA STORE ====================
+
 # Global data store for live readings
 class LiveDataStore:
     """Thread-safe storage for latest sensor readings"""
@@ -65,8 +126,11 @@ class LiveDataStore:
         self.paused_environments = set()  # Track which environments are paused
         self.environment_paused_data = {}  # Store paused data for each environment
         
-        # Multi-environment support
-        self.environments = {
+        # Multi-environment support - load from database if available
+        db_settings = get_environment_settings()
+        
+        # Default environment configuration
+        default_environments = {
             'primary': {
                 'name': 'Primary Environment',
                 'description': 'Main monitoring area',
@@ -104,6 +168,16 @@ class LiveDataStore:
                 'last_update': None
             }
         }
+        
+        # Override with database settings if available
+        for env_id, default_config in default_environments.items():
+            if env_id in db_settings:
+                db_config = db_settings[env_id]
+                default_config['name'] = db_config.get('name', default_config['name'])
+                default_config['description'] = db_config.get('description', default_config['description'])
+                # Keep color and icon from defaults unless explicitly stored in DB
+        
+        self.environments = default_environments
         self.current_environment = 'primary'
         self.highest_threat_environment = 'primary'
     
@@ -423,6 +497,57 @@ def get_target_history(minutes=30):
     except Exception as e:
         app.logger.error(f"Error fetching targets: {e}")
         return []
+    finally:
+        if conn:
+            conn.close()
+
+def get_environment_settings():
+    """Get all environment settings from database"""
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT environment_id, name, description, color, icon
+            FROM environment_settings
+            ORDER BY environment_id
+        """)
+        
+        settings = cursor.fetchall()
+        return {row['environment_id']: dict(row) for row in settings}
+    except Exception as e:
+        app.logger.error(f"Error fetching environment settings: {e}")
+        return {}
+    finally:
+        if conn:
+            conn.close()
+
+def update_environment_setting(environment_id, name, description=None):
+    """Update environment name and optionally description"""
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        if description:
+            cursor.execute("""
+                UPDATE environment_settings 
+                SET name = ?, description = ?, updated_at = CURRENT_TIMESTAMP
+                WHERE environment_id = ?
+            """, (name, description, environment_id))
+        else:
+            cursor.execute("""
+                UPDATE environment_settings 
+                SET name = ?, updated_at = CURRENT_TIMESTAMP
+                WHERE environment_id = ?
+            """, (name, environment_id))
+        
+        conn.commit()
+        return cursor.rowcount > 0
+    except Exception as e:
+        app.logger.error(f"Error updating environment setting: {e}")
+        return False
     finally:
         if conn:
             conn.close()
@@ -1653,22 +1778,62 @@ def api_environment_data(environment_id):
     """Get data for specific environment"""
     fake_mode = session.get('fake_mode', True)
     
-    if fake_mode:
-        # Generate environment-specific fake data
-        data = generate_fake_sensor_data(environment_id)
-        # Update the live data store for this environment
-        live_data.update(data, environment_id)
-        return jsonify(data)
-    else:
-        # Get real environment data
-        data = live_data.get_environment_data(environment_id)
+    try:
+        if fake_mode:
+            # Get fake environment data
+            data = live_data.get_environment_data(environment_id)
+        else:
+            # Get real environment data
+            data = live_data.get_environment_data(environment_id)
         return jsonify(data or {})
+    except Exception as e:
+        app.logger.error(f"Error getting environment data: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
-@app.route("/api/timeline")
-def api_timeline():
-    """Get timeline data for analytics"""
-    hours = request.args.get('hours', 24, type=int)
-    return jsonify(get_threat_timeline(hours))
+@app.route("/api/environment/<environment_id>/settings", methods=['POST'])
+@login_required
+def update_environment_settings(environment_id):
+    """Update environment settings (name, description)"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'success': False, 'error': 'No data provided'}), 400
+        
+        name = data.get('name', '').strip()
+        description = data.get('description', '').strip()
+        
+        if not name:
+            return jsonify({'success': False, 'error': 'Environment name is required'}), 400
+        
+        # Validate environment_id
+        if environment_id not in live_data.environments:
+            return jsonify({'success': False, 'error': 'Invalid environment ID'}), 400
+        
+        # Update database
+        success = update_environment_setting(environment_id, name, description if description else None)
+        
+        if success:
+            # Update live data store with new name and description
+            with live_data.lock:
+                if environment_id in live_data.environments:
+                    live_data.environments[environment_id]['name'] = name
+                    if description:
+                        live_data.environments[environment_id]['description'] = description
+            
+            app.logger.info(f"Updated environment {environment_id}: name='{name}', description='{description}'")
+            return jsonify({
+                'success': True, 
+                'message': 'Environment settings updated successfully',
+                'environment_id': environment_id,
+                'name': name,
+                'description': description
+            })
+        else:
+            return jsonify({'success': False, 'error': 'Failed to update environment settings'}), 500
+            
+    except Exception as e:
+        app.logger.error(f"Error updating environment settings: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route("/api/events/stream")
 def events_stream():

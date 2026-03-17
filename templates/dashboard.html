@@ -48,6 +48,37 @@
     font-size: 0.9rem;
     margin-bottom: 0.5rem;
     color: #2d3748;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.env-name-text {
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 3px;
+    transition: background-color 0.2s ease;
+    flex: 1;
+    text-align: center;
+}
+
+.env-name-text:hover {
+    background-color: rgba(0, 123, 255, 0.1);
+}
+
+.edit-env-icon {
+    cursor: pointer;
+    color: #6c757d;
+    font-size: 0.8rem;
+    opacity: 0.7;
+    transition: opacity 0.2s ease, color 0.2s ease;
+}
+
+.edit-env-icon:hover {
+    opacity: 1;
+    color: #007bff;
 }
 
 .env-score-value {
@@ -319,6 +350,67 @@
     background: #48bb78;
     border-radius: 50%;
     animation: pulse 2s infinite;
+}
+
+/* Modal for editing environment name */
+.environment-edit-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1050;
+}
+
+.environment-edit-modal-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    min-width: 400px;
+    max-width: 90%;
+}
+
+.environment-edit-modal h5 {
+    margin-bottom: 1.5rem;
+    color: #2d3748;
+}
+
+.environment-edit-modal .form-group {
+    margin-bottom: 1rem;
+}
+
+.environment-edit-modal label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #495057;
+}
+
+.environment-edit-modal input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid #e9ecef;
+    border-radius: 5px;
+    font-size: 1rem;
+    transition: border-color 0.2s ease;
+}
+
+.environment-edit-modal input:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.environment-edit-modal .modal-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 1.5rem;
 }
 
 @media (max-width: 768px) {
@@ -1372,10 +1464,11 @@ function updateEnvironmentScores() {
                 const levelClass = `threat-${level.toLowerCase()}`;
                 
                 html += `
-                    <div class="${cardClass}">
+                    <div class="${cardClass}" data-environment-id="${envId}">
                         <div class="env-score-name">
                             <i class="bi ${env.icon}" style="color: ${env.color}"></i>
-                            ${env.name}
+                            <span class="env-name-text" onclick="editEnvironmentName('${envId}', '${env.name.replace(/'/g, "\\'")}')">${env.name}</span>
+                            <i class="bi bi-pencil-square edit-env-icon" onclick="editEnvironmentName('${envId}', '${env.name.replace(/'/g, "\\'")}')" title="Edit environment name"></i>
                         </div>
                         <div class="env-score-value">${score}%</div>
                         <div class="env-score-level ${levelClass}">${level}</div>
@@ -1394,6 +1487,162 @@ function updateEnvironmentScores() {
         .catch(error => {
             console.error('Error updating environment scores:', error);
         });
+}
+
+// Function to edit environment name
+function editEnvironmentName(environmentId, currentName) {
+    // Create modal HTML
+    const modalHtml = `
+        <div class="environment-edit-modal" id="environment-edit-modal">
+            <div class="environment-edit-modal-content">
+                <h5><i class="bi bi-gear me-2"></i>Edit Environment Name</h5>
+                <div class="form-group">
+                    <label for="env-name-input">Environment Name:</label>
+                    <input type="text" id="env-name-input" value="${currentName}" 
+                           placeholder="Enter environment name" maxlength="50" autofocus>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn btn-secondary" onclick="closeEnvironmentModal()">
+                        <i class="bi bi-x-lg me-1"></i>Cancel
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="saveEnvironmentName('${environmentId}')">
+                        <i class="bi bi-check-lg me-1"></i>Save
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add modal to page
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // Focus on input
+    setTimeout(() => {
+        const input = document.getElementById('env-name-input');
+        if (input) {
+            input.focus();
+            input.select();
+        }
+    }, 100);
+    
+    // Add event listeners
+    document.getElementById('environment-edit-modal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeEnvironmentModal();
+        }
+    });
+    
+    document.getElementById('env-name-input').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            saveEnvironmentName(environmentId);
+        } else if (e.key === 'Escape') {
+            closeEnvironmentModal();
+        }
+    });
+}
+
+function closeEnvironmentModal() {
+    const modal = document.getElementById('environment-edit-modal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+function saveEnvironmentName(environmentId) {
+    const nameInput = document.getElementById('env-name-input');
+    
+    const newName = nameInput.value.trim();
+    
+    if (!newName) {
+        alert('Environment name is required');
+        return;
+    }
+    
+    // Send update request
+    fetch(`/api/environment/${environmentId}/settings`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            name: newName
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Close modal
+            closeEnvironmentModal();
+            
+            // Show success message
+            showFlashMessage('Environment name updated successfully!', 'success');
+            
+            // Update the display immediately
+            updateEnvironmentDisplayName(environmentId, newName);
+            
+            // Refresh environment scores to get updated data
+            setTimeout(() => {
+                updateEnvironmentScores();
+            }, 500);
+        } else {
+            alert('Failed to update environment name: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error updating environment name:', error);
+        alert('Error updating environment name. Please try again.');
+    });
+}
+
+function updateEnvironmentDisplayName(environmentId, newName) {
+    // Update dashboard environment cards
+    const envCard = document.querySelector(`[data-environment-id="${environmentId}"]`);
+    if (envCard) {
+        const nameSpan = envCard.querySelector('.env-name-text');
+        if (nameSpan) {
+            nameSpan.textContent = newName;
+        }
+    }
+    
+    // Update sidebar environment list if it exists
+    const sidebarItem = document.querySelector(`#sidebarEnvironmentList [data-env-id="${environmentId}"] .environment-name`);
+    if (sidebarItem) {
+        sidebarItem.textContent = newName;
+    }
+    
+    // Update highest threat display if needed
+    const highestNameElement = document.getElementById('dashboard-highest-name');
+    if (highestNameElement && highestNameElement.textContent.includes('Loading...')) {
+        // Refresh to get the updated highest threat environment
+        updateEnvironmentScores();
+    }
+}
+
+function showFlashMessage(message, type) {
+    // Create flash message element
+    const flashDiv = document.createElement('div');
+    flashDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show`;
+    flashDiv.style.position = 'fixed';
+    flashDiv.style.top = '20px';
+    flashDiv.style.right = '20px';
+    flashDiv.style.zIndex = '1060';
+    flashDiv.style.maxWidth = '400px';
+    flashDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" onclick="this.parentElement.remove()">
+            <span>&times;</span>
+        </button>
+    `;
+    
+    document.body.appendChild(flashDiv);
+    
+    // Auto-remove after 3 seconds
+    setTimeout(() => {
+        if (flashDiv.parentElement) {
+            flashDiv.remove();
+        }
+    }, 3000);
 }
 </script>
 {% endblock %}
