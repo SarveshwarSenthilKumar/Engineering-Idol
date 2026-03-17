@@ -982,7 +982,8 @@ def history():
                          stats=stats,
                          timeline_data=timeline_data,
                          current_date=datetime.now().strftime('%Y-%m-%d'),
-                         current_time=datetime.now().isoformat())
+                         current_time=datetime.now().isoformat(),
+                         fake_mode=session.get('fake_mode', True))
 
 @app.route("/analytics")
 @login_required
@@ -993,7 +994,8 @@ def analytics():
     return render_template('analytics.html',
                          timeline=json.dumps(timeline),
                          stats=stats,
-                         current_time=datetime.now().isoformat())
+                         current_time=datetime.now().isoformat(),
+                         fake_mode=session.get('fake_mode', True))
 
 @app.route("/targets")
 @login_required
@@ -1011,7 +1013,8 @@ def targets_view():
     
     return render_template('targets.html',
                          targets=targets,
-                         current_time=datetime.now().isoformat())
+                         current_time=datetime.now().isoformat(),
+                         fake_mode=fake_mode)
 
 @app.route("/settings")
 @login_required
@@ -1020,7 +1023,8 @@ def settings():
     return render_template('settings.html',
                          current_time=datetime.now().isoformat(),
                          database_path=app.config.get('DATABASE_PATH', 'N/A'),
-                         other_config_values=app.config.get('OTHER_CONFIG_VALUES', 'N/A'))
+                         other_config_values=app.config.get('OTHER_CONFIG_VALUES', 'N/A'),
+                         fake_mode=session.get('fake_mode', True))
 
 # ==================== API ROUTES ====================
 
