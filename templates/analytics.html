@@ -384,6 +384,22 @@
                 charts.people.data.datasets[0].data = data.map(d => d.people_count || 0);
                 charts.people.update();
 
+                // Update noise chart
+                charts.noise.data.labels = labels;
+                charts.noise.data.datasets[0].data = data.map(d => d.sound_db || 0);
+                charts.noise.update();
+
+                // Update AQI chart
+                charts.aqi.data.labels = labels;
+                charts.aqi.data.datasets[0].data = data.map(d => d.air_aqi || 0);
+                charts.aqi.update();
+
+                // Update pollution chart (VOC and PM2.5)
+                charts.pollution.data.labels = labels;
+                charts.pollution.data.datasets[0].data = data.map(d => d.air_voc_ppm || 0);
+                charts.pollution.data.datasets[1].data = data.map(d => d.air_pm25 || 0);
+                charts.pollution.update();
+
                 // Count threat levels
                 const levels = {CRITICAL: 0, HIGH: 0, ELEVATED: 0, MODERATE: 0, LOW: 0};
                 data.forEach(d => {

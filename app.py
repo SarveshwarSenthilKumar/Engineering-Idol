@@ -460,14 +460,28 @@ def get_threat_timeline(hours=24):
         cutoff = (datetime.now() - timedelta(hours=hours)).isoformat()
         
         cursor.execute("""
-            SELECT timestamp, threat_score, quality_score, people_count
-            FROM events_log
+            SELECT timestamp, threat_overall, quality_score, radar_target_count,
+                   sound_db, air_aqi, air_voc_ppm, air_pm25
+            FROM events
             WHERE timestamp >= ?
             ORDER BY timestamp ASC
         """, (cutoff,))
         
         data = cursor.fetchall()
-        return [dict(row) for row in data]
+        app.logger.info(f"Timeline query returned {len(data)} rows")
+        
+        # Rename fields for consistency
+        result = []
+        for row in data:
+            item = dict(row)
+            item['threat_score'] = item.pop('threat_overall')
+            item['people_count'] = item.pop('radar_target_count')
+            result.append(item)
+        
+        if result:
+            app.logger.info(f"First timeline entry: {list(result[0].keys())}")
+        
+        return result
     except Exception as e:
         app.logger.error(f"Error fetching timeline: {e}")
         return []
