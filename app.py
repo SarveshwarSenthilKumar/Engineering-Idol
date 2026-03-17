@@ -145,11 +145,10 @@ class LiveDataStore:
 # Initialize live data store
 live_data = LiveDataStore()
 
-# Global fake data cache for consistency across all pages
 fake_data_cache = {
     'data': None,
     'timestamp': None,
-    'cache_duration': 5  # Cache for 5 seconds
+    'cache_duration': 1  # Cache for 1 second for more frequent updates
 }
 
 def get_cached_fake_data():
@@ -497,6 +496,10 @@ def generate_fake_sensor_data():
         'last_update': datetime.now().strftime('%H:%M:%S.%f')[:-3],
         'components': components  # Add components to the returned data
     }
+
+# Initialize the cache with pre-populated data
+fake_data_cache['data'] = generate_fake_sensor_data()
+fake_data_cache['timestamp'] = datetime.now()
 
 def get_realtime_sensor_data():
     """Get real sensor data from database"""

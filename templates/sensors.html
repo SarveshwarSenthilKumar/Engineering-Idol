@@ -1001,7 +1001,17 @@
     }
     
     function startLiveUpdates() {
-        // Fetch live data every 2 seconds
+        // Fetch data immediately on page load
+        fetch('/api/live')
+            .then(response => response.json())
+            .then(data => {
+                handleLiveUpdate(data);
+            })
+            .catch(error => {
+                console.error('Error fetching initial data:', error);
+            });
+        
+        // Then continue with regular updates every 2 seconds
         setInterval(function() {
             fetch('/api/live')
                 .then(response => response.json())

@@ -1183,10 +1183,20 @@
         initMiniCharts();
         loadEvents();
         
+        // Fetch live data immediately on page load
+        fetch('/api/live')
+            .then(response => response.json())
+            .then(data => {
+                handleLiveUpdate(data);
+            })
+            .catch(error => {
+                console.error('Error fetching initial data:', error);
+            });
+        
         // Refresh events every 30 seconds
         setInterval(loadEvents, 30000);
         
-        // Fetch live data every 2 seconds
+        // Then continue with regular updates every 2 seconds
         setInterval(function() {
             fetch('/api/live')
                 .then(response => response.json())
