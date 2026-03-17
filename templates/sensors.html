@@ -545,7 +545,7 @@
         <div class="col-md-3">
             <div class="sensor-card text-center">
                 <div class="status-indicator purple"></div>
-                <span class="text-muted small">Active Personnel</span>
+                <span class="text-muted small">Active People</span>
                 <h3 class="text-primary">{{ people_count }}</h3>
                 <div class="data-log mt-2">
                     Status: {{ 'Active' if people_count > 0 else 'Idle' }}
@@ -573,7 +573,7 @@
             <div class="sensor-card">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h4 class="mb-0 text-primary">
-                        <i class="bi bi-geo-alt"></i> Personnel Tracking
+                        <i class="bi bi-geo-alt"></i> Person Tracking
                     </h4>
                     <span class="badge bg-primary">
                         <span class="status-indicator blue"></span> Active Monitoring
@@ -921,32 +921,43 @@
             ctx.lineWidth = 2;
             ctx.stroke();
             
-            // Draw targets
-            {% for target in targets %}
-            const distance = {{ target.distance }};
-            const angle = {{ target.angle }};
+            // Draw targets from template data
+            const targets = [
+                {% for target in targets %}
+                {
+                    id: '{{ target.id }}',
+                    distance: {{ target.distance }},
+                    angle: {{ target.angle }},
+                    abnormal_breathing: {{ 'true' if target.abnormal_breathing else 'false' }}
+                }{{ ',' if not loop.last }}
+                {% endfor %}
+            ];
             
-            if (distance > 0) {
-                const rad = (angle - 90) * Math.PI / 180;
-                const r = (distance / 10) * maxRadius;
-                const x = centerX + Math.cos(rad) * r;
-                const y = centerY + Math.sin(rad) * maxRadius;
+            targets.forEach(target => {
+                const distance = target.distance;
+                const angle = target.angle;
                 
-                // Target dot
-                ctx.beginPath();
-                ctx.arc(x, y, 6, 0, Math.PI * 2);
-                ctx.fillStyle = {{ 'true' if target.abnormal_breathing else 'false' }} ? '#dc3545' : '#007bff';
-                ctx.fill();
-                ctx.strokeStyle = '#ffffff';
-                ctx.lineWidth = 2;
-                ctx.stroke();
-                
-                // Target label
-                ctx.font = '12px system-ui';
-                ctx.fillStyle = '#333';
-                ctx.fillText('{{ target.id }}', x + 10, y - 10);
-            }
-            {% endfor %}
+                if (distance > 0) {
+                    const rad = (angle - 90) * Math.PI / 180;
+                    const r = (distance / 10) * maxRadius;
+                    const x = centerX + Math.cos(rad) * r;
+                    const y = centerY + Math.sin(rad) * r;
+                    
+                    // Target dot
+                    ctx.beginPath();
+                    ctx.arc(x, y, 6, 0, Math.PI * 2);
+                    ctx.fillStyle = target.abnormal_breathing ? '#dc3545' : '#007bff';
+                    ctx.fill();
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    
+                    // Target label
+                    ctx.font = '12px system-ui';
+                    ctx.fillStyle = '#333';
+                    ctx.fillText(target.id, x + 10, y - 10);
+                }
+            });
             
             requestAnimationFrame(drawRadar);
         }
