@@ -225,11 +225,11 @@
     }
 
     function updateTargets() {
-        fetch('/api/targets')
+        fetch('/api/live')
             .then(response => response.json())
-            .then(targets => {
+            .then(data => {
                 // Check if no real data is available
-                if (targets.no_data || (Array.isArray(targets) && targets.length === 0 && !fake_mode)) {
+                if (data.no_data || (!data.targets || data.targets.length === 0) && !fake_mode) {
                     // Show "No Data Available" message
                     document.getElementById('total-people').textContent = '--';
                     document.getElementById('active-people').textContent = '--';
@@ -255,6 +255,9 @@
                     
                     return;
                 }
+                
+                // Get targets from live data
+                const targets = data.targets || [];
                 
                 // Update counters
                 const total = targets.length;
