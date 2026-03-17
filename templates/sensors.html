@@ -811,6 +811,66 @@
         </div>
     </div>
 
+    <!-- Threat Score Display -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="sensor-card">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="bi bi-shield-exclamation"></i> Overall Threat Assessment
+                    </h4>
+                    <span class="badge bg-{{ 'danger' if threat_score > 60 else 'warning' if threat_score > 30 else 'success' }}">
+                        <span class="status-indicator threat-indicator {{ 'red' if threat_score > 60 else 'yellow' if threat_score > 30 else 'green' }}"></span>
+                        {{ threat_level }}
+                    </span>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-8">
+                        <!-- Large Score Display -->
+                        <div class="text-center">
+                            <div class="display-1 fw-bold text-{{ 'danger' if threat_score > 60 else 'warning' if threat_score > 30 else 'success' }} threat-score-display">
+                                {{ "%.1f"|format(threat_score) }}
+                            </div>
+                            <div class="mt-2">
+                                <div class="progress" style="height: 25px;">
+                                    <div class="progress-bar bg-{{ 'danger' if threat_score > 60 else 'warning' if threat_score > 30 else 'success' }} threat-progress-bar" 
+                                         role="progressbar" 
+                                         style="width: {{ threat_score }}%"
+                                         aria-valuenow="{{ threat_score }}" aria-valuemin="0" aria-valuemax="100">
+                                        Threat Score: {{ "%.1f"|format(threat_score) }}/100
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-2 text-muted">
+                                <small>Assessment based on environmental factors, people detection, and sensor anomalies</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <!-- Threat Details -->
+                        <div class="threat-details">
+                            <h6 class="text-muted mb-3">Threat Components:</h6>
+                            {% for component, data in components.items() %}
+                            <div class="mb-2">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="small text-uppercase">{{ component|replace('_', ' ') }}</span>
+                                    <span class="badge bg-{{ 'danger' if data.score > 60 else 'warning' if data.score > 30 else 'success' }}">
+                                        {{ "%.0f"|format(data.score) }}
+                                    </span>
+                                </div>
+                                <div class="progress" style="height: 4px;">
+                                    <div class="progress-bar" style="width: {{ data.score }}%; background: linear-gradient(90deg, #ff6b6b, #ffd93d, #6bcf7f);"></div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Data Stream Footer -->
     <div class="row mt-4">
         <div class="col-12">
@@ -966,6 +1026,9 @@
             const threatScoreElements = document.querySelectorAll('.threat-score');
             threatScoreElements.forEach(el => el.textContent = data.threat.overall_threat?.toFixed(1) || '0.0');
             
+            const threatScoreDisplayElements = document.querySelectorAll('.threat-score-display');
+            threatScoreDisplayElements.forEach(el => el.textContent = data.threat.overall_threat?.toFixed(1) || '0.0');
+            
             const threatLevelElements = document.querySelectorAll('.threat-level');
             threatLevelElements.forEach(el => el.textContent = data.threat.level || 'LOW');
             
@@ -976,6 +1039,13 @@
                     data.threat.overall_threat > 60 ? 'red' : 
                     data.threat.overall_threat > 30 ? 'yellow' : 'green'
                 );
+            });
+            
+            // Update threat progress bar
+            const threatProgressBars = document.querySelectorAll('.threat-progress-bar');
+            threatProgressBars.forEach(el => {
+                el.style.width = data.threat.overall_threat + '%';
+                el.setAttribute('aria-valuenow', data.threat.overall_threat);
             });
         }
         
