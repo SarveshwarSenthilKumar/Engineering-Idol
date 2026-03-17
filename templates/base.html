@@ -166,6 +166,23 @@
         .status-indicator.green { background-color: #28a745; }
         .status-indicator.blue { background-color: #007bff; }
         .status-indicator.purple { background-color: #6f42c1; }
+        
+        .pause-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1050;
+        }
+        
+        .pause-button.btn-paused {
+            background-color: #dc3545;
+            border-color: #dc3545;
+        }
+        
+        .pause-button.btn-active {
+            background-color: #28a745;
+            border-color: #28a745;
+        }
     </style>
     
     {% block extra_css %}{% endblock %}
@@ -257,9 +274,17 @@
             
             <!-- Main Content -->
             <main class="col-md-10 ms-sm-auto px-md-4 main-content">
-                <!-- Fake Mode Toggle (only for logged-in users) -->
+                <!-- Global Pause Button (only for logged-in users) -->
                 {% if session.user_id %}
-                <div class="position-fixed top-0 end-0 m-4" style="z-index: 1000;">
+                <div class="pause-button">
+                    <button id="pauseBtn" class="btn btn-active btn-lg rounded-circle shadow-lg" 
+                            onclick="togglePause()" title="Pause/Resume Data Updates">
+                        <i class="bi bi-pause-fill" id="pauseIcon"></i>
+                    </button>
+                </div>
+                
+                <!-- Fake Mode Toggle -->
+                <div class="position-fixed top-0 end-0 m-4" style="z-index: 1000; margin-top: 80px !important;">
                     <div class="d-flex align-items-center gap-3">
                         <span class="text-uppercase small">
                             <span class="status-indicator {{ 'yellow' if session.get('fake_mode', False) else 'red' }}"></span>
@@ -403,6 +428,73 @@
                 document.getElementById('fakeToggle').checked = !isChecked;
             });
         }
+        
+        // Global pause/resume functionality
+        let isPaused = false;
+        
+        function updatePauseButton(paused) {
+            const pauseBtn = document.getElementById('pauseBtn');
+            const pauseIcon = document.getElementById('pauseIcon');
+            
+            if (paused) {
+                pauseBtn.classList.remove('btn-active');
+                pauseBtn.classList.add('btn-paused');
+                pauseIcon.classList.remove('bi-pause-fill');
+                pauseIcon.classList.add('bi-play-fill');
+                pauseBtn.title = 'Resume Data Updates';
+            } else {
+                pauseBtn.classList.remove('btn-paused');
+                pauseBtn.classList.add('btn-active');
+                pauseIcon.classList.remove('bi-play-fill');
+                pauseIcon.classList.add('bi-pause-fill');
+                pauseBtn.title = 'Pause Data Updates';
+            }
+            isPaused = paused;
+        }
+        
+        function togglePause() {
+            const endpoint = isPaused ? '/api/resume' : '/api/pause';
+            
+            fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updatePauseButton(data.paused);
+                    console.log(data.paused ? 'Data updates paused' : 'Data updates resumed');
+                } else {
+                    console.error('Failed to toggle pause:', data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error toggling pause:', error);
+            });
+        }
+        
+        function checkPauseStatus() {
+            fetch('/api/pause_status')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success !== false) {
+                    updatePauseButton(data.paused);
+                }
+            })
+            .catch(error => {
+                console.error('Error checking pause status:', error);
+            });
+        }
+        
+        // Initialize pause button state on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const pauseBtn = document.getElementById('pauseBtn');
+            if (pauseBtn) {
+                checkPauseStatus();
+            }
+        });
     </script>
     
     {% block extra_js %}{% endblock %}

@@ -60,10 +60,16 @@ class LiveDataStore:
         self.timestamps = deque(maxlen=max_history)
         self.event_queue = queue.Queue(maxsize=50)
         self.connected_clients = 0
+        self.paused = False
+        self.paused_data = None  # Store data when paused
     
     def update(self, data):
         """Update with latest sensor data"""
         with self.lock:
+            # If paused, don't update the data
+            if self.paused:
+                return
+            
             self.latest = data
             self.timestamps.append(datetime.now())
             
@@ -84,7 +90,26 @@ class LiveDataStore:
     def get_latest(self):
         """Get latest readings"""
         with self.lock:
+            if self.paused and self.paused_data:
+                return self.paused_data.copy()
             return self.latest.copy()
+    
+    def pause(self):
+        """Pause data updates and store current data"""
+        with self.lock:
+            self.paused = True
+            self.paused_data = self.latest.copy()
+    
+    def resume(self):
+        """Resume data updates"""
+        with self.lock:
+            self.paused = False
+            self.paused_data = None
+    
+    def is_paused(self):
+        """Check if data updates are paused"""
+        with self.lock:
+            return self.paused
     
     def get_history(self, metric, minutes=60):
         """Get historical data for a metric"""
@@ -131,6 +156,10 @@ def get_cached_fake_data():
     """Get cached fake data or generate new data if expired"""
     global fake_data_cache
     current_time = datetime.now()
+    
+    # If data is paused, return the cached data even if expired
+    if live_data.is_paused() and fake_data_cache['data'] is not None:
+        return fake_data_cache['data']
     
     # Generate new data if cache is empty or expired
     if (fake_data_cache['data'] is None or 
@@ -1090,6 +1119,38 @@ def toggle_fake_mode():
         return jsonify({'success': True, 'fake_mode': fake_mode})
     except Exception as e:
         app.logger.error(f"Error toggling fake mode: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route("/api/pause", methods=['POST'])
+@login_required
+def pause_data():
+    """Pause data updates"""
+    try:
+        live_data.pause()
+        return jsonify({'success': True, 'paused': True})
+    except Exception as e:
+        app.logger.error(f"Error pausing data: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route("/api/resume", methods=['POST'])
+@login_required
+def resume_data():
+    """Resume data updates"""
+    try:
+        live_data.resume()
+        return jsonify({'success': True, 'paused': False})
+    except Exception as e:
+        app.logger.error(f"Error resuming data: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route("/api/pause_status")
+def pause_status():
+    """Get current pause status"""
+    try:
+        is_paused = live_data.is_paused()
+        return jsonify({'paused': is_paused})
+    except Exception as e:
+        app.logger.error(f"Error getting pause status: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route("/api/update", methods=['POST'])
