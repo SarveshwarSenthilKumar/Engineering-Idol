@@ -993,13 +993,6 @@
         drawRadar();
     }
     
-    function toggleFakeMode() {
-        fakeMode = !fakeMode;
-        
-        // Reload with fake mode parameter
-        window.location.href = window.location.pathname + '?fake=' + (fakeMode ? '1' : '0');
-    }
-    
     function startLiveUpdates() {
         // Fetch data immediately on page load
         fetch('/api/live')
@@ -1035,6 +1028,34 @@
     
     function handleLiveUpdate(data) {
         console.log('Received data:', data);
+        
+        // Check if no real data is available
+        if (data.no_data) {
+            // Show "No Data Available" message
+            const peopleElements = document.querySelectorAll('.people-count');
+            peopleElements.forEach(el => el.textContent = '--');
+            
+            const statusElements = document.querySelectorAll('.people-status');
+            statusElements.forEach(el => el.textContent = 'No Data');
+            
+            // Clear radar visualization
+            const canvas = document.getElementById('radarCanvas');
+            if (canvas) {
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#666';
+                ctx.font = '16px system-ui';
+                ctx.textAlign = 'center';
+                ctx.fillText('No Real Data Available', canvas.width / 2, canvas.height / 2);
+            }
+            
+            // Update other metrics to show no data
+            document.getElementById('threat-score').textContent = '--';
+            document.getElementById('threat-level').textContent = 'NO DATA';
+            document.getElementById('temporal-trend').textContent = '--';
+            
+            return;
+        }
         
         // Update people count
         if (data.people_count !== undefined) {

@@ -128,6 +128,7 @@
 
 {% block extra_js %}
 <script>
+    let fake_mode = {{ 'true' if fake_mode else 'false' }};
     let radarCanvas = document.getElementById('radar-canvas');
     let ctx = radarCanvas.getContext('2d');
     let animationFrame;
@@ -227,6 +228,34 @@
         fetch('/api/targets')
             .then(response => response.json())
             .then(targets => {
+                // Check if no real data is available
+                if (targets.no_data || (Array.isArray(targets) && targets.length === 0 && !fake_mode)) {
+                    // Show "No Data Available" message
+                    document.getElementById('total-people').textContent = '--';
+                    document.getElementById('active-people').textContent = '--';
+                    document.getElementById('avg-distance').textContent = '--';
+                    document.getElementById('abnormal-count').textContent = '--';
+                    
+                    // Clear radar visualization
+                    const radarCanvas = document.getElementById('radar-canvas');
+                    if (radarCanvas) {
+                        const ctx = radarCanvas.getContext('2d');
+                        ctx.clearRect(0, 0, 800, 400);
+                        ctx.fillStyle = '#1a2634';
+                        ctx.fillRect(0, 0, 800, 400);
+                        ctx.fillStyle = '#666';
+                        ctx.font = '16px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.fillText('No Real Data Available', 400, 200);
+                    }
+                    
+                    // Update target cards
+                    const cardsContainer = document.getElementById('target-cards');
+                    cardsContainer.innerHTML = '<div class="col-12 text-center text-muted">No real data available from Raspberry Pi sensors</div>';
+                    
+                    return;
+                }
+                
                 // Update counters
                 const total = targets.length;
                 const active = targets.filter(t => t.target_velocity > 0.1).length;

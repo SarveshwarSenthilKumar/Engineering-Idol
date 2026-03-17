@@ -503,11 +503,94 @@ fake_data_cache['timestamp'] = datetime.now()
 
 def get_realtime_sensor_data():
     """Get real sensor data from database"""
-    # This would query your actual database for the latest readings
-    # For now, return fake data as fallback
-    data = generate_fake_sensor_data()
-    data['fake_mode'] = False
-    return data
+    try:
+        # Connect to the events database
+        conn = sqlite3.connect('events.db')
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        # Get the most recent event data
+        cursor.execute("""
+            SELECT * FROM events 
+            ORDER BY timestamp DESC 
+            LIMIT 1
+        """)
+        
+        latest_event = cursor.fetchone()
+        conn.close()
+        
+        if latest_event:
+            # Parse the JSON data from the database
+            event_data = json.loads(latest_event['data']) if latest_event['data'] else {}
+            
+            # Structure the data to match the expected format
+            real_data = {
+                'fake_mode': False,
+                'people_count': event_data.get('radar', {}).get('target_count', 0),
+                'active_targets': len(event_data.get('targets', [])),
+                'abnormal_count': event_data.get('radar', {}).get('abnormal_breathing_count', 0),
+                'threat': event_data.get('threat', {}),
+                'quality': event_data.get('quality', {}),
+                'radar': event_data.get('radar', {}),
+                'sound': event_data.get('sound', {}),
+                'odor': event_data.get('odor', {}),
+                'targets': event_data.get('targets', []),
+                'last_update': latest_event['timestamp'],
+                'sensor_status': event_data.get('sensor_status', {
+                    'radar': False,
+                    'pms5003': False,
+                    'mq135': False,
+                    'sound': False
+                })
+            }
+            return real_data
+        else:
+            # No real data available - return empty structure
+            return {
+                'fake_mode': False,
+                'people_count': 0,
+                'active_targets': 0,
+                'abnormal_count': 0,
+                'threat': {'overall_threat': 0, 'level': 'LOW'},
+                'quality': {'quality_score': 0},
+                'radar': {'target_count': 0},
+                'sound': {'db': 0},
+                'odor': {'air_quality_index': 0, 'voc_ppm': 0, 'pm25': 0},
+                'targets': [],
+                'last_update': datetime.now().strftime('%H:%M:%S'),
+                'sensor_status': {
+                    'radar': False,
+                    'pms5003': False,
+                    'mq135': False,
+                    'sound': False
+                },
+                'no_data': True  # Flag to indicate no real data available
+            }
+            
+    except Exception as e:
+        app.logger.error(f"Error getting real sensor data: {e}")
+        # Return empty structure on error
+        return {
+            'fake_mode': False,
+            'people_count': 0,
+            'active_targets': 0,
+            'abnormal_count': 0,
+            'threat': {'overall_threat': 0, 'level': 'LOW'},
+            'quality': {'quality_score': 0},
+            'radar': {'target_count': 0},
+            'sound': {'db': 0},
+            'odor': {'air_quality_index': 0, 'voc_ppm': 0, 'pm25': 0},
+            'targets': [],
+            'last_update': datetime.now().strftime('%H:%M:%S'),
+            'sensor_status': {
+                'radar': False,
+                'pms5003': False,
+                'mq135': False,
+                'sound': False
+            },
+            'no_data': True,
+            'error': str(e)
+        }
 
 def generate_recent_logs(count=10):
     """Generate recent log entries"""
@@ -886,9 +969,7 @@ def dashboard():
     else:
         # Try to get real data from database
         data = get_realtime_sensor_data()
-        if not data:
-            data = get_cached_fake_data()
-            data['fake_mode'] = True
+        # Don't fall back to fake data - show blank/empty when no real data available
     
     # Extract top-level variables for template compatibility
     template_data = {
@@ -897,16 +978,6 @@ def dashboard():
         'people_count': data.get('people_count', 0),
         'active_targets': data.get('active_targets', 0),
         'abnormal_count': data.get('abnormal_count', 0),
-        'targets': data.get('targets', []),
-        'threat_score': data.get('threat', {}).get('overall_threat', 0),
-        'threat_level': data.get('threat', {}).get('level', 'UNKNOWN'),
-        'temporal_trend': data.get('threat', {}).get('temporal', {}).get('trend', 'stable'),
-        'temporal_slope': data.get('threat', {}).get('temporal', {}).get('slope', 0),
-        'temporal_acceleration': data.get('threat', {}).get('temporal', {}).get('acceleration', 0),
-        'persistence_factor': data.get('threat', {}).get('temporal', {}).get('persistence', 1.0),
-        'trajectory_5min': data.get('threat', {}).get('trajectory', {}).get('5min', 0),
-        'trajectory_15min': data.get('threat', {}).get('trajectory', {}).get('15min', 0),
-        'trajectory_30min': data.get('threat', {}).get('trajectory', {}).get('30min', 0),
         'components': data.get('components', {}),
         'aqi': data.get('aqi', 0),
         'voc': data.get('voc', 0),
@@ -928,7 +999,14 @@ def dashboard():
         'radar': data.get('radar', {}),
         'odor': data.get('odor', {}),
         'sound': data.get('sound', {}),
-        'quality': data.get('quality', {})
+        'quality': data.get('quality', {}),
+        'no_data': data.get('no_data', False),
+        'sensor_status': data.get('sensor_status', {
+            'radar': False,
+            'pms5003': False,
+            'mq135': False,
+            'sound': False
+        })
     }
     
     return render_template('dashboard.html', **template_data)
@@ -947,8 +1025,7 @@ def sensors():
         # Try to get real data from database
         data = get_realtime_sensor_data()
         if not data:
-            data = get_cached_fake_data()
-            data['fake_mode'] = True
+            data = {'no_data': True}
     
     # Extract top-level variables for template compatibility
     template_data = {
@@ -984,11 +1061,16 @@ def sensors():
         'uptime': data.get('uptime', (datetime.now() - START_TIME).total_seconds()),
         'data_rate': data.get('data_rate', 0),
         'packet_count': data.get('packet_count', 0),
+        'no_data': data.get('no_data', False),
+        'sensor_status': data.get('sensor_status', {
+            'radar': False,
+            'pms5003': False,
+            'mq135': False,
+            'sound': False
+        }),
         # Pass the full data structures for JavaScript
         'threat': data.get('threat', {}),
         'radar': data.get('radar', {}),
-        'odor': data.get('odor', {}),
-        'sound': data.get('sound', {}),
         'quality': data.get('quality', {})
     }
     
@@ -1243,9 +1325,8 @@ def api_live():
     if fake_mode:
         data = get_cached_fake_data()
     else:
-        data = live_data.get_latest()
-        if not data:
-            data = get_cached_fake_data()
+        data = get_realtime_sensor_data()
+        # Don't fall back to fake data - return empty data when no real data available
     
     return jsonify(data)
 
@@ -1285,7 +1366,7 @@ def events_stream():
                         # Use cached fake data for consistency
                         data = get_cached_fake_data()
                     else:
-                        data = live_data.get_latest()
+                        data = get_realtime_sensor_data()
                     
                     if data:
                         yield f"event: update\ndata: {json.dumps(data)}\n\n"

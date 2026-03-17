@@ -1159,6 +1159,20 @@
     
     // Update mini charts with new data
     function updateMiniCharts(data) {
+        // Check if no real data is available
+        if (data.no_data) {
+            // Show blank/empty charts
+            if (window.airChart) {
+                window.airChart.data.datasets[0].data = Array(15).fill(null);
+                window.airChart.update('none');
+            }
+            if (window.soundChart) {
+                window.soundChart.data.datasets[0].data = Array(15).fill(null);
+                window.soundChart.update('none');
+            }
+            return;
+        }
+        
         // Update air quality chart
         if (window.airChart && data.odor) {
             const aqi = data.odor.air_quality_index || 0;
