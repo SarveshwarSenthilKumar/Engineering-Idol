@@ -296,6 +296,46 @@
         .threat-elevated { background: #fff3cd; color: #856404; }
         .threat-high { background: #f8d7da; color: #721c24; }
         .threat-critical { background: #343a40; color: white; }
+        
+        /* Sidebar Environment Items */
+        .environment-sidebar-item {
+            background: rgba(255,255,255,0.05);
+            border: 2px solid transparent;
+        }
+        
+        .environment-sidebar-item:hover {
+            background: rgba(255,255,255,0.1);
+            transform: translateX(3px);
+        }
+        
+        .environment-sidebar-item.active {
+            background: rgba(0,123,255,0.3);
+            border-color: #007bff;
+        }
+        
+        .environment-sidebar-item.highest-threat {
+            background: rgba(255,193,7,0.2);
+            border-color: #ffc107;
+            animation: pulse-threat-sidebar 2s infinite;
+        }
+        
+        @keyframes pulse-threat-sidebar {
+            0% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.4); }
+            70% { box-shadow: 0 0 0 8px rgba(255, 193, 7, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0); }
+        }
+        
+        .threat-sidebar-badge {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            font-weight: 600;
+        }
+        
+        .threat-sidebar-badge.threat-low { background: rgba(40,167,69,0.8); }
+        .threat-sidebar-badge.threat-moderate { background: rgba(23,162,184,0.8); }
+        .threat-sidebar-badge.threat-elevated { background: rgba(255,193,7,0.8); }
+        .threat-sidebar-badge.threat-high { background: rgba(220,53,69,0.8); }
+        .threat-sidebar-badge.threat-critical { background: rgba(52,58,64,0.9); }
     </style>
     
     {% block extra_css %}{% endblock %}
@@ -378,12 +418,40 @@
                         {% endif %}
                     </ul>
                     
-                    <div class="mt-auto text-white-50 small text-center pt-3">
-                        <div id="live-time" class="mb-1"></div>
-                        <div>Environmental Monitoring System v2.0.0</div>
+                    <!-- Environment Monitor (only for logged-in users on dashboard) -->
+                    {% if session.user_id and request.endpoint == 'dashboard' and environments is defined %}
+                    <div class="mt-4 pt-3 border-top border-secondary">
+                        <h6 class="text-white-50 text-uppercase small fw-bold mb-3">Environment Monitor</h6>
+                        <div id="sidebarEnvironmentList" class="small">
+                            {% for env_id, env_data in environments.items() %}
+                            <div class="environment-sidebar-item {% if env_id == current_environment %}active{% endif %} {% if env_id == highest_threat_environment %}highest-threat{% endif %}" 
+                                 onclick="switchEnvironment('{{ env_id }}')" data-env-id="{{ env_id }}"
+                                 style="display: flex; align-items: center; padding: 8px; margin: 4px 0; border-radius: 6px; cursor: pointer; transition: all 0.2s ease; border: 2px solid transparent;">
+                                <div class="environment-icon" style="width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 8px; font-size: 12px; color: white; background-color: {{ env_data.color }}">
+                                    <i class="bi {{ env_data.icon }}"></i>
+                                </div>
+                                <div class="environment-info" style="flex: 1;">
+                                    <div class="environment-name text-white fw-semibold" style="font-size: 0.8rem;">{{ env_data.name }}</div>
+                                    <div class="environment-desc text-white-50" style="font-size: 0.7rem;">{{ env_data.description }}</div>
+                                </div>
+                                <div class="threat-sidebar-badge threat-{{ env_data.data.threat.level|lower if env_data.data and env_data.data.threat and env_data.data.threat.level else 'low' }}" 
+                                     style="padding: 2px 6px; border-radius: 8px; font-size: 0.65rem; font-weight: 600; text-align: center; min-width: 35px;">
+                                    {{ env_data.threat_score|round|int if env_data.threat_score is defined else 0 }}%
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="mt-2 text-center">
+                            <small class="text-warning">
+                                <i class="bi bi-exclamation-triangle"></i> 
+                                Highest: {{ environments[highest_threat_environment].name if highest_threat_environment is defined and environments and highest_threat_environment in environments else 'Unknown' }}
+                            </small>
+                        </div>
                     </div>
+                    {% endif %}
+                    
                 </nav>
-                
+                    
                 <!-- Main Content -->
                 <main class="col-md-10 ms-sm-auto px-md-4 main-content">
                     <!-- Fake Mode Toggle -->
@@ -407,36 +475,6 @@
                                 <i class="bi bi-pause-fill" id="pauseIcon"></i>
                             </button>
                         </div>
-                        
-                        <!-- Environment Switcher (only for logged-in users) -->
-                        {% if session.user_id and request.endpoint == 'dashboard' %}
-                        <div class="environment-switcher" id="environmentSwitcher">
-                            <h6 class="mb-3 text-center fw-bold">Environment Monitor</h6>
-                            <div id="environmentList">
-                                {% for env_id, env_data in environments.items() %}
-                                <div class="environment-item {% if env_id == current_environment %}active{% endif %} {% if env_id == highest_threat_environment %}highest-threat{% endif %}" 
-                                     onclick="switchEnvironment('{{ env_id }}')" data-env-id="{{ env_id }}">
-                                    <div class="environment-icon" style="background-color: {{ env_data.color }}">
-                                        <i class="bi {{ env_data.icon }}"></i>
-                                    </div>
-                                    <div class="environment-info">
-                                        <div class="environment-name">{{ env_data.name }}</div>
-                                        <div class="environment-desc">{{ env_data.description }}</div>
-                                    </div>
-                                    <div class="threat-badge threat-{{ env_data.data.threat.level|lower if env_data.data.threat.level else 'low' }}">
-                                        {{ env_data.threat_score|round|int }}%
-                                    </div>
-                                </div>
-                                {% endfor %}
-                            </div>
-                            <div class="mt-3 text-center">
-                                <small class="text-muted">
-                                    <i class="bi bi-exclamation-triangle text-warning"></i> 
-                                    Highest: {{ environments[highest_threat_environment].name }}
-                                </small>
-                            </div>
-                        </div>
-                        {% endif %}
                         
                         <!-- Flash Messages -->
                         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -684,7 +722,8 @@
         }
         
         function updateEnvironmentUI(currentEnvId, highestThreatEnvId) {
-            const items = document.querySelectorAll('.environment-item');
+            // Update both old floating switcher and new sidebar items
+            const items = document.querySelectorAll('.environment-item, .environment-sidebar-item');
             items.forEach(item => {
                 const envId = item.getAttribute('data-env-id');
                 item.classList.remove('active', 'highest-threat');
@@ -705,10 +744,14 @@
                     const envData = environments[envId];
                     const item = document.querySelector(`[data-env-id="${envId}"]`);
                     if (item) {
-                        const badge = item.querySelector('.threat-badge');
+                        // Update both old and new badge types
+                        const badge = item.querySelector('.threat-badge, .threat-sidebar-badge');
                         if (badge && envData.threat_score !== undefined) {
                             const threatLevel = envData.data?.threat?.level || 'LOW';
-                            badge.className = `threat-badge threat-${threatLevel.toLowerCase()}`;
+                            const badgeClass = badge.classList.contains('threat-sidebar-badge') ? 
+                                `threat-sidebar-badge threat-${threatLevel.toLowerCase()}` : 
+                                `threat-badge threat-${threatLevel.toLowerCase()}`;
+                            badge.className = badgeClass;
                             badge.textContent = `${Math.round(envData.threat_score)}%`;
                         }
                     }
