@@ -342,7 +342,7 @@
             data: {
                 labels: ['Proximity', 'Count', 'Behavior', 'Vital Signs', 'Air Quality', 'Noise'],
                 datasets: [{
-                    label: 'Current Threat Components',
+                    label: 'Average Threat Components (24h)',
                     data: [0, 0, 0, 0, 0, 0],
                     backgroundColor: 'rgba(220, 53, 69, 0.2)',
                     borderColor: '#dc3545',
@@ -420,23 +420,21 @@
             })
             .catch(error => console.error('Error loading timeline:', error));
 
-        // Load live data for radar chart
-        fetch('/api/live')
+        // Load average components data for radar chart
+        fetch('/api/components?hours=24')
             .then(response => response.json())
             .then(data => {
-                if (data.threat && data.threat.components) {
-                    const comp = data.threat.components;
-                    charts.radar.data.datasets[0].data = [
-                        comp.proximity?.score || 0,
-                        comp.count?.score || 0,
-                        comp.behavior?.score || 0,
-                        comp.vital_signs?.score || 0,
-                        comp.air_quality?.score || 0,
-                        comp.noise?.score || 0
-                    ];
-                    charts.radar.update();
-                }
-            });
+                charts.radar.data.datasets[0].data = [
+                    data.avg_proximity || 0,
+                    data.avg_count || 0,
+                    data.avg_behavior || 0,
+                    data.avg_vital_signs || 0,
+                    data.avg_air_quality || 0,
+                    data.avg_noise || 0
+                ];
+                charts.radar.update();
+            })
+            .catch(error => console.error('Error loading components:', error));
     }
 
     function calculateStats(data) {

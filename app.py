@@ -489,6 +489,36 @@ def get_threat_timeline(hours=24):
         if conn:
             conn.close()
 
+def get_average_threat_components(hours=24):
+    """Get average threat components from all events"""
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cutoff = (datetime.now() - timedelta(hours=hours)).isoformat()
+        
+        cursor.execute("""
+            SELECT 
+                AVG(proximity_score) as avg_proximity,
+                AVG(count_score) as avg_count,
+                AVG(behavior_score) as avg_behavior,
+                AVG(vital_signs_score) as avg_vital_signs,
+                AVG(air_quality_score) as avg_air_quality,
+                AVG(noise_score) as avg_noise
+            FROM events
+            WHERE timestamp >= ?
+        """, (cutoff,))
+        
+        result = cursor.fetchone()
+        return dict(result) if result else {}
+    except Exception as e:
+        app.logger.error(f"Error fetching average threat components: {e}")
+        return {}
+    finally:
+        if conn:
+            conn.close()
+
 def get_target_history(minutes=30):
     """Get recent target data"""
     conn = None
@@ -1909,6 +1939,13 @@ def api_timeline():
     hours = request.args.get('hours', 24, type=int)
     timeline = get_threat_timeline(hours)
     return jsonify(timeline)
+
+@app.route("/api/components")
+def api_components():
+    """Get average threat components for radar chart"""
+    hours = request.args.get('hours', 24, type=int)
+    components = get_average_threat_components(hours)
+    return jsonify(components)
 
 @app.route("/api/events/stream")
 def events_stream():
