@@ -1,10 +1,3 @@
-check if there is a way to check if someone fighting shows different patterns than like nervous
-look into privacy of recording video and audio
-
-using mmwave radars, audio sensors, vape detectors: concentration detector and organic material detector
-
-create a show a graph of the live data from the sensors especially spikes from the sound sensor
-
 figure out a way to send a notification or something similar to ping the front office and show the concern score
 
 create an ai summary of each event and store it with time stamps
@@ -15,10 +8,6 @@ get rid of storing certain events that set off the alarm, create the portal, cre
 
 show snippet of person exiting or entering and create timestamps based off these events and store
 
-list out all organic compounds and concentration of human detection, extreme vs normal, ventilation system, intensity of the event
-
-work with different sizes of washrooms for average calculation
-
 add like a tab for each bathroom cause schools have multiple bathrooms
 
 change the temperature of the summary based on the score, suggest an approach where observe activity or confront
@@ -26,6 +15,3 @@ change the temperature of the summary based on the score, suggest an approach wh
 create a webpage with js code and create a summary for each section of code and make it look good and add a chatbot to ask, a documentation page to cover everything including every advantage and everything fof the webapp and also add a feature where you can play with the scoring system
 
 create a feature to create a scenario for fake scenarios and change the value of the sensors to fit that on the fake data page for the website
-
-make sure real mode actually works
-remove the fake data warning banner thing in the sensors page
