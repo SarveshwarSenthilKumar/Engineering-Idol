@@ -532,20 +532,38 @@
         <div class="col-md-3">
             <div class="sensor-card text-center">
                 <div class="status-indicator purple"></div>
+                <span class="text-muted small">Total People</span>
+                <h3 class="text-primary" id="total-people">{{ people_count or 0 }}</h3>
+                <div class="data-log mt-2">
+                    <span class="badge bg-success">Live</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="sensor-card text-center">
+                <div class="status-indicator green"></div>
                 <span class="text-muted small">Active People</span>
-                <h3 class="text-primary people-count">{{ people_count }}</h3>
-                <div class="data-log mt-2 people-status">
+                <h3 class="text-success" id="active-people">{{ active_targets or 0 }}</h3>
+                <div class="data-log mt-2">
                     Status: {{ 'Active' if people_count > 0 else 'Idle' }}
                 </div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="sensor-card text-center">
-                <div class="status-indicator {{ 'yellow' if threat_score > 60 else 'green' }}"></div>
-                <span class="text-muted small">Threat Level</span>
-                <h3 class="text-{{ 'danger' if threat_score > 60 else 'warning' if threat_score > 30 else 'success' }} threat-level">
-                    {{ threat_level }}
-                </h3>
+                <div class="status-indicator yellow"></div>
+                <span class="text-muted small">Avg Distance</span>
+                <h3 class="text-warning" id="avg-distance">0.0m</h3>
+                <div class="data-log mt-2">
+                    <span class="badge bg-info">Calculated</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="sensor-card text-center">
+                <div class="status-indicator {{ 'red' if threat_score > 60 else 'green' }}"></div>
+                <span class="text-muted small">Abnormal Breathing</span>
+                <h3 class="text-danger" id="abnormal-count">{{ abnormal_count or 0 }}</h3>
                 <div class="data-log mt-2">
                     Score: <span class="threat-score">{{ "%.1f"|format(threat_score) }}</span>/100
                 </div>
@@ -1208,17 +1226,45 @@
         
         // Update radar/target data
         if (data.targets && data.targets.length > 0) {
-            // Update target count
+            const targets = data.targets;
+            const total = targets.length;
+            const active = targets.filter(t => t.target_velocity > 0.1).length;
+            const avgDist = targets.reduce((sum, t) => sum + (t.target_distance || 0), 0) / total || 0;
+            const abnormal = targets.filter(t => t.target_abnormal_breathing).length;
+            
+            // Update counters to match targets page format
+            document.getElementById('total-people').textContent = total;
+            document.getElementById('active-people').textContent = active;
+            document.getElementById('avg-distance').textContent = avgDist.toFixed(1) + 'm';
+            document.getElementById('abnormal-count').textContent = abnormal;
+            
+            // Update legacy elements for compatibility
             const targetCountElements = document.querySelectorAll('.target-count');
-            targetCountElements.forEach(el => el.textContent = data.targets.length);
+            targetCountElements.forEach(el => el.textContent = total);
             
-            // Update active targets
             const activeTargetElements = document.querySelectorAll('.active-targets');
-            activeTargetElements.forEach(el => el.textContent = data.active_targets || 0);
+            activeTargetElements.forEach(el => el.textContent = active);
             
-            // Update abnormal count
             const abnormalElements = document.querySelectorAll('.abnormal-count');
-            abnormalElements.forEach(el => el.textContent = data.abnormal_count || 0);
+            abnormalElements.forEach(el => el.textContent = abnormal);
+            
+            // Update radar visualization
+            drawRadar(targets);
+        } else {
+            // No targets data - show zeros
+            document.getElementById('total-people').textContent = '0';
+            document.getElementById('active-people').textContent = '0';
+            document.getElementById('avg-distance').textContent = '0.0m';
+            document.getElementById('abnormal-count').textContent = '0';
+            
+            // Clear radar
+            const radarCanvas = document.getElementById('radarCanvas');
+            if (radarCanvas) {
+                const ctx = radarCanvas.getContext('2d');
+                ctx.clearRect(0, 0, 600, 300);
+                ctx.fillStyle = '#1a2634';
+                ctx.fillRect(0, 0, 600, 300);
+            }
         }
         
         // Update data stream logs

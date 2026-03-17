@@ -441,37 +441,48 @@
 
 <!-- Advanced Sensor Grid -->
 <div class="sensor-grid">
-    <!-- Occupancy Monitoring -->
+    <!-- Person Tracking -->
     <div class="metric-card">
         <div class="d-flex justify-content-between align-items-start mb-3">
             <div>
                 <h6 class="metric-label">
-                    <i class="bi bi-people me-2"></i>Occupancy Monitoring
+                    <i class="bi bi-people me-2"></i>Person Tracking
                 </h6>
             </div>
             <div class="alert-indicator" id="occupancy-alert"></div>
         </div>
-        <div class="metric-value" id="people-count">0</div>
-        <div class="metric-label">People Detected</div>
-        <div class="metric-change" id="occupancy-change">--</div>
         
-        <div class="mt-3">
-            <div class="stats-grid">
-                <div class="stat-item">
-                    <div class="stat-value" id="active-targets">0</div>
-                    <div class="stat-label">Active</div>
+        <div class="row mb-3">
+            <div class="col-3">
+                <div class="text-center">
+                    <h3 class="text-primary" id="total-people">0</h3>
+                    <small>Total People</small>
                 </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="abnormal-count">0</div>
-                    <div class="stat-label">Abnormal</div>
+            </div>
+            <div class="col-3">
+                <div class="text-center">
+                    <h3 class="text-success" id="active-people">0</h3>
+                    <small>Active People</small>
+                </div>
+            </div>
+            <div class="col-3">
+                <div class="text-center">
+                    <h3 class="text-warning" id="avg-distance">0.0m</h3>
+                    <small>Avg Distance</small>
+                </div>
+            </div>
+            <div class="col-3">
+                <div class="text-center">
+                    <h3 class="text-info" id="abnormal-count">0</h3>
+                    <small>Abnormal Breathing</small>
                 </div>
             </div>
         </div>
         
         <div class="mt-3">
-            <h6 class="metric-label mb-2">Target Details</h6>
-            <div id="target-list" class="small" style="max-height: 150px; overflow-y: auto;">
-                <!-- Filled by JS -->
+            <h6 class="metric-label mb-2">Current People</h6>
+            <div id="target-cards" class="row" style="max-height: 200px; overflow-y: auto;">
+                <div class="col-12 text-center">No people detected</div>
             </div>
         </div>
     </div>
@@ -917,69 +928,6 @@
             }
         }
         
-        // Update occupancy monitoring
-        if (data.radar) {
-            const peopleCount = data.radar.target_count || 0;
-            const activeTargets = data.active_targets || 0;
-            const abnormalCount = data.abnormal_count || 0;
-            
-            document.getElementById('people-count').textContent = peopleCount;
-            document.getElementById('active-targets').textContent = activeTargets;
-            document.getElementById('abnormal-count').textContent = abnormalCount;
-            
-            // Occupancy change indicator
-            const occChange = document.getElementById('occupancy-change');
-            if (peopleCount > 3) {
-                occChange.textContent = '⚠️ High';
-                occChange.className = 'metric-change change-negative';
-            } else if (peopleCount > 0) {
-                occChange.textContent = '✓ Normal';
-                occChange.className = 'metric-change change-positive';
-            } else {
-                occChange.textContent = '— Empty';
-                occChange.className = 'metric-change change-neutral';
-            }
-            
-            // Update occupancy alert
-            const occAlert = document.getElementById('occupancy-alert');
-            if (peopleCount > 5) {
-                occAlert.className = 'alert-indicator alert-critical';
-            } else if (peopleCount > 3) {
-                occAlert.className = 'alert-indicator alert-high';
-            } else if (peopleCount > 0) {
-                occAlert.className = 'alert-indicator alert-moderate';
-            } else {
-                occAlert.className = 'alert-indicator alert-low';
-            }
-            
-            // Target list
-            const targets = data.radar.targets || [];
-            let targetHtml = '';
-            targets.forEach((t, i) => {
-                const activityIcon = {
-                    'stationary': '🧍',
-                    'sitting': '🪑',
-                    'walking': '🚶',
-                    'running': '🏃'
-                }[t.activity] || '❓';
-                
-                targetHtml += `
-                    <div class="mb-2 p-2 bg-light rounded border-start border-3 border-${t.abnormal_breathing ? 'danger' : 'primary'}">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <strong>${activityIcon} Target ${i+1}</strong>
-                            <small class="text-muted">${t.distance?.toFixed(1)}m</small>
-                        </div>
-                        <div class="small text-muted">
-                            Activity: ${t.activity || 'unknown'}
-                            ${t.breathing_rate ? ' • Breathing: ' + t.breathing_rate + ' bpm' : ''}
-                            ${t.abnormal_breathing ? ' ⚠️' : ''}
-                        </div>
-                    </div>
-                `;
-            });
-            document.getElementById('target-list').innerHTML = targets.length ? targetHtml : '<div class="text-muted text-center py-3">No targets detected</div>';
-        }
-        
         // Update air quality analysis
         if (data.odor) {
             const aqi = data.odor.air_quality_index || 0;
@@ -1055,6 +1003,83 @@
             
             eventEl.innerHTML = `<span class="badge bg-secondary">${event}</span>`;
             spikeEl.innerHTML = spike ? '<span class="badge bg-danger">⚠️ SPIKE DETECTED</span>' : '';
+        }
+        
+        // Update person tracking
+        if (data.targets && data.targets.length > 0) {
+            const targets = data.targets;
+            const total = targets.length;
+            const active = targets.filter(t => t.target_velocity > 0.1).length;
+            const avgDist = targets.reduce((sum, t) => sum + (t.target_distance || 0), 0) / total || 0;
+            const abnormal = targets.filter(t => t.target_abnormal_breathing).length;
+            
+            // Update counters
+            document.getElementById('total-people').textContent = total;
+            document.getElementById('active-people').textContent = active;
+            document.getElementById('avg-distance').textContent = avgDist.toFixed(1) + 'm';
+            document.getElementById('abnormal-count').textContent = abnormal;
+            
+            // Group by target ID for current state
+            const currentTargets = {};
+            targets.forEach(t => {
+                if (!currentTargets[t.target_id] || 
+                    new Date(t.event_timestamp) > new Date(currentTargets[t.target_id].event_timestamp)) {
+                    currentTargets[t.target_id] = t;
+                }
+            });
+            
+            const currentList = Object.values(currentTargets);
+            
+            // Update target cards
+            const cardsContainer = document.getElementById('target-cards');
+            if (currentList.length === 0) {
+                cardsContainer.innerHTML = '<div class="col-12 text-center">No people detected</div>';
+            } else {
+                let cardsHtml = '';
+                currentList.forEach((target, i) => {
+                    cardsHtml += `
+                        <div class="col-md-6 mb-2">
+                            <div class="card ${target.target_abnormal_breathing ? 'border-danger' : ''} bg-light">
+                                <div class="card-body p-2">
+                                    <h6 class="card-title mb-1">Person ${target.target_id}</h6>
+                                    <small class="text-muted">
+                                        Activity: ${target.target_activity || 'unknown'}
+                                    </small>
+                                    <div class="mt-1">
+                                        <small>
+                                            <i class="bi bi-geo-alt"></i> ${target.target_distance?.toFixed(2)}m
+                                            <i class="bi bi-arrow-right ms-2"></i> ${target.target_angle?.toFixed(1)}°
+                                            <i class="bi bi-speedometer2 ms-2"></i> ${target.target_velocity?.toFixed(2)} m/s
+                                            ${target.target_abnormal_breathing ? '<i class="bi bi-exclamation-triangle text-danger ms-2"></i>' : ''}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                cardsContainer.innerHTML = cardsHtml;
+            }
+            
+            // Update occupancy alert based on total people
+            const occAlert = document.getElementById('occupancy-alert');
+            if (total > 5) {
+                occAlert.className = 'alert-indicator alert-critical';
+            } else if (total > 3) {
+                occAlert.className = 'alert-indicator alert-high';
+            } else if (total > 0) {
+                occAlert.className = 'alert-indicator alert-moderate';
+            } else {
+                occAlert.className = 'alert-indicator alert-low';
+            }
+        } else {
+            // No targets data
+            document.getElementById('total-people').textContent = '0';
+            document.getElementById('active-people').textContent = '0';
+            document.getElementById('avg-distance').textContent = '0.0m';
+            document.getElementById('abnormal-count').textContent = '0';
+            document.getElementById('target-cards').innerHTML = '<div class="col-12 text-center">No people detected</div>';
+            document.getElementById('occupancy-alert').className = 'alert-indicator alert-low';
         }
         
         // Update last update time
