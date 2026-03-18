@@ -6,10 +6,6 @@ create a weekly report at the end of the week summarizing the events, show trend
 
 get rid of storing certain events that set off the alarm, create the portal, create a teams bot type of thing, detect action and breathing patterns
 
-show snippet of person exiting or entering and create timestamps based off these events and store
-
-fix the previous events section in dashboard
-
 change the temperature of the summary based on the score, suggest an approach where observe activity or confront
 
 update the rasp pi code to Software UART (bit-banging) using things like pigpio

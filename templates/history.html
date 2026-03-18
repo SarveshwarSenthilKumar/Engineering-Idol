@@ -62,7 +62,7 @@
 <!-- Filters -->
 <div class="row mb-3">
     <div class="col-md-3">
-        <select class="form-select" id="level-filter">
+        <select class="form-select" id="level-filter" onchange="applyFilters()">
             <option value="all">All Threat Levels</option>
             <option value="CRITICAL">Critical</option>
             <option value="HIGH">High</option>
@@ -72,7 +72,7 @@
         </select>
     </div>
     <div class="col-md-3">
-        <select class="form-select" id="type-filter">
+        <select class="form-select" id="type-filter" onchange="applyFilters()">
             <option value="all">All Event Types</option>
             <option value="CRITICAL_THREAT">Critical Threat</option>
             <option value="HIGH_THREAT">High Threat</option>
@@ -85,10 +85,11 @@
         </select>
     </div>
     <div class="col-md-3">
-        <input type="date" class="form-control" id="date-filter">
+        <input type="date" class="form-control" id="date-filter" onchange="applyFilters()">
     </div>
-    <div class="col-md-3">
-        <button class="btn btn-primary w-100" onclick="applyFilters()">Apply Filters</button>
+    <div class="col-md-3 d-flex gap-2">
+        <button class="btn btn-secondary flex-fill" onclick="clearFilters()">Clear</button>
+        <button class="btn btn-primary flex-fill" onclick="applyFilters()">Apply</button>
     </div>
 </div>
 
@@ -238,19 +239,78 @@
         const date = document.getElementById('date-filter').value;
 
         const rows = document.querySelectorAll('#events-body tr');
+        let visibleCount = 0;
+        
         rows.forEach(row => {
-            const threatLevel = row.querySelector('td:nth-child(3) .badge')?.textContent || '';
-            const eventType = row.querySelector('td:nth-child(2) .badge')?.textContent || '';
-            const timestamp = row.querySelector('td:nth-child(1)')?.textContent || '';
+            // Skip the "No events found" row
+            if (row.cells.length === 1 && row.cells[0].colSpan === 9) {
+                row.style.display = 'none';
+                return;
+            }
+            
+            // Get the actual text content from cells
+            const threatLevelCell = row.querySelector('td:nth-child(3)');
+            const eventTypeCell = row.querySelector('td:nth-child(2)');
+            const timestampCell = row.querySelector('td:nth-child(1)');
+            
+            // Extract text content (handle badges)
+            const threatLevel = threatLevelCell ? threatLevelCell.textContent.trim() : '';
+            const eventType = eventTypeCell ? eventTypeCell.textContent.trim() : '';
+            const timestamp = timestampCell ? timestampCell.textContent.trim() : '';
 
             let show = true;
             
-            if (level !== 'all' && threatLevel !== level) show = false;
-            if (type !== 'all' && eventType !== type) show = false;
-            if (date && !timestamp.includes(date)) show = false;
+            // Filter by threat level
+            if (level !== 'all' && threatLevel !== level) {
+                show = false;
+            }
+            
+            // Filter by event type
+            if (type !== 'all' && eventType !== type) {
+                show = false;
+            }
+            
+            // Filter by date (format: YYYY-MM-DD from input, compare with formatted timestamp)
+            if (date && timestamp) {
+                // Convert timestamp to YYYY-MM-DD format for comparison
+                const timestampDate = timestamp.includes(' ') ? timestamp.split(' ')[0] : timestamp;
+                if (!timestampDate.includes(date)) {
+                    show = false;
+                }
+            }
 
             row.style.display = show ? '' : 'none';
+            if (show) visibleCount++;
         });
+        
+        // Show message if no results
+        const noResultsRow = Array.from(rows).find(row => 
+            row.cells.length === 1 && row.cells[0].colSpan === 9
+        );
+        if (noResultsRow) {
+            noResultsRow.style.display = visibleCount === 0 ? '' : 'none';
+        }
+    }
+
+    function clearFilters() {
+        // Reset all filter values
+        document.getElementById('level-filter').value = 'all';
+        document.getElementById('type-filter').value = 'all';
+        document.getElementById('date-filter').value = '';
+        
+        // Show all rows
+        const rows = document.querySelectorAll('#events-body tr');
+        rows.forEach(row => {
+            row.style.display = '';
+        });
+        
+        // Hide the "No events found" row if it exists
+        const noResultsRow = Array.from(rows).find(row => 
+            row.cells.length === 1 && row.cells[0].colSpan === 9
+        );
+        if (noResultsRow) {
+            noResultsRow.style.display = 'none';
+        }
     }
 </script>
 {% endblock %}
