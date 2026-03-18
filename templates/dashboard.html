@@ -40,7 +40,31 @@
 .env-score-card.highest-threat {
     background: #fff3cd;
     border-color: #ffc107;
-    animation: pulse-threat 2s infinite;
+    animation: alarm-pulse 1s ease-in-out infinite;
+    position: relative;
+}
+
+.env-score-card.highest-threat::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, #dc3545, #ffc107, #dc3545);
+    border-radius: 12px;
+    z-index: -1;
+    animation: alarm-border 2s linear infinite;
+    opacity: 0.8;
+}
+
+/* Remove pulsing from other high threat cards that aren't the highest */
+.env-score-card:not(.highest-threat) {
+    animation: none !important;
+}
+
+.env-score-card:not(.highest-threat)::before {
+    display: none !important;
 }
 
 .env-score-card.offline {
@@ -113,10 +137,81 @@
     border-radius: 15px;
 }
 
+/* Threat level color classes for environment scores */
+.env-score-level.threat-critical {
+    background: #dc3545;
+    color: white;
+}
+
+.env-score-level.threat-high {
+    background: #fd7e14;
+    color: white;
+}
+
+.env-score-level.threat-elevated {
+    background: #ffc107;
+    color: #212529;
+}
+
+.env-score-level.threat-moderate {
+    background: #17a2b8;
+    color: white;
+}
+
+.env-score-level.threat-low {
+    background: #28a745;
+    color: white;
+}
+
+/* Only pulse text on the highest threat card with critical level */
+.env-score-card.highest-threat .env-score-level.threat-critical {
+    animation: text-pulse 1s ease-in-out infinite;
+}
+
+@keyframes text-pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.6; }
+    100% { opacity: 1; }
+}
+
 @keyframes pulse-threat {
     0% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7); }
     70% { box-shadow: 0 0 0 10px rgba(255, 193, 7, 0); }
     100% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0); }
+}
+
+@keyframes alarm-pulse {
+    0% { 
+        transform: scale(1); 
+        box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.8);
+        background: #fff3cd;
+    }
+    25% { 
+        transform: scale(1.05); 
+        box-shadow: 0 0 20px 5px rgba(220, 53, 69, 0.6);
+        background: #ffeaa7;
+    }
+    50% { 
+        transform: scale(1.1); 
+        box-shadow: 0 0 30px 10px rgba(220, 53, 69, 0.4);
+        background: #fab1a0;
+    }
+    75% { 
+        transform: scale(1.05); 
+        box-shadow: 0 0 20px 5px rgba(220, 53, 69, 0.6);
+        background: #ffeaa7;
+    }
+    100% { 
+        transform: scale(1); 
+        box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.8);
+        background: #fff3cd;
+    }
+}
+
+@keyframes alarm-border {
+    0% { opacity: 0.8; }
+    50% { opacity: 0.3; }
+    100% { opacity: 0.8; }
 }
 
 @keyframes pulsate {
@@ -1403,6 +1498,7 @@
                 let highestThreatEnv = null;
                 let highestThreatScore = -1;
                 
+                // First pass: find the highest threat environment
                 Object.entries(environments).forEach(([envId, envData]) => {
                     const threatScore = envData.threat_score || 0;
                     const isOnline = envData.online !== false; // Default to online if not specified
@@ -1411,12 +1507,19 @@
                         highestThreatScore = threatScore;
                         highestThreatEnv = envId;
                     }
+                });
+                
+                // Second pass: build HTML with proper classes
+                Object.entries(environments).forEach(([envId, envData]) => {
+                    const threatScore = envData.threat_score || 0;
+                    const isOnline = envData.online !== false; // Default to online if not specified
                     
                     // Determine card classes
                     let cardClass = 'env-score-card';
                     if (envId === '{{ current_environment }}') {
                         cardClass += ' active';
                     }
+                    // Only add highest-threat to single highest scoring environment
                     if (envId === highestThreatEnv) {
                         cardClass += ' highest-threat';
                     }
@@ -1424,16 +1527,39 @@
                         cardClass += ' offline';
                     }
                     
-                    // Determine threat level class
+                    // Determine threat level class and ensure proper coloring
                     const levelClass = `threat-${getThreatLevel(threatScore).toLowerCase()}`;
                     
+                    // Set card background color based on threat level
+                    let cardBackground = '#f8f9fa'; // Default
+                    let cardTextColor = '#2d3748';
+                    
+                    if (isOnline) {
+                        if (threatScore >= 80) {
+                            cardBackground = '#f8d7da'; // Light red for critical
+                            cardTextColor = '#721c24';
+                        } else if (threatScore >= 60) {
+                            cardBackground = '#ffeaa7'; // Light orange for high
+                            cardTextColor = '#856404';
+                        } else if (threatScore >= 40) {
+                            cardBackground = '#fff3cd'; // Light yellow for elevated
+                            cardTextColor = '#856404';
+                        } else if (threatScore >= 20) {
+                            cardBackground = '#d1ecf1'; // Light blue for moderate
+                            cardTextColor = '#0c5460';
+                        } else {
+                            cardBackground = '#d4edda'; // Light green for low
+                            cardTextColor = '#155724';
+                        }
+                    }
+                    
                     html += `
-                        <div class="${cardClass}" data-environment-id="${envId}">
+                        <div class="${cardClass}" data-environment-id="${envId}" style="background: ${cardBackground}; color: ${cardTextColor};">
                             <div class="env-score-name">
                                 <i class="bi ${envData.icon || 'bi-house'}" style="color: ${isOnline ? (envData.color || '#007bff') : '#6c757d'}"></i>
                                 <span class="env-name-text" onclick="editEnvironmentName('${envId}', '${(envData.name || '').replace(/'/g, "\\'")}')">${envData.name || 'Unknown'}</span>
                             </div>
-                            <div class="env-score-value">${isOnline ? threatScore.toFixed(1) : 'OFFLINE'}</div>
+                            <div class="env-score-value" style="color: ${cardTextColor}; font-weight: 700;">${isOnline ? threatScore.toFixed(1) : 'OFFLINE'}</div>
                             <div class="env-score-level ${levelClass}">${isOnline ? getThreatLevel(threatScore) : 'OFFLINE'}</div>
                         </div>
                     `;
