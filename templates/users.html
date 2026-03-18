@@ -1,253 +1,253 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Management - Person Tracking System</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        body {
-            background: #f8f9fa;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        .management-container {
-            max-width: 1200px;
-            margin: 30px auto;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
-        .page-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            margin: -30px -30px 30px -30px;
-            border-radius: 15px 15px 0 0;
-        }
-        .user-table {
-            background: white;
-        }
-        .user-table th {
-            background: #f8f9fa;
-            border-bottom: 2px solid #dee2e6;
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 12px;
-            letter-spacing: 0.5px;
-            padding: 15px 10px;
-        }
-        .role-badge {
-            display: inline-block;
-            padding: 4px 10px;
-            border-radius: 15px;
-            font-weight: 600;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .role-admin {
-            background: #dc3545;
-            color: white;
-        }
-        .role-user {
-            background: #28a745;
-            color: white;
-        }
-        .status-badge {
-            display: inline-block;
-            padding: 4px 10px;
-            border-radius: 15px;
-            font-weight: 600;
-            font-size: 11px;
-            text-transform: capitalize;
-        }
-        .status-active {
-            background: #28a745;
-            color: white;
-        }
-        .status-inactive {
-            background: #6c757d;
-            color: white;
-        }
-        .status-suspended {
-            background: #ffc107;
-            color: #212529;
-        }
-        .btn-create {
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-            border: none;
-            border-radius: 50px;
-            padding: 10px 25px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-        .btn-create:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
-        }
-        .action-buttons {
-            white-space: nowrap;
-        }
-        .btn-action {
-            padding: 5px 10px;
-            margin: 0 2px;
-            border-radius: 5px;
-            font-size: 12px;
-            border: none;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        .btn-activate {
-            background: #28a745;
-            color: white;
-        }
-        .btn-deactivate {
-            background: #6c757d;
-            color: white;
-        }
-        .btn-delete {
-            background: #dc3545;
-            color: white;
-        }
-        .btn-action:hover {
-            transform: scale(1.05);
-        }
-    </style>
-</head>
-<body>
-    {% include 'base.html' %}
-    
-    <div class="container mt-4">
-        <div class="management-container">
-            <div class="page-header">
-                <h2><i class="fas fa-users-cog"></i> User Management</h2>
-                <p class="mb-0">Manage system users and permissions</p>
-            </div>
+{% extends "base.html" %}
 
-            <!-- Flash Messages -->
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="alert alert-{{ 'danger' if category == 'error' else 'success' if category == 'success' else 'info' }} alert-dismissible fade show mt-3" role="alert">
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
+{% block title %}User Management - Environmental Monitoring{% endblock %}
 
-            <!-- Create User Form -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5><i class="fas fa-user-plus"></i> Create New User</h5>
-                </div>
-                <div class="card-body">
-                    <form method="POST" action="{{ url_for('create_user_route') }}" class="row g-3">
-                        <div class="col-md-3">
-                            <input type="text" class="form-control" name="username" placeholder="Username" required>
-                        </div>
-                        <div class="col-md-4">
-                            <input type="email" class="form-control" name="email" placeholder="Email" required>
-                        </div>
-                        <div class="col-md-3">
-                            <input type="password" class="form-control" name="password" placeholder="Password" required>
-                        </div>
-                        <div class="col-md-2">
-                            <select class="form-control" name="role">
-                                <option value="user">User</option>
-                                <option value="admin">Admin</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <button type="submit" class="btn btn-success btn-create">
-                                <i class="fas fa-plus"></i> Create
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
+{% block extra_css %}
+<style>
+    .management-container {
+        max-width: 1200px;
+        margin: 30px auto;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+    .page-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        margin: -30px -30px 30px -30px;
+        border-radius: 15px 15px 0 0;
+    }
+    .user-table {
+        background: white;
+    }
+    .user-table th {
+        background: #f8f9fa;
+        border-bottom: 2px solid #dee2e6;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 12px;
+        letter-spacing: 0.5px;
+        padding: 15px 10px;
+    }
+    .role-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 15px;
+        font-weight: 600;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .role-admin {
+        background: #dc3545;
+        color: white;
+    }
+    .role-user {
+        background: #28a745;
+        color: white;
+    }
+    .status-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 15px;
+        font-weight: 600;
+        font-size: 11px;
+        text-transform: capitalize;
+    }
+    .status-active {
+        background: #28a745;
+        color: white;
+    }
+    .status-inactive {
+        background: #6c757d;
+        color: white;
+    }
+    .status-suspended {
+        background: #ffc107;
+        color: #212529;
+    }
+    .btn-create {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        border: none;
+        border-radius: 50px;
+        padding: 10px 25px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    .btn-create:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+    }
+    .action-buttons {
+        white-space: nowrap;
+    }
+    .btn-action {
+        padding: 5px 10px;
+        margin: 0 2px;
+        border-radius: 5px;
+        font-size: 12px;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .btn-activate {
+        background: #28a745;
+        color: white;
+    }
+    .btn-deactivate {
+        background: #6c757d;
+        color: white;
+    }
+    .btn-delete {
+        background: #dc3545;
+        color: white;
+    }
+    .btn-action:hover {
+        transform: scale(1.05);
+    }
+</style>
+{% endblock %}
 
-            <!-- Users Table -->
-            <div class="card">
-                <div class="card-header">
-                    <h5><i class="fas fa-list"></i> System Users ({{ users|length }})</h5>
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">
+            <i class="bi bi-people"></i> User Management
+        </h1>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else 'success' if category == 'success' else 'info' }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
-                <div class="card-body p-0">
-                    {% if users %}
-                        <div class="table-responsive">
-                            <table class="table table-hover user-table">
-                                <thead>
-                                    <tr>
-                                        <th>Username</th>
-                                        <th>Email</th>
-                                        <th>Role</th>
-                                        <th>Status</th>
-                                        <th>Joined</th>
-                                        <th>Last Login</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for user in users %}
-                                    <tr>
-                                        <td>
-                                            <strong>{{ user.username }}</strong>
-                                        </td>
-                                        <td>{{ user.email }}</td>
-                                        <td>
-                                            <span class="role-badge role-{{ user.role }}">
-                                                {{ user.role }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span class="status-badge status-{{ user.accountStatus }}">
-                                                {{ user.accountStatus }}
-                                            </span>
-                                        </td>
-                                        <td>{{ user.dateJoined[:10] or 'Unknown' }}</td>
-                                        <td>{{ user.lastLogin[:10] or 'Never' }}</td>
-                                        <td>
-                                            <div class="action-buttons">
-                                                {% if user.accountStatus == 'active' %}
-                                                    <form method="POST" action="{{ url_for('update_user_status_route', user_id=user.id) }}" style="display: inline;">
-                                                        <button type="submit" name="status" value="inactive" class="btn-action btn-deactivate" title="Deactivate User">
-                                                            <i class="fas fa-pause"></i>
-                                                        </button>
-                                                    </form>
-                                                {% else %}
-                                                    <form method="POST" action="{{ url_for('update_user_status_route', user_id=user.id) }}" style="display: inline;">
-                                                        <button type="submit" name="status" value="active" class="btn-action btn-activate" title="Activate User">
-                                                            <i class="fas fa-play"></i>
-                                                        </button>
-                                                    </form>
-                                                {% endif %}
-                                                
-                                                <form method="POST" action="{{ url_for('delete_user_route', user_id=user.id) }}" style="display: inline;" 
-                                                      onsubmit="return confirm('Are you sure you want to delete user {{ user.username }}? This action cannot be undone.')">
-                                                    <button type="submit" class="btn-action btn-delete" title="Delete User">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    {% else %}
-                        <div class="text-center py-4">
-                            <i class="fas fa-users fa-3x text-muted"></i>
-                            <p class="text-muted">No users found in the system.</p>
-                        </div>
-                    {% endif %}
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Create User Form -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="bi bi-person-plus"></i> Create New User</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('create_user_route') }}" class="row g-3">
+                <div class="col-md-3">
+                    <label for="username" class="form-label">Username</label>
+                    <input type="text" class="form-control" id="username" name="username" placeholder="Enter username" required>
                 </div>
-            </div>
+                <div class="col-md-3">
+                    <label for="email" class="form-label">Email Address</label>
+                    <input type="email" class="form-control" id="email" name="email" placeholder="Enter email address" required>
+                </div>
+                <div class="col-md-3">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" class="form-control" id="password" name="password" placeholder="Enter password" required>
+                </div>
+                <div class="col-md-2">
+                    <label for="role" class="form-label">Role</label>
+                    <select class="form-control" id="role" name="role">
+                        <option value="user">User</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label">&nbsp;</label>
+                    <div>
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="bi bi-plus-circle"></i> Create
+                        </button>
+                    </div>
+                </div>
+            </form>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+    <!-- Users Table -->
+    <div class="card">
+        <div class="card-header bg-secondary text-white">
+            <h5 class="mb-0"><i class="bi bi-list-ul"></i> System Users ({{ users|length }})</h5>
+        </div>
+        <div class="card-body p-0">
+            {% if users %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Username</th>
+                                <th>Email Address</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Date Joined</th>
+                                <th>Last Login</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                            <tr>
+                                <td>
+                                    <strong>{{ user.username }}</strong>
+                                </td>
+                                <td>{{ user.emailAddress }}</td>
+                                <td>
+                                    <span class="badge bg-{{ 'danger' if user.role == 'admin' else 'success' }} text-white">
+                                        <i class="bi bi-{{ 'shield-check' if user.role == 'admin' else 'person' }}"></i>
+                                        {{ user.role|title }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if user.accountStatus == 'active' else 'secondary' if user.accountStatus == 'inactive' else 'warning' }} text-white">
+                                        <i class="bi bi-{{ 'check-circle' if user.accountStatus == 'active' else 'pause-circle' if user.accountStatus == 'inactive' else 'exclamation-triangle' }}"></i>
+                                        {{ user.accountStatus|title }}
+                                    </span>
+                                </td>
+                                <td>{{ user.dateJoined[:10] if user.dateJoined else 'Unknown' }}</td>
+                                <td>{{ user.lastLogin[:10] if user.lastLogin else 'Never' }}</td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        {% if user.accountStatus == 'active' %}
+                                            <form method="POST" action="{{ url_for('update_user_status_route', user_id=user.id) }}" style="display: inline;">
+                                                <input type="hidden" name="status" value="inactive">
+                                                <button type="submit" class="btn btn-sm btn-outline-secondary" title="Deactivate User">
+                                                    <i class="bi bi-pause"></i>
+                                                </button>
+                                            </form>
+                                        {% else %}
+                                            <form method="POST" action="{{ url_for('update_user_status_route', user_id=user.id) }}" style="display: inline;">
+                                                <input type="hidden" name="status" value="active">
+                                                <button type="submit" class="btn btn-sm btn-outline-success" title="Activate User">
+                                                    <i class="bi bi-play"></i>
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                        
+                                        <form method="POST" action="{{ url_for('delete_user_route', user_id=user.id) }}" style="display: inline;" 
+                                              onsubmit="return confirm('Are you sure you want to delete user {{ user.username }}? This action cannot be undone.')">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete User">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-people display-1 text-muted"></i>
+                    <h4 class="text-muted mt-3">No Users Found</h4>
+                    <p class="text-muted">There are no users in the system yet. Create your first user above.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
