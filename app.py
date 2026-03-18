@@ -380,7 +380,7 @@ live_data = LiveDataStore()
 fake_data_cache = {
     'data': None,
     'timestamp': None,
-    'cache_duration': 1  # Cache for 1 second for more frequent updates
+    'cache_duration': 3  # Cache for 3 seconds for less frequent, more natural updates
 }
 
 def get_cached_fake_data():
@@ -1199,8 +1199,16 @@ def generate_fake_sensor_data(environment_id=None):
     # Calculate overall threat score from components first
     calculated_threat = sum(comp['score'] * comp['weight'] for comp in components.values())
     
-    # Use the calculated threat as the primary score, with some random variation
-    threat_score = calculated_threat + random.uniform(-5, 5)
+    # Use the calculated threat as the primary score with minimal natural variation
+    # Add small random walk for natural movement
+    import time
+    current_time = time.time()
+    
+    # Create a more natural variation based on time (slower changes)
+    time_factor = math.sin(current_time / 30) * 3  # Slow oscillation over ~30 seconds
+    small_variation = random.uniform(-1, 1)  # Much smaller variation
+    
+    threat_score = calculated_threat + time_factor + small_variation
     threat_score = max(0, min(100, threat_score))  # Clamp to 0-100 range
     
     # Update threat level based on final score
