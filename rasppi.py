@@ -11,6 +11,7 @@ import board
 import busio
 import adafruit_ads1x15.ads1115 as ADS
 from adafruit_ads1x15.analog_in import AnalogIn
+import pigpio
 import numpy as np
 import math
 import random
@@ -97,6 +98,15 @@ NOTIFICATION_COOLDOWN = int(os.getenv('NOTIFICATION_COOLDOWN', 300))
 # Radar Configuration
 RADAR_TYPE = os.getenv('RADAR_TYPE', 'auto')
 RADAR_PORT = os.getenv('RADAR_PORT', '/dev/ttyUSB0')
+
+# GPIO Pin Configuration for Software UART
+MMWAVE_TX_PIN = 16  # GPIO pin for mmWave TX
+MMWAVE_RX_PIN = 18  # GPIO pin for mmWave RX
+MMWAVE_BAUDRATE = 256000
+
+# Analog Pin Configuration
+AIR_QUALITY_PIN = 'A1'  # ADS1115 P0 for air quality
+MICROPHONE_PIN = 'A2'   # ADS1115 P1 for microphone
 
 # Breathing detection parameters
 BREATHING_FREQ_RANGE = (
@@ -907,13 +917,130 @@ def analyze_sound(new_sample):
         'features': features
     }
 
-# ==================== ENHANCED RADAR PROCESSING ====================
+# ==================== RADAR CONFIGURATIONS ====================
+RADAR_CONFIGS = {
+    'rd03d': {
+        'max_targets': 8,
+        'max_range': 8.0,
+        'range_resolution': 0.1,
+        'velocity_resolution': 0.01,
+        'update_rate': 10,  # Hz
+        'detection_threshold': 0.3
+    },
+    'ld2410': {
+        'max_targets': 5,
+        'max_range': 6.0,
+        'range_resolution': 0.2,
+        'velocity_resolution': 0.02,
+        'update_rate': 8,  # Hz
+        'detection_threshold': 0.4
+    }
+}
+
+# ==================== SOFTWARE UART IMPLEMENTATION ====================
+class SoftwareUART:
+    """Software UART implementation using pigpio for bit-banging"""
+    
+    def __init__(self, tx_pin, rx_pin, baudrate=256000):
+        self.pi = pigpio.pi()
+        self.tx_pin = tx_pin
+        self.rx_pin = rx_pin
+        self.baudrate = baudrate
+        self.bit_time = 1.0 / baudrate  # Time per bit in seconds
+        self.connected = False
+        
+        # Setup GPIO pins
+        self.pi.set_mode(self.tx_pin, pigpio.OUTPUT)
+        self.pi.set_mode(self.rx_pin, pigpio.INPUT)
+        self.pi.set_pull_up_down(self.rx_pin, pigpio.PULL_UP)
+        
+        # Set TX pin high (idle state)
+        self.pi.write(self.tx_pin, 1)
+        self.connected = True
+        logger.info(f"✅ Software UART initialized on TX:{tx_pin}, RX:{rx_pin} at {baudrate} baud")
+    
+    def write(self, data):
+        """Write data to software UART"""
+        if not self.connected:
+            return 0
+            
+        if isinstance(data, str):
+            data = data.encode('utf-8')
+        
+        bytes_written = 0
+        for byte in data:
+            # Start bit (low)
+            self.pi.write(self.tx_pin, 0)
+            time.sleep(self.bit_time)
+            
+            # 8 data bits (LSB first)
+            for i in range(8):
+                bit = (byte >> i) & 0x01
+                self.pi.write(self.tx_pin, bit)
+                time.sleep(self.bit_time)
+            
+            # Stop bit (high)
+            self.pi.write(self.tx_pin, 1)
+            time.sleep(self.bit_time)
+            
+            bytes_written += 1
+        
+        return bytes_written
+    
+    def read(self, num_bytes=1):
+        """Read data from software UART"""
+        if not self.connected:
+            return b''
+        
+        data = bytearray()
+        
+        for _ in range(num_bytes):
+            # Wait for start bit (low)
+            timeout = time.time() + 0.1  # 100ms timeout
+            while self.pi.read(self.rx_pin) == 1 and time.time() < timeout:
+                time.sleep(self.bit_time / 10)  # Check every 0.1 bit time
+            
+            if time.time() >= timeout:
+                break  # Timeout
+            
+            # Skip start bit
+            time.sleep(self.bit_time)
+            
+            # Read 8 data bits (LSB first)
+            byte = 0
+            for i in range(8):
+                bit = self.pi.read(self.rx_pin)
+                byte |= (bit << i)
+                time.sleep(self.bit_time)
+            
+            # Wait for stop bit
+            time.sleep(self.bit_time)
+            
+            data.append(byte)
+        
+        return bytes(data)
+    
+    def flush(self):
+        """Flush input buffer (not applicable to software UART)"""
+        pass
+    
+    def reset_input_buffer(self):
+        """Reset input buffer (not applicable to software UART)"""
+        pass
+    
+    def close(self):
+        """Close software UART connection"""
+        if self.connected:
+            self.pi.write(self.tx_pin, 1)  # Set TX high before closing
+            self.pi.stop()
+            self.connected = False
+            logger.info("✅ Software UART closed")
 class RadarProcessor:
     """Advanced mmWave radar processor with tracking and vital signs"""
     
-    def __init__(self, radar_type='auto', port='/dev/ttyUSB0'):
+    def __init__(self, radar_type='auto', use_software_uart=True):
         self.radar_type = radar_type
-        self.port = port
+        self.use_software_uart = use_software_uart
         self.config = None
         self.serial_conn = None
         self.target_history = deque(maxlen=100)
@@ -927,49 +1054,63 @@ class RadarProcessor:
     
     def _connect_and_detect(self):
         """Connect to radar and auto-detect type"""
-        test_baudrates = [256000, 115200, 921600, 9600]
-        
-        for baud in test_baudrates:
+        if self.use_software_uart:
+            # Use software UART for mmWave sensor
             try:
+                self.serial_conn = SoftwareUART(MMWAVE_TX_PIN, MMWAVE_RX_PIN, MMWAVE_BAUDRATE)
+                self.detected_radar_type = 'rd03d'
+                self.config = RADAR_CONFIGS['rd03d']
+                logger.info(f"✅ Using Software UART for mmWave radar on pins TX:{MMWAVE_TX_PIN}, RX:{MMWAVE_RX_PIN}")
+            except Exception as e:
+                logger.error(f"❌ Failed to initialize Software UART: {e}")
+                self.serial_conn = None
+                self.detected_radar_type = 'rd03d'
+                self.config = RADAR_CONFIGS['rd03d']
+        else:
+            # Fallback to hardware serial
+            test_baudrates = [256000, 115200, 921600, 9600]
+            
+            for baud in test_baudrates:
+                try:
+                    self.serial_conn = serial.Serial(
+                        port=self.port,
+                        baudrate=baud,
+                        timeout=1,
+                        write_timeout=1
+                    )
+                    
+                    time.sleep(0.5)
+                    if self.serial_conn.in_waiting:
+                        test_data = self.serial_conn.read(50)
+                        
+                        if test_data:
+                            if len(test_data) >= 22 and test_data[0] == 0xAA and test_data[1] == 0xFF:
+                                self.detected_radar_type = 'rd03d'
+                                self.config = RADAR_CONFIGS['rd03d']
+                                self.config['baudrate'] = baud
+                                logger.info(f"✅ Detected RD-03D radar at {baud} baud")
+                                break
+                            elif b'F' in test_data or b'T' in test_data:
+                                self.detected_radar_type = 'ld2410'
+                                self.config = RADAR_CONFIGS['ld2410']
+                                self.config['baudrate'] = baud
+                                logger.info(f"✅ Detected LD2410 radar at {baud} baud")
+                                break
+                    
+                    self.serial_conn.close()
+                except:
+                    continue
+            
+            if not self.detected_radar_type:
+                self.detected_radar_type = 'rd03d'
+                self.config = RADAR_CONFIGS['rd03d']
                 self.serial_conn = serial.Serial(
                     port=self.port,
-                    baudrate=baud,
+                    baudrate=256000,
                     timeout=1,
                     write_timeout=1
                 )
-                
-                time.sleep(0.5)
-                if self.serial_conn.in_waiting:
-                    test_data = self.serial_conn.read(50)
-                    
-                    if test_data:
-                        if len(test_data) >= 22 and test_data[0] == 0xAA and test_data[1] == 0xFF:
-                            self.detected_radar_type = 'rd03d'
-                            self.config = RADAR_CONFIGS['rd03d']
-                            self.config['baudrate'] = baud
-                            logger.info(f"✅ Detected RD-03D radar at {baud} baud")
-                            break
-                        elif b'F' in test_data or b'T' in test_data:
-                            self.detected_radar_type = 'ld2410'
-                            self.config = RADAR_CONFIGS['ld2410']
-                            self.config['baudrate'] = baud
-                            logger.info(f"✅ Detected LD2410 radar at {baud} baud")
-                            break
-                
-                self.serial_conn.close()
-            except:
-                continue
-        
-        if not self.detected_radar_type:
-            self.detected_radar_type = 'rd03d'
-            self.config = RADAR_CONFIGS['rd03d']
-            self.serial_conn = serial.Serial(
-                port=self.port,
-                baudrate=256000,
-                timeout=1,
-                write_timeout=1
-            )
-            logger.warning("⚠ Could not auto-detect radar, assuming RD-03D")
+                logger.warning("⚠ Could not auto-detect radar, assuming RD-03D")
     
     def _parse_rd03d_frame(self, data):
         """Parse RD-03D radar data format"""
@@ -2025,15 +2166,21 @@ def analyze_odor(noise_db):
 
 # ==================== HARDWARE INITIALIZATION ====================
 def init_hardware():
-    """Initialize all hardware components"""
+    """Initialize all hardware components with new pin layout"""
     try:
+        # Initialize I2C for ADS1115 ADC
         i2c = busio.I2C(board.SCL, board.SDA)
         ads = ADS.ADS1115(i2c, address=0x48)
         ads.gain = 1
         
-        mq135_channel = AnalogIn(ads, ADS.P0)
-        sound_channel = AnalogIn(ads, ADS.P1)
+        # Initialize analog sensors with new pin assignments
+        # A1: Air quality sensor (MQ135) - ADS1115 P0
+        # A2: Microphone - ADS1115 P1
+        mq135_channel = AnalogIn(ads, ADS.P0)  # A1 - Air quality
+        sound_channel = AnalogIn(ads, ADS.P1)  # A2 - Microphone
         
+        # Initialize PMS5003 particle sensor on hardware UART
+        # Using GPIO 8 (TX) and GPIO 10 (RX) for particle sensor
         pms = serial.Serial(
             port="/dev/serial0",
             baudrate=9600,
@@ -2042,6 +2189,10 @@ def init_hardware():
         )
         
         logger.info("✅ Hardware initialized successfully")
+        logger.info(f"  - Air Quality (MQ135): ADS1115 P0 (A1)")
+        logger.info(f"  - Microphone: ADS1115 P1 (A2)")
+        logger.info(f"  - Particle Sensor (PMS5003): Hardware UART")
+        
         return i2c, ads, mq135_channel, sound_channel, pms
         
     except Exception as e:
@@ -2050,6 +2201,9 @@ def init_hardware():
 
 # Initialize hardware
 i2c, ads, mq135_channel, sound_channel, pms = init_hardware()
+
+# Initialize radar processor with software UART
+radar_processor = RadarProcessor(use_software_uart=True)
 
 # ==================== SENSOR READING FUNCTIONS ====================
 def read_pms5003():
@@ -2150,11 +2304,11 @@ signal.signal(signal.SIGINT, signal_handler)   # Ctrl+C
 signal.signal(signal.SIGQUIT, signal_handler)  # Ctrl+\
 
 # Initialize processors
-radar_processor = RadarProcessor(radar_type=RADAR_TYPE, port=RADAR_PORT)
+radar_processor = RadarProcessor(use_software_uart=True)  # Use software UART for mmWave sensor
 threat_scorer = EnhancedThreatScorer()
 quality_scorer = EnvironmentalQualityScorer()
-# ==================== NOTIFICATION MANAGER ====================
 
+# ==================== NOTIFICATION MANAGER ====================
 class NotificationManager:
     """Manages notifications via Gmail, Microsoft Teams, and SMS/Twilio"""
     
