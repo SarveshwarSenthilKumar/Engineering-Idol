@@ -966,7 +966,7 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-def create_user(username, password, email, role='user'):
+def create_user(username, password, email, role='user', name=None, phone=None, dob=None, gender=None):
     """Create a new user account"""
     conn = None
     try:
@@ -985,9 +985,9 @@ def create_user(username, password, email, role='user'):
         # Create new user
         password_hash = generate_password_hash(password)
         cursor.execute("""
-            INSERT INTO users (username, password, emailAddress, role, dateJoined, accountStatus)
-            VALUES (?, ?, ?, ?, ?, ?)
-        """, (username, password_hash, email, role, datetime.now().isoformat(), 'active'))
+            INSERT INTO users (username, password, emailAddress, role, name, phoneNumber, dateOfBirth, gender, dateJoined, accountStatus)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (username, password_hash, email, role, name, phone, dob, gender, datetime.now().isoformat(), 'active'))
         
         conn.commit()
         return True, "User created successfully"
@@ -1244,12 +1244,16 @@ def create_user_route():
     email = request.form.get('email', '').strip()
     password = request.form.get('password', '')
     role = request.form.get('role', 'user')
+    name = request.form.get('name', '').strip() or None
+    phone = request.form.get('phone', '').strip() or None
+    dob = request.form.get('dob', '').strip() or None
+    gender = request.form.get('gender', '').strip() or None
     
     if not username or not email or not password:
-        flash('All fields are required.', 'error')
+        flash('Username, email, and password are required.', 'error')
         return redirect(url_for('users'))
     
-    success, message = create_user(username, password, email, role)
+    success, message = create_user(username, password, email, role, name, phone, dob, gender)
     if success:
         flash(f'User {username} created successfully!', 'success')
     else:
