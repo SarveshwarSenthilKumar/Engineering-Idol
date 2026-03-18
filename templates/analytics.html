@@ -31,12 +31,6 @@
     </div>
     <div class="col-md-2">
         <div class="stat-card text-center">
-            <h3 class="text-success">{{ "%.1f"|format(stats.avg_quality or 0) }}</h3>
-            <small>Avg Quality</small>
-        </div>
-    </div>
-    <div class="col-md-2">
-        <div class="stat-card text-center">
             <h3 class="text-warning">{{ "%.1f"|format(stats.avg_people or 0) }}</h3>
             <small>Avg People</small>
         </div>
@@ -57,6 +51,12 @@
         <div class="stat-card text-center">
             <h3 class="text-secondary">{{ stats.total_events or 0 }}</h3>
             <small>Total Events</small>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="stat-card text-center">
+            <h3 class="text-primary">{{ "%.0f"|format(stats.max_threat or 0) }}</h3>
+            <small>Max Threat</small>
         </div>
     </div>
 </div>
@@ -436,7 +436,6 @@
     function calculateStats(data) {
         const metrics = {
             threat: { values: [], min: Infinity, max: -Infinity, sum: 0 },
-            quality: { values: [], min: Infinity, max: -Infinity, sum: 0 },
             people: { values: [], min: Infinity, max: -Infinity, sum: 0 },
             noise: { values: [], min: Infinity, max: -Infinity, sum: 0 },
             aqi: { values: [], min: Infinity, max: -Infinity, sum: 0 }
@@ -449,13 +448,6 @@
             metrics.threat.min = Math.min(metrics.threat.min, threat);
             metrics.threat.max = Math.max(metrics.threat.max, threat);
             metrics.threat.sum += threat;
-
-            // Quality
-            const quality = d.quality_score || 0;
-            metrics.quality.values.push(quality);
-            metrics.quality.min = Math.min(metrics.quality.min, quality);
-            metrics.quality.max = Math.max(metrics.quality.max, quality);
-            metrics.quality.sum += quality;
 
             // People
             const people = d.people_count || 0;
@@ -488,7 +480,6 @@
         };
 
         const threatMean = metrics.threat.sum / n;
-        const qualityMean = metrics.quality.sum / n;
         const peopleMean = metrics.people.sum / n;
         const noiseMean = metrics.noise.sum / n;
         const aqiMean = metrics.aqi.sum / n;
@@ -501,14 +492,6 @@
                 <td>${threatMean.toFixed(1)}</td>
                 <td>${stdDev(metrics.threat.values, threatMean).toFixed(2)}</td>
                 <td>${getTrend(metrics.threat.values)}</td>
-            </tr>
-            <tr>
-                <td>Quality Score</td>
-                <td>${metrics.quality.min.toFixed(1)}</td>
-                <td>${metrics.quality.max.toFixed(1)}</td>
-                <td>${qualityMean.toFixed(1)}</td>
-                <td>${stdDev(metrics.quality.values, qualityMean).toFixed(2)}</td>
-                <td>${getTrend(metrics.quality.values)}</td>
             </tr>
             <tr>
                 <td>People Count</td>
