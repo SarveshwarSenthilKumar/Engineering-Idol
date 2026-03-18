@@ -2092,16 +2092,187 @@ def threat_icon(level):
     }
     return icons.get(level, 'bi-question')
 
+@app.route("/api/data/archive", methods=['POST'])
+@login_required
+def archive_old_data():
+    """Archive data older than specified number of days"""
+    try:
+        data = request.get_json()
+        days = data.get('days', 30)  # Default to 30 days
+        
+        if days < 1:
+            return jsonify({'success': False, 'error': 'Days must be greater than 0'}), 400
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Calculate cutoff date
+        cutoff_date = (datetime.now() - timedelta(days=days)).isoformat()
+        
+        # Create archive tables if they don't exist
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS events_archive AS 
+            SELECT * FROM events WHERE 1=0
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS events_log_archive AS 
+            SELECT * FROM events_log WHERE 1=0
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS targets_archive AS 
+            SELECT * FROM targets WHERE 1=0
+        ''')
+        
+        # Move old data to archive tables
+        # Archive events
+        cursor.execute('''
+            INSERT INTO events_archive 
+            SELECT * FROM events 
+            WHERE timestamp < ?
+        ''', (cutoff_date,))
+        
+        archived_events = cursor.rowcount
+        
+        # Archive events_log
+        cursor.execute('''
+            INSERT INTO events_log_archive 
+            SELECT * FROM events_log 
+            WHERE timestamp < ?
+        ''', (cutoff_date,))
+        
+        archived_log = cursor.rowcount
+        
+        # Archive targets (need to join with events to get timestamp)
+        cursor.execute('''
+            INSERT INTO targets_archive 
+            SELECT t.* FROM targets t
+            INNER JOIN events e ON t.event_id = e.id
+            WHERE e.timestamp < ?
+        ''', (cutoff_date,))
+        
+        archived_targets = cursor.rowcount
+        
+        # Delete old data from main tables
+        cursor.execute("DELETE FROM events WHERE timestamp < ?", (cutoff_date,))
+        cursor.execute("DELETE FROM events_log WHERE timestamp < ?", (cutoff_date,))
+        
+        # Delete targets that belong to archived events
+        cursor.execute('''
+            DELETE FROM targets 
+            WHERE event_id IN (
+                SELECT id FROM events 
+                WHERE timestamp < ?
+            )
+        ''', (cutoff_date,))
+        
+        conn.commit()
+        conn.close()
+        
+        app.logger.info(f"Archived {archived_events} events, {archived_log} log entries, {archived_targets} targets older than {days} days")
+        
+        return jsonify({
+            'success': True,
+            'message': f'Successfully archived data older than {days} days',
+            'archived_events': archived_events,
+            'archived_log': archived_log,
+            'archived_targets': archived_targets
+        })
+        
+    except Exception as e:
+        app.logger.error(f"Error archiving data: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route("/api/data/clear", methods=['POST'])
+@login_required
+def clear_history():
+    """Clear all historical data from the database"""
+    try:
+        # Get confirmation from request body
+        data = request.get_json()
+        confirm = data.get('confirm', False)
+        
+        if not confirm:
+            return jsonify({'success': False, 'error': 'Confirmation required to clear all data'}), 400
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Get counts before deletion for logging
+        cursor.execute("SELECT COUNT(*) as count FROM events")
+        events_count = cursor.fetchone()['count']
+        
+        cursor.execute("SELECT COUNT(*) as count FROM events_log")
+        log_count = cursor.fetchone()['count']
+        
+        cursor.execute("SELECT COUNT(*) as count FROM targets")
+        targets_count = cursor.fetchone()['count']
+        
+        # Clear all data from main tables
+        cursor.execute("DELETE FROM events")
+        cursor.execute("DELETE FROM events_log")
+        cursor.execute("DELETE FROM targets")
+        
+        # Also clear archive tables
+        cursor.execute("DELETE FROM events_archive")
+        cursor.execute("DELETE FROM events_log_archive")
+        cursor.execute("DELETE FROM targets_archive")
+        
+        # Reset auto-increment counters
+        cursor.execute("DELETE FROM sqlite_sequence WHERE name IN ('events', 'events_log', 'targets')")
+        
+        conn.commit()
+        conn.close()
+        
+        app.logger.warning(f"Cleared all historical data: {events_count} events, {log_count} log entries, {targets_count} targets")
+        
+        return jsonify({
+            'success': True,
+            'message': 'All historical data has been cleared',
+            'cleared_events': events_count,
+            'cleared_log': log_count,
+            'cleared_targets': targets_count
+        })
+        
+    except Exception as e:
+        app.logger.error(f"Error clearing data: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route("/api/data/export", methods=['GET'])
+@login_required
+def export_data():
+    """Export all data as JSON"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Get all data from main tables
+        cursor.execute("SELECT * FROM events ORDER BY timestamp DESC")
+        events = [dict(row) for row in cursor.fetchall()]
+        
+        cursor.execute("SELECT * FROM events_log ORDER BY timestamp DESC")
+        events_log = [dict(row) for row in cursor.fetchall()]
+        
+        cursor.execute("SELECT * FROM targets ORDER BY timestamp DESC")
+        targets = [dict(row) for row in cursor.fetchall()]
+        
+        conn.close()
+        
+        export_data = {
+            'export_timestamp': datetime.now().isoformat(),
+            'events': events,
+            'events_log': events_log,
+            'targets': targets
+        }
+        
+        return jsonify(export_data)
+        
+    except Exception as e:
+        app.logger.error(f"Error exporting data: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 # ==================== ERROR HANDLERS ====================
-
-@app.errorhandler(404)
-def not_found_error(error):
-    return render_template('404.html'), 404
-
-@app.errorhandler(500)
-def internal_error(error):
-    return render_template('500.html'), 500
-
 # ==================== MAIN ====================
 
 if __name__ == '__main__':

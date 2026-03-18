@@ -280,27 +280,124 @@
     });
 
     function exportData() {
-        fetch('/api/events/recent?limit=1000')
+        fetch('/api/data/export')
             .then(response => response.json())
-            .then(events => {
-                const blob = new Blob([JSON.stringify(events, null, 2)], {type: 'application/json'});
+            .then(data => {
+                const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
                 a.download = `environmental_data_${new Date().toISOString().slice(0,10)}.json`;
                 a.click();
+                URL.revokeObjectURL(url);
+            })
+            .catch(error => {
+                console.error('Error exporting data:', error);
+                alert('Error exporting data: ' + error.message);
             });
     }
 
     function archiveData() {
-        if (confirm('Archive data older than 30 days?')) {
-            alert('Archive functionality would be implemented here');
+        const days = prompt('Archive data older than how many days?', '30');
+        if (days === null) return; // User cancelled
+        
+        const daysNum = parseInt(days);
+        if (isNaN(daysNum) || daysNum < 1) {
+            alert('Please enter a valid number of days (greater than 0)');
+            return;
+        }
+        
+        if (confirm(`Archive all data older than ${daysNum} days? This will move the data to archive tables.`)) {
+            // Show loading state
+            const archiveBtn = document.querySelector('button[onclick="archiveData()"]');
+            const originalText = archiveBtn.innerHTML;
+            archiveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Archiving...';
+            archiveBtn.disabled = true;
+            
+            fetch('/api/data/archive', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    days: daysNum
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(`Archive completed successfully!\n\n` +
+                          `Archived ${data.archived_events} events\n` +
+                          `Archived ${data.archived_log} log entries\n` +
+                          `Archived ${data.archived_targets} targets\n\n` +
+                          `Data older than ${daysNum} days has been moved to archive tables.`);
+                    // Refresh system status
+                    loadSystemStatus();
+                } else {
+                    alert('Error archiving data: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error archiving data:', error);
+                alert('Error archiving data: ' + error.message);
+            })
+            .finally(() => {
+                // Restore button state
+                archiveBtn.innerHTML = originalText;
+                archiveBtn.disabled = false;
+            });
         }
     }
 
     function clearData() {
-        if (confirm('Are you sure? This will delete all historical data!')) {
-            alert('Clear functionality would be implemented here');
+        const confirmText = prompt('Type "DELETE ALL" to confirm you want to clear all historical data:');
+        if (confirmText === null) return; // User cancelled
+        
+        if (confirmText !== 'DELETE ALL') {
+            alert('Confirmation text does not match. Operation cancelled for your safety.');
+            return;
+        }
+        
+        if (confirm('⚠️ WARNING: This will permanently delete ALL historical data including archives!\n\n' +
+                   'This action cannot be undone. Are you absolutely sure?')) {
+            // Show loading state
+            const clearBtn = document.querySelector('button[onclick="clearData()"]');
+            const originalText = clearBtn.innerHTML;
+            clearBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Clearing...';
+            clearBtn.disabled = true;
+            
+            fetch('/api/data/clear', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    confirm: true
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(`All historical data has been cleared!\n\n` +
+                          `Cleared ${data.cleared_events} events\n` +
+                          `Cleared ${data.cleared_log} log entries\n` +
+                          `Cleared ${data.cleared_targets} targets\n\n` +
+                          `The database has been reset.`);
+                    // Refresh system status
+                    loadSystemStatus();
+                } else {
+                    alert('Error clearing data: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error clearing data:', error);
+                alert('Error clearing data: ' + error.message);
+            })
+            .finally(() => {
+                // Restore button state
+                clearBtn.innerHTML = originalText;
+                clearBtn.disabled = false;
+            });
         }
     }
 
