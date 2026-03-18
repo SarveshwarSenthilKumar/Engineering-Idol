@@ -892,8 +892,8 @@
             });
         }
         
-        // Update environment threat levels periodically
-        setInterval(updateEnvironmentThreatLevels, 5000);
+        // Update environment threat levels periodically (every 2 seconds to match dashboard)
+        setInterval(updateEnvironmentThreatLevels, 2000);
     </script>
 
 {% block extra_js %}{% endblock %}

@@ -1407,8 +1407,8 @@
         // Then continue with regular updates every 2 seconds
         setInterval(fetchData, 2000);
         
-        // Update environment scores every 5 seconds
-        setInterval(updateEnvironmentScores, 5000);
+        // Update environment scores every 2 seconds (to match main dashboard updates)
+        setInterval(updateEnvironmentScores, 2000);
         
         // Initialize dashboard with current time
         document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
