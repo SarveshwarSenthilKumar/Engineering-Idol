@@ -22,6 +22,20 @@ from dotenv import load_dotenv
 import queue
 from collections import deque
 import numpy as np
+import google.generativeai as genai
+import io
+import base64
+
+# Optional imports for PDF generation
+try:
+    import weasyprint
+    from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+    import matplotlib.pyplot as plt
+    import matplotlib.dates as mdates
+    PDF_AVAILABLE = True
+except ImportError:
+    PDF_AVAILABLE = False
+    print("Warning: PDF generation not available. Install weasyprint and matplotlib for full functionality.")
 
 # Load environment variables
 load_dotenv()
@@ -595,6 +609,456 @@ def update_environment_setting(environment_id, name, description=None):
     finally:
         if conn:
             conn.close()
+
+# ==================== AI REPORT GENERATION ====================
+
+# Initialize Gemini AI
+gemini_api_key = os.getenv('GEMINI_API_KEY')
+if gemini_api_key:
+    genai.configure(api_key=gemini_api_key)
+    gemini_model = genai.GenerativeModel(os.getenv('GEMINI_MODEL', 'gemini-1.5-flash'))
+else:
+    gemini_model = None
+
+def generate_ai_summary(events_data, stats_data, time_period="weekly"):
+    """Generate AI-powered summary of environmental data"""
+    if not gemini_model:
+        return "AI summary not available - Gemini API key not configured"
+    
+    try:
+        # Prepare data for AI
+        prompt = f"""
+        As an expert environmental safety analyst, analyze the following {time_period} environmental monitoring data from a school facility and provide a comprehensive professional summary for school administration.
+
+        KEY STATISTICS:
+        - Average Threat Score: {stats_data.get('avg_threat', 0):.1f}/100
+        - Average Quality Score: {stats_data.get('avg_quality', 0):.1f}/100
+        - Average People Count: {stats_data.get('avg_people', 0):.1f}
+        - Average Noise Level: {stats_data.get('avg_noise', 0):.1f} dB
+        - Average Air Quality Index: {stats_data.get('avg_aqi', 0):.0f}
+        - Total Events: {stats_data.get('total_events', 0)}
+        - Critical Events: {stats_data.get('critical_count', 0)}
+        - High Threat Events: {stats_data.get('high_count', 0)}
+
+        THREAT LEVEL DISTRIBUTION:
+        - Critical: {stats_data.get('critical_count', 0)} events
+        - High: {stats_data.get('high_count', 0)} events  
+        - Elevated: {stats_data.get('elevated_count', 0)} events
+        - Moderate: {stats_data.get('moderate_count', 0)} events
+        - Low: {stats_data.get('low_count', 0)} events
+
+        Please provide:
+        1. Executive Summary (3-4 sentences)
+        2. Key Findings and Trends
+        3. Areas of Concern
+        4. Positive Observations
+        5. Preventative Recommendations (3-5 specific, actionable items)
+
+        Format the response professionally for school board presentation. Use clear, concise language appropriate for educational administrators.
+        """
+        
+        response = gemini_model.generate_content(prompt)
+        return response.text
+        
+    except Exception as e:
+        app.logger.error(f"Error generating AI summary: {e}")
+        return f"AI summary generation failed: {str(e)}"
+
+def create_chart_image(data, chart_type, title):
+    """Create a matplotlib chart and return as base64 image"""
+    if not PDF_AVAILABLE:
+        return None
+        
+    try:
+        plt.style.use('seaborn-v0_8')
+        fig, ax = plt.subplots(figsize=(10, 6))
+        
+        if chart_type == 'timeline':
+            timestamps = [datetime.fromisoformat(d['timestamp']) for d in data]
+            threat_scores = [d.get('threat_score', 0) for d in data]
+            quality_scores = [d.get('quality_score', 0) for d in data]
+            
+            ax.plot(timestamps, threat_scores, 'r-', label='Threat Score', linewidth=2)
+            ax.plot(timestamps, quality_scores, 'g-', label='Quality Score', linewidth=2)
+            ax.set_title(title)
+            ax.set_ylabel('Score')
+            ax.legend()
+            ax.grid(True, alpha=0.3)
+            
+        elif chart_type == 'threat_distribution':
+            levels = ['Critical', 'High', 'Elevated', 'Moderate', 'Low']
+            counts = [
+                sum(1 for d in data if d.get('threat_score', 0) >= 80),
+                sum(1 for d in data if 60 <= d.get('threat_score', 0) < 80),
+                sum(1 for d in data if 40 <= d.get('threat_score', 0) < 60),
+                sum(1 for d in data if 20 <= d.get('threat_score', 0) < 40),
+                sum(1 for d in data if d.get('threat_score', 0) < 20)
+            ]
+            colors = ['#8B0000', '#DC143C', '#FF8C00', '#FFD700', '#32CD32']
+            
+            ax.pie(counts, labels=levels, colors=colors, autopct='%1.1f%%', startangle=90)
+            ax.set_title(title)
+            
+        elif chart_type == 'environmental_metrics':
+            timestamps = [datetime.fromisoformat(d['timestamp']) for d in data]
+            noise_levels = [d.get('sound_db', 0) for d in data]
+            aqi_levels = [d.get('air_aqi', 0) for d in data]
+            
+            ax2 = ax.twinx()
+            ax.plot(timestamps, noise_levels, 'b-', label='Noise (dB)', linewidth=2)
+            ax2.plot(timestamps, aqi_levels, 'orange', label='AQI', linewidth=2)
+            
+            ax.set_ylabel('Noise (dB)', color='b')
+            ax2.set_ylabel('Air Quality Index', color='orange')
+            ax.set_title(title)
+            ax.grid(True, alpha=0.3)
+            
+            # Combine legends
+            lines1, labels1 = ax.get_legend_handles_labels()
+            lines2, labels2 = ax2.get_legend_handles_labels()
+            ax.legend(lines1 + lines2, labels1 + labels2, loc='upper left')
+        
+        plt.tight_layout()
+        
+        # Convert to base64
+        img_buffer = io.BytesIO()
+        plt.savefig(img_buffer, format='png', dpi=150, bbox_inches='tight')
+        img_buffer.seek(0)
+        img_base64 = base64.b64encode(img_buffer.getvalue()).decode()
+        plt.close()
+        
+        return img_base64
+        
+    except Exception as e:
+        app.logger.error(f"Error creating chart: {e}")
+        return None
+
+def generate_weekly_html_report():
+    """Generate comprehensive weekly HTML report"""
+    if not PDF_AVAILABLE:
+        raise ImportError("PDF generation not available. Install weasyprint and matplotlib.")
+        
+    try:
+        # Get weekly data (last 7 days)
+        week_ago = (datetime.now() - timedelta(days=7)).isoformat()
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Get events data
+        cursor.execute("""
+            SELECT timestamp, threat_overall, quality_score, radar_target_count, 
+                   sound_db, air_aqi, threat_level
+            FROM events 
+            WHERE timestamp >= ?
+            ORDER BY timestamp ASC
+        """, (week_ago,))
+        
+        events_data = [dict(row) for row in cursor.fetchall()]
+        
+        # Get statistics
+        cursor.execute("""
+            SELECT 
+                COUNT(*) as total_events,
+                AVG(threat_overall) as avg_threat,
+                MAX(threat_overall) as max_threat,
+                AVG(quality_score) as avg_quality,
+                AVG(radar_target_count) as avg_people,
+                AVG(sound_db) as avg_noise,
+                AVG(air_aqi) as avg_aqi,
+                SUM(CASE WHEN threat_level = 'CRITICAL' THEN 1 ELSE 0 END) as critical_count,
+                SUM(CASE WHEN threat_level = 'HIGH' THEN 1 ELSE 0 END) as high_count,
+                SUM(CASE WHEN threat_level = 'ELEVATED' THEN 1 ELSE 0 END) as elevated_count,
+                SUM(CASE WHEN threat_level = 'MODERATE' THEN 1 ELSE 0 END) as moderate_count,
+                SUM(CASE WHEN threat_level = 'LOW' THEN 1 ELSE 0 END) as low_count
+            FROM events
+            WHERE timestamp >= ?
+        """, (week_ago,))
+        
+        stats_data = dict(cursor.fetchone())
+        conn.close()
+        
+        # Generate AI summary
+        ai_summary = generate_ai_summary(events_data, stats_data, "weekly")
+        
+        # Create charts
+        timeline_img = create_chart_image(events_data, 'timeline', '7-Day Threat and Quality Timeline')
+        threat_img = create_chart_image(events_data, 'threat_distribution', 'Threat Level Distribution')
+        env_img = create_chart_image(events_data, 'environmental_metrics', 'Noise and Air Quality Trends')
+        
+        # Generate preventative recommendations
+        preventative_text = generate_preventative_recommendations(stats_data)
+        
+        # Create HTML template
+        html_template = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <title>Environmental Monitoring Weekly Report</title>
+            <style>
+                body {{
+                    font-family: Arial, sans-serif;
+                    margin: 40px;
+                    line-height: 1.6;
+                    color: #333;
+                }}
+                .header {{
+                    text-align: center;
+                    border-bottom: 3px solid #007bff;
+                    padding-bottom: 20px;
+                    margin-bottom: 30px;
+                }}
+                .header h1 {{
+                    color: #007bff;
+                    margin: 0;
+                }}
+                .metadata {{
+                    background: #f8f9fa;
+                    padding: 15px;
+                    border-radius: 5px;
+                    margin: 20px 0;
+                }}
+                .metadata table {{
+                    width: 100%;
+                    border-collapse: collapse;
+                }}
+                .metadata td {{
+                    padding: 8px;
+                    border-bottom: 1px solid #dee2e6;
+                }}
+                .metadata td:first-child {{
+                    font-weight: bold;
+                    width: 30%;
+                }}
+                .section {{
+                    margin: 30px 0;
+                    page-break-inside: avoid;
+                }}
+                .section h2 {{
+                    color: #007bff;
+                    border-bottom: 2px solid #007bff;
+                    padding-bottom: 10px;
+                }}
+                .stats-table {{
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin: 20px 0;
+                }}
+                .stats-table th,
+                .stats-table td {{
+                    border: 1px solid #dee2e6;
+                    padding: 12px;
+                    text-align: center;
+                }}
+                .stats-table th {{
+                    background: #007bff;
+                    color: white;
+                    font-weight: bold;
+                }}
+                .stats-table tr:nth-child(even) {{
+                    background: #f8f9fa;
+                }}
+                .chart {{
+                    text-align: center;
+                    margin: 20px 0;
+                    page-break-inside: avoid;
+                }}
+                .chart img {{
+                    max-width: 100%;
+                    height: auto;
+                }}
+                .ai-summary {{
+                    background: #e9ecef;
+                    padding: 20px;
+                    border-radius: 5px;
+                    margin: 20px 0;
+                    white-space: pre-wrap;
+                    font-family: Arial, sans-serif;
+                }}
+                .recommendations {{
+                    background: #d4edda;
+                    padding: 20px;
+                    border-radius: 5px;
+                    margin: 20px 0;
+                    border-left: 4px solid #28a745;
+                }}
+                .footer {{
+                    text-align: center;
+                    margin-top: 40px;
+                    padding-top: 20px;
+                    border-top: 1px solid #dee2e6;
+                    color: #6c757d;
+                    font-size: 0.9em;
+                }}
+                @media print {{
+                    body {{ margin: 20px; }}
+                    .section {{ page-break-inside: avoid; }}
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>Environmental Monitoring Weekly Report</h1>
+                <p>Professional Analysis for School Administration</p>
+            </div>
+            
+            <div class="metadata">
+                <table>
+                    <tr>
+                        <td>Report Generated:</td>
+                        <td>{datetime.now().strftime("%B %d, %Y")}</td>
+                    </tr>
+                    <tr>
+                        <td>Analysis Period:</td>
+                        <td>{(datetime.now() - timedelta(days=7)).strftime("%B %d, %Y")} - {datetime.now().strftime("%B %d, %Y")}</td>
+                    </tr>
+                    <tr>
+                        <td>Facility:</td>
+                        <td>Environmental Monitoring System</td>
+                    </tr>
+                    <tr>
+                        <td>Total Monitoring Hours:</td>
+                        <td>168 hours</td>
+                    </tr>
+                </table>
+            </div>
+            
+            <div class="section">
+                <h2>Executive Summary</h2>
+                <div class="ai-summary">{ai_summary}</div>
+            </div>
+            
+            <div class="section">
+                <h2>Key Performance Indicators</h2>
+                <table class="stats-table">
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th>Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Average Threat Score</td>
+                            <td>{stats_data.get('avg_threat', 0):.1f}/100</td>
+                        </tr>
+                        <tr>
+                            <td>Average Quality Score</td>
+                            <td>{stats_data.get('avg_quality', 0):.1f}/100</td>
+                        </tr>
+                        <tr>
+                            <td>Average Occupancy</td>
+                            <td>{stats_data.get('avg_people', 0):.1f} people</td>
+                        </tr>
+                        <tr>
+                            <td>Average Noise Level</td>
+                            <td>{stats_data.get('avg_noise', 0):.1f} dB</td>
+                        </tr>
+                        <tr>
+                            <td>Average Air Quality Index</td>
+                            <td>{stats_data.get('avg_aqi', 0):.0f}</td>
+                        </tr>
+                        <tr>
+                            <td>Total Events Recorded</td>
+                            <td>{stats_data.get('total_events', 0)}</td>
+                        </tr>
+                        <tr>
+                            <td>Critical Threat Events</td>
+                            <td>{stats_data.get('critical_count', 0)}</td>
+                        </tr>
+                        <tr>
+                            <td>High Threat Events</td>
+                            <td>{stats_data.get('high_count', 0)}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            {f'''<div class="section">
+                <h2>Threat & Quality Trends</h2>
+                <div class="chart">
+                    <img src="data:image/png;base64,{timeline_img}" alt="Threat and Quality Timeline">
+                </div>
+            </div>''' if timeline_img else ''}
+            
+            {f'''<div class="section">
+                <h2>Threat Level Distribution</h2>
+                <div class="chart">
+                    <img src="data:image/png;base64,{threat_img}" alt="Threat Level Distribution">
+                </div>
+            </div>''' if threat_img else ''}
+            
+            {f'''<div class="section">
+                <h2>Environmental Conditions</h2>
+                <div class="chart">
+                    <img src="data:image/png;base64,{env_img}" alt="Environmental Metrics">
+                </div>
+            </div>''' if env_img else ''}
+            
+            <div class="section">
+                <h2>Preventative Recommendations</h2>
+                <div class="recommendations">
+                    <pre>{preventative_text}</pre>
+                </div>
+            </div>
+            
+            <div class="footer">
+                <p>This report was automatically generated by the Environmental Monitoring System.</p>
+                <p>Generated on {datetime.now().strftime("%B %d, %Y at %I:%M %p")}</p>
+            </div>
+        </body>
+        </html>
+        """
+        
+        return html_template
+        
+    except Exception as e:
+        app.logger.error(f"Error generating HTML report: {e}")
+        raise e
+
+def generate_weekly_pdf_report():
+    """Generate comprehensive weekly PDF report using HTML to PDF"""
+    html_content = generate_weekly_html_report()
+    
+    # Convert HTML to PDF using WeasyPrint
+    pdf_data = weasyprint.HTML(string=html_content).write_pdf()
+    
+    return pdf_data
+
+def generate_preventative_recommendations(stats_data):
+    """Generate preventative recommendations based on statistics"""
+    recommendations = []
+    
+    avg_threat = stats_data.get('avg_threat', 0)
+    critical_count = stats_data.get('critical_count', 0)
+    high_count = stats_data.get('high_count', 0)
+    avg_noise = stats_data.get('avg_noise', 0)
+    avg_aqi = stats_data.get('avg_aqi', 0)
+    avg_people = stats_data.get('avg_people', 0)
+    
+    if avg_threat > 60:
+        recommendations.append("• Review and enhance security protocols during high-threat periods")
+    
+    if critical_count > 0:
+        recommendations.append("• Implement immediate response plan for critical threat events")
+    
+    if high_count > 5:
+        recommendations.append("• Conduct staff training on threat de-escalation procedures")
+    
+    if avg_noise > 70:
+        recommendations.append("• Install noise reduction measures in high-traffic areas")
+    
+    if avg_aqi > 100:
+        recommendations.append("• Improve ventilation systems and consider air purification solutions")
+    
+    if avg_people > 10:
+        recommendations.append("• Monitor occupancy levels and implement crowd management strategies")
+    
+    if not recommendations:
+        recommendations.append("• Continue current monitoring protocols - all indicators within acceptable ranges")
+    
+    return '\n'.join(recommendations)
 
 # ==================== FAKE DATA GENERATION ====================
 
@@ -2270,6 +2734,37 @@ def export_data():
         
     except Exception as e:
         app.logger.error(f"Error exporting data: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route("/api/reports/weekly", methods=['GET'])
+@login_required
+def generate_weekly_report():
+    """Generate and download weekly PDF report"""
+    try:
+        if not PDF_AVAILABLE:
+            return jsonify({
+                'success': False, 
+                'error': 'PDF generation not available. Install weasyprint and matplotlib packages.'
+            }), 500
+            
+        # Generate PDF report
+        pdf_data = generate_weekly_pdf_report()
+        
+        # Create filename with current date
+        filename = f"weekly_environmental_report_{datetime.now().strftime('%Y%m%d')}.pdf"
+        
+        # Return PDF as downloadable file
+        return Response(
+            pdf_data,
+            mimetype='application/pdf',
+            headers={
+                'Content-Disposition': f'attachment; filename="{filename}"',
+                'Content-Length': len(pdf_data)
+            }
+        )
+        
+    except Exception as e:
+        app.logger.error(f"Error generating weekly report: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 # ==================== ERROR HANDLERS ====================
