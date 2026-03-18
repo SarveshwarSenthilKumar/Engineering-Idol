@@ -345,10 +345,16 @@ class LiveDataStore:
             
             return self.environments[environment_id]['data'].copy()
     
-    def get_all_environments(self):
+    def get_all_environments(self, fake_mode=True):
         """Get all environments data"""
         with self.lock:
-            return {k: v.copy() for k, v in self.environments.items()}
+            result = {}
+            for env_id, env_data in self.environments.items():
+                env_copy = env_data.copy()
+                # Add online status based on fake mode
+                env_copy['online'] = fake_mode
+                result[env_id] = env_copy
+            return result
     
     def set_current_environment(self, environment_id):
         """Set the current active environment"""
@@ -2304,19 +2310,22 @@ def api_live():
             live_data.update(data, current_env)
             data = live_data.get_environment_data(current_env)
     else:
+        # Get real sensor data
         data = get_realtime_sensor_data()
         # Don't fall back to fake data - return empty data when no real data available
     
-    return jsonify(data)
+    return jsonify(data or {})
 
 @app.route("/api/environments")
 def api_environments():
     """Get all environments data"""
-    return jsonify(live_data.get_all_environments())
+    fake_mode = session.get('fake_mode', True)
+    return jsonify(live_data.get_all_environments(fake_mode))
 
 @app.route("/api/environment/current", methods=['GET', 'POST'])
-def api_current_environment():
-    """Get or set current environment"""
+@login_required
+def update_environment():
+    """Update current environment"""
     if request.method == 'GET':
         return jsonify({
             'current': live_data.get_current_environment(),
