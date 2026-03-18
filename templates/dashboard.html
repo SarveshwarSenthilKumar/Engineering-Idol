@@ -221,11 +221,11 @@
 }
 
 .mini-chart {
-    height: 28px !important;
+    height: 60px !important;
     margin-top: 0.5rem;
     opacity: 0.8;
     transition: opacity 0.3s ease;
-    max-height: 28px !important;
+    max-height: 60px !important;
     overflow: hidden !important;
     display: block !important;
 }
@@ -235,8 +235,8 @@
 }
 
 .mini-chart canvas {
-    height: 28px !important;
-    max-height: 28px !important;
+    height: 60px !important;
+    max-height: 60px !important;
     width: 100% !important;
 }
 
@@ -287,7 +287,7 @@
 
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
     gap: 1rem;
     margin-top: 1rem;
 }
@@ -775,55 +775,210 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // Threat gauge
-    const threatCtx = document.getElementById('threat-gauge').getContext('2d');
-    const threatGauge = new Chart(threatCtx, {
-        type: 'doughnut',
-        data: {
-            datasets: [{
-                data: [0, 100],
-                backgroundColor: ['#28a745', '#e9ecef'],
-                borderWidth: 0,
-                circumference: 180,
-                rotation: 270
-            }]
-        },
-        options: {
-            cutout: '70%',
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                tooltip: { enabled: false },
-                legend: { display: false }
-            }
-        }
-    });
+    // Global variables for charts
+    let threatGauge, qualityGauge, airChart, soundChart;
+    let dataHistory = {
+        air: [],
+        sound: []
+    };
 
-    // Quality gauge
-    const qualityCtx = document.getElementById('quality-gauge').getContext('2d');
-    const qualityGauge = new Chart(qualityCtx, {
-        type: 'doughnut',
-        data: {
-            datasets: [{
-                data: [0, 100],
-                backgroundColor: ['#17a2b8', '#e9ecef'],
-                borderWidth: 0,
-                circumference: 180,
-                rotation: 270
-            }]
-        },
-        options: {
-            cutout: '70%',
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                tooltip: { enabled: false },
-                legend: { display: false }
+    // Initialize threat gauge
+    function initThreatGauge() {
+        const ctx = document.getElementById('threat-gauge').getContext('2d');
+        threatGauge = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                datasets: [{
+                    data: [0, 100],
+                    backgroundColor: ['#28a745', '#e9ecef'],
+                    borderWidth: 0,
+                    circumference: 180,
+                    rotation: 270
+                }]
+            },
+            options: {
+                cutout: '70%',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: { enabled: false },
+                    legend: { display: false }
+                }
             }
-        }
-    });
+        });
+    }
 
+    // Initialize quality gauge
+    function initQualityGauge() {
+        const ctx = document.getElementById('quality-gauge').getContext('2d');
+        qualityGauge = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                datasets: [{
+                    data: [0, 100],
+                    backgroundColor: ['#17a2b8', '#e9ecef'],
+                    borderWidth: 0,
+                    circumference: 180,
+                    rotation: 270
+                }]
+            },
+            options: {
+                cutout: '70%',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: { enabled: false },
+                    legend: { display: false }
+                }
+            }
+        });
+    }
+
+    // Initialize mini charts
+    function initMiniCharts() {
+        // Air quality chart
+        const airCtx = document.getElementById('air-chart');
+        if (airCtx) {
+            airChart = new Chart(airCtx.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: Array.from({length: 20}, (_, i) => i),
+                    datasets: [{
+                        data: Array(20).fill(0),
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        pointRadius: 0,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { display: false }, 
+                        tooltip: { enabled: false } 
+                    },
+                    scales: {
+                        x: { display: false },
+                        y: { display: false }
+                    },
+                    animation: {
+                        duration: 300
+                    }
+                }
+            });
+        }
+        
+        // Sound chart
+        const soundCtx = document.getElementById('sound-chart');
+        if (soundCtx) {
+            soundChart = new Chart(soundCtx.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: Array.from({length: 20}, (_, i) => i),
+                    datasets: [{
+                        data: Array(20).fill(0),
+                        borderColor: '#48bb78',
+                        backgroundColor: 'rgba(72, 187, 120, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        pointRadius: 0,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { display: false }, 
+                        tooltip: { enabled: false } 
+                    },
+                    scales: {
+                        x: { display: false },
+                        y: { display: false }
+                    },
+                    animation: {
+                        duration: 300
+                    }
+                }
+            });
+        }
+    }
+
+    // Update threat gauge with color coding
+    function updateThreatGauge(score) {
+        if (!threatGauge) return;
+        
+        let color;
+        if (score >= 80) {
+            color = '#dc3545'; // Critical - Red
+        } else if (score >= 60) {
+            color = '#fd7e14'; // High - Orange
+        } else if (score >= 40) {
+            color = '#ffc107'; // Elevated - Yellow
+        } else if (score >= 20) {
+            color = '#17a2b8'; // Moderate - Blue
+        } else {
+            color = '#28a745'; // Low - Green
+        }
+        
+        threatGauge.data.datasets[0].data = [score, 100 - score];
+        threatGauge.data.datasets[0].backgroundColor[0] = color;
+        threatGauge.update('none');
+    }
+
+    // Update quality gauge with color coding
+    function updateQualityGauge(score) {
+        if (!qualityGauge) return;
+        
+        let color;
+        if (score >= 80) {
+            color = '#28a745'; // Excellent - Green
+        } else if (score >= 60) {
+            color = '#17a2b8'; // Good - Blue
+        } else if (score >= 40) {
+            color = '#ffc107'; // Fair - Yellow
+        } else if (score >= 20) {
+            color = '#fd7e14'; // Poor - Orange
+        } else {
+            color = '#dc3545'; // Critical - Red
+        }
+        
+        qualityGauge.data.datasets[0].data = [score, 100 - score];
+        qualityGauge.data.datasets[0].backgroundColor[0] = color;
+        qualityGauge.update('none');
+    }
+
+    // Update mini charts with new data
+    function updateMiniCharts(data) {
+        // Update air quality chart
+        if (airChart && data.odor && data.odor.air_quality_index !== undefined) {
+            const aqi = data.odor.air_quality_index;
+            dataHistory.air.push(aqi);
+            if (dataHistory.air.length > 20) {
+                dataHistory.air.shift();
+            }
+            airChart.data.datasets[0].data = [...dataHistory.air];
+            airChart.update('none');
+        }
+        
+        // Update sound chart
+        if (soundChart && data.sound && data.sound.db !== undefined) {
+            const db = data.sound.db;
+            dataHistory.sound.push(db);
+            if (dataHistory.sound.length > 20) {
+                dataHistory.sound.shift();
+            }
+            soundChart.data.datasets[0].data = [...dataHistory.sound];
+            soundChart.update('none');
+        }
+    }
+
+    // Main function to handle live data updates
     function handleLiveUpdate(data) {
         console.log('Updating dashboard with:', data);
         
@@ -844,11 +999,11 @@
             
             // Set colors and alerts
             const threatConfig = {
-                'CRITICAL': { color: '#742a2a', bg: 'bg-danger', alert: 'alert-critical' },
-                'HIGH': { color: '#c05621', bg: 'bg-warning', alert: 'alert-high' },
-                'ELEVATED': { color: '#d69e2e', bg: 'bg-info', alert: 'alert-elevated' },
-                'MODERATE': { color: '#2b6cb0', bg: 'bg-primary', alert: 'alert-moderate' },
-                'LOW': { color: '#22543d', bg: 'bg-success', alert: 'alert-low' }
+                'CRITICAL': { color: '#dc3545', bg: 'bg-danger', alert: 'alert-critical' },
+                'HIGH': { color: '#fd7e14', bg: 'bg-warning', alert: 'alert-high' },
+                'ELEVATED': { color: '#ffc107', bg: 'bg-warning', alert: 'alert-elevated' },
+                'MODERATE': { color: '#17a2b8', bg: 'bg-info', alert: 'alert-moderate' },
+                'LOW': { color: '#28a745', bg: 'bg-success', alert: 'alert-low' }
             };
             
             const config = threatConfig[level] || threatConfig['LOW'];
@@ -856,13 +1011,11 @@
             threatAlert.className = `alert-indicator ${config.alert}`;
             
             // Update gauge
-            threatGauge.data.datasets[0].data = [score, 100 - score];
-            threatGauge.data.datasets[0].backgroundColor[0] = config.color;
-            threatGauge.update();
+            updateThreatGauge(score);
             
             // Update threat change indicator
             const changeEl = document.getElementById('threat-change');
-            if (threat.temporal && threat.temporal.slope) {
+            if (threat.temporal && threat.temporal.slope !== undefined) {
                 const slope = threat.temporal.slope;
                 if (slope > 1) {
                     changeEl.textContent = `⬆️ +${slope.toFixed(1)}`;
@@ -887,43 +1040,21 @@
                 };
                 document.getElementById('trend-value').textContent = trendMap[threat.temporal.trend] || '--';
                 document.getElementById('slope-value').textContent = (threat.temporal.slope || 0).toFixed(1);
-                document.getElementById('persistence-value').textContent = (threat.temporal.persistence || 1.0).toFixed(1);
-            }
-            
-            // Trajectory predictions
-            if (threat.trajectory) {
-                const updatePrediction = (id, value) => {
-                    const el = document.getElementById(id);
-                    if (el && value !== undefined) {
-                        const width = Math.min(Math.max(value, 0), 100);
-                        el.style.width = width + '%';
-                        el.textContent = Math.round(value);
-                    }
-                };
-                
-                updatePrediction('pred-5min', threat.trajectory['5min']);
-                updatePrediction('pred-15min', threat.trajectory['15min']);
-                updatePrediction('pred-30min', threat.trajectory['30min']);
             }
             
             // Component scores
             if (threat.components) {
                 const comp = threat.components;
-                console.log('Updating threat components:', comp); // Debug log
                 
                 // Update individual component scores
                 const updateComp = (id, component) => {
                     const el = document.getElementById(id);
-                    if (el && component) {
+                    if (el && component && component.score !== undefined) {
                         const score = Math.round(component.score || 0);
                         el.textContent = score;
-                        console.log(`Updated ${id}: ${score}`); // Debug each component
-                    } else {
-                        console.log(`Missing element or component for ${id}:`, el, component);
                     }
                 };
                 
-                // Update all component scores
                 updateComp('prox-score', comp.proximity);
                 updateComp('count-score', comp.count);
                 updateComp('behave-score', comp.behavior);
@@ -932,28 +1063,23 @@
                 updateComp('noise-score', comp.noise);
                 
                 // Update component bar visualization
-                if (comp.proximity && comp.count && comp.behavior && comp.vital_signs && comp.air_quality && comp.noise) {
-                    const updateBar = (id, component) => {
-                        const el = document.getElementById(id);
-                        if (el && component) {
-                            const width = (component.weight * 100);
-                            el.style.width = width + '%';
-                            el.title = `${id}: ${Math.round(component.score || 0)} (${width.toFixed(0)}%)`;
-                            console.log(`Updated bar ${id}: ${width}%`); // Debug bar updates
-                        }
-                    };
-                    
-                    updateBar('comp-proximity', comp.proximity);
-                    updateBar('comp-count', comp.count);
-                    updateBar('comp-behavior', comp.behavior);
-                    updateBar('comp-vital', comp.vital_signs);
-                    updateBar('comp-air', comp.air_quality);
-                    updateBar('comp-noise', comp.noise);
-                } else {
-                    console.log('Missing component data for bar updates');
-                }
+                const updateBar = (id, component) => {
+                    const el = document.getElementById(id);
+                    if (el && component && component.weight !== undefined) {
+                        const width = (component.weight * 100);
+                        el.style.width = width + '%';
+                        el.title = `${id}: ${Math.round(component.score || 0)} (${width.toFixed(0)}%)`;
+                    }
+                };
                 
-                // Update components alert indicator based on highest component score
+                updateBar('comp-proximity', comp.proximity);
+                updateBar('comp-count', comp.count);
+                updateBar('comp-behavior', comp.behavior);
+                updateBar('comp-vital', comp.vital_signs);
+                updateBar('comp-air', comp.air_quality);
+                updateBar('comp-noise', comp.noise);
+                
+                // Update components alert indicator
                 const componentsAlert = document.getElementById('components-alert');
                 if (componentsAlert) {
                     const scores = [
@@ -965,7 +1091,6 @@
                         comp.noise?.score || 0
                     ];
                     const maxScore = Math.max(...scores);
-                    console.log('Component scores:', scores, 'Max:', maxScore); // Debug scores
                     
                     if (maxScore > 80) {
                         componentsAlert.className = 'alert-indicator alert-critical';
@@ -978,20 +1103,7 @@
                     } else {
                         componentsAlert.className = 'alert-indicator alert-low';
                     }
-                } else {
-                    console.log('Components alert element not found');
                 }
-                
-                // Log component contributions to overall threat
-                const contributions = {};
-                for (const [name, component] of Object.entries(comp)) {
-                    contributions[name] = (component.score || 0) * (component.weight || 0);
-                }
-                console.log('Component contributions to threat:', contributions);
-                console.log('Calculated threat from components:', Object.values(contributions).reduce((a, b) => a + b, 0));
-                
-            } else {
-                console.log('No threat components data available in:', threat); // Debug log
             }
         }
         
@@ -1004,8 +1116,7 @@
             document.getElementById('quality-category').textContent = quality.category || '--';
             
             // Update quality gauge
-            qualityGauge.data.datasets[0].data = [score, 100 - score];
-            qualityGauge.update();
+            updateQualityGauge(score);
             
             // Quality trend
             const trendEl = document.getElementById('quality-trend');
@@ -1114,24 +1225,13 @@
             document.getElementById('avg-distance').textContent = avgDist.toFixed(1) + 'm';
             document.getElementById('abnormal-count').textContent = abnormal;
             
-            // Group by target ID for current state
-            const currentTargets = {};
-            targets.forEach(t => {
-                if (!currentTargets[t.target_id] || 
-                    new Date(t.event_timestamp) > new Date(currentTargets[t.target_id].event_timestamp)) {
-                    currentTargets[t.target_id] = t;
-                }
-            });
-            
-            const currentList = Object.values(currentTargets);
-            
             // Update target cards
             const cardsContainer = document.getElementById('target-cards');
-            if (currentList.length === 0) {
+            if (total === 0) {
                 cardsContainer.innerHTML = '<div class="col-12 text-center">No people detected</div>';
             } else {
                 let cardsHtml = '';
-                currentList.forEach((target, i) => {
+                targets.forEach((target, i) => {
                     cardsHtml += `
                         <div class="col-md-6 mb-2">
                             <div class="card ${target.target_abnormal_breathing ? 'border-danger' : ''} bg-light">
@@ -1177,14 +1277,14 @@
             document.getElementById('occupancy-alert').className = 'alert-indicator alert-low';
         }
         
+        // Update mini charts
+        updateMiniCharts(data);
+        
         // Update last update time
         document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
-        
-        // Update mini charts with new data
-        updateMiniCharts(data);
     }
-    
-    // Load recent events with enhanced statistics
+
+    // Load recent events
     function loadEvents() {
         fetch('/api/events/recent?limit=10')
             .then(response => response.json())
@@ -1232,7 +1332,7 @@
                     '<tr><td colspan="8" class="text-center text-danger py-4">📡 Error loading events</td></tr>';
             });
     }
-    
+
     // Update event statistics
     function updateEventStats(events) {
         const stats = {
@@ -1255,139 +1355,239 @@
         document.getElementById('stat-elevated').textContent = stats.elevated;
         document.getElementById('stat-critical').textContent = stats.critical;
     }
-    
+
     // Refresh events function
     function refreshEvents() {
         const tbody = document.getElementById('events-body');
         tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4"><div class="spinner-border spinner-border-sm me-2" role="status"></div>Refreshing...</td></tr>';
         loadEvents();
     }
-    
-    // Initialize mini charts
-    function initMiniCharts() {
-        // Air quality mini chart
-        const airCtx = document.getElementById('air-chart');
-        if (airCtx) {
-            window.airChart = new Chart(airCtx.getContext('2d'), {
-                type: 'line',
-                data: {
-                    labels: Array.from({length: 15}, (_, i) => ''),
-                    datasets: [{
-                        data: Array.from({length: 15}, () => Math.random() * 100),
-                        borderColor: '#667eea',
-                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                        borderWidth: 1.5,
-                        tension: 0.6,
-                        pointRadius: 0,
-                        fill: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false }, tooltip: { enabled: false } },
-                    scales: {
-                        x: { display: false },
-                        y: { display: false }
-                    },
-                    elements: {
-                        line: {
-                            borderCapStyle: 'round',
-                            borderJoinStyle: 'round'
-                        }
-                    },
-                    resizeDelay: 0,
-                    animation: {
-                        duration: 300
+
+    // Update environment scores
+    function updateEnvironmentScores() {
+        fetch('/api/environments')
+            .then(response => response.json())
+            .then(environments => {
+                const grid = document.getElementById('environment-scores-grid');
+                if (!grid) return;
+                
+                let html = '';
+                let highestThreatEnv = null;
+                let highestThreatScore = -1;
+                
+                Object.entries(environments).forEach(([envId, envData]) => {
+                    const threatScore = envData.threat_score || 0;
+                    
+                    if (threatScore > highestThreatScore) {
+                        highestThreatScore = threatScore;
+                        highestThreatEnv = envId;
                     }
+                    
+                    // Determine card classes
+                    let cardClass = 'env-score-card';
+                    if (envId === '{{ current_environment }}') {
+                        cardClass += ' active';
+                    }
+                    if (envId === highestThreatEnv) {
+                        cardClass += ' highest-threat';
+                    }
+                    
+                    // Determine threat level class
+                    const levelClass = `threat-${getThreatLevel(threatScore).toLowerCase()}`;
+                    
+                    html += `
+                        <div class="${cardClass}" data-environment-id="${envId}">
+                            <div class="env-score-name">
+                                <i class="bi ${envData.icon || 'bi-house'}" style="color: ${envData.color || '#007bff'}"></i>
+                                <span class="env-name-text" onclick="editEnvironmentName('${envId}', '${(envData.name || '').replace(/'/g, "\\'")}')">${envData.name || 'Unknown'}</span>
+                            </div>
+                            <div class="env-score-value">${threatScore.toFixed(1)}</div>
+                            <div class="env-score-level ${levelClass}">${getThreatLevel(threatScore)}</div>
+                        </div>
+                    `;
+                });
+                
+                grid.innerHTML = html;
+                
+                // Update highest threat display
+                const highestNameElement = document.getElementById('dashboard-highest-name');
+                const highestThreatElement = document.getElementById('dashboard-highest-threat');
+                
+                if (highestThreatEnv) {
+                    const highestEnv = environments[highestThreatEnv];
+                    highestNameElement.textContent = highestEnv.name || 'Unknown';
+                    highestThreatElement.innerHTML = `<i class="bi bi-exclamation-triangle"></i> Highest: ${getThreatLevel(highestThreatScore)}`;
+                } else {
+                    highestNameElement.textContent = 'No active threats';
+                    highestThreatElement.innerHTML = '<i class="bi bi-check-circle"></i> System Stable';
                 }
+            })
+            .catch(error => {
+                console.error('Error updating environment scores:', error);
             });
-        }
+    }
+
+    function getThreatLevel(score) {
+        if (score >= 80) return 'CRITICAL';
+        if (score >= 60) return 'HIGH';
+        if (score >= 40) return 'ELEVATED';
+        if (score >= 20) return 'MODERATE';
+        return 'LOW';
+    }
+
+    // Function to edit environment name
+    function editEnvironmentName(environmentId, currentName) {
+        // Create modal HTML
+        const modalHtml = `
+            <div class="environment-edit-modal" id="environment-edit-modal">
+                <div class="environment-edit-modal-content">
+                    <h5><i class="bi bi-gear me-2"></i>Edit Environment Name</h5>
+                    <div class="form-group">
+                        <label for="env-name-input">Environment Name:</label>
+                        <input type="text" id="env-name-input" value="${currentName}" 
+                               placeholder="Enter environment name" maxlength="50" autofocus>
+                    </div>
+                    <div class="modal-buttons">
+                        <button type="button" class="btn btn-secondary" onclick="closeEnvironmentModal()">
+                            <i class="bi bi-x-lg me-1"></i>Cancel
+                        </button>
+                        <button type="button" class="btn btn-primary" onclick="saveEnvironmentName('${environmentId}')">
+                            <i class="bi bi-check-lg me-1"></i>Save
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
         
-        // Sound mini chart
-        const soundCtx = document.getElementById('sound-chart');
-        if (soundCtx) {
-            window.soundChart = new Chart(soundCtx.getContext('2d'), {
-                type: 'line',
-                data: {
-                    labels: Array.from({length: 15}, (_, i) => ''),
-                    datasets: [{
-                        data: Array.from({length: 15}, () => Math.random() * 80 + 20),
-                        borderColor: '#48bb78',
-                        backgroundColor: 'rgba(72, 187, 120, 0.1)',
-                        borderWidth: 1.5,
-                        tension: 0.6,
-                        pointRadius: 0,
-                        fill: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false }, tooltip: { enabled: false } },
-                    scales: {
-                        x: { display: false },
-                        y: { display: false }
-                    },
-                    elements: {
-                        line: {
-                            borderCapStyle: 'round',
-                            borderJoinStyle: 'round'
-                        }
-                    },
-                    resizeDelay: 0,
-                    animation: {
-                        duration: 300
-                    }
-                }
-            });
+        // Add modal to page
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        
+        // Focus on input
+        setTimeout(() => {
+            const input = document.getElementById('env-name-input');
+            if (input) {
+                input.focus();
+                input.select();
+            }
+        }, 100);
+        
+        // Add event listeners
+        document.getElementById('environment-edit-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeEnvironmentModal();
+            }
+        });
+        
+        document.getElementById('env-name-input').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                saveEnvironmentName(environmentId);
+            } else if (e.key === 'Escape') {
+                closeEnvironmentModal();
+            }
+        });
+    }
+
+    function closeEnvironmentModal() {
+        const modal = document.getElementById('environment-edit-modal');
+        if (modal) {
+            modal.remove();
         }
     }
-    
-    // Update mini charts with new data
-    function updateMiniCharts(data) {
-        // Check if no real data is available
-        if (data.no_data) {
-            // Show blank/empty charts
-            if (window.airChart) {
-                window.airChart.data.datasets[0].data = Array(15).fill(null);
-                window.airChart.update('none');
-            }
-            if (window.soundChart) {
-                window.soundChart.data.datasets[0].data = Array(15).fill(null);
-                window.soundChart.update('none');
-            }
+
+    function saveEnvironmentName(environmentId) {
+        const nameInput = document.getElementById('env-name-input');
+        
+        const newName = nameInput.value.trim();
+        
+        if (!newName) {
+            alert('Environment name is required');
             return;
         }
         
-        // Update air quality chart
-        if (window.airChart && data.odor) {
-            const aqi = data.odor.air_quality_index || 0;
-            const currentData = window.airChart.data.datasets[0].data;
-            currentData.shift();
-            currentData.push(aqi);
-            window.airChart.update('none');
-        }
-        
-        // Update sound chart
-        if (window.soundChart && data.sound) {
-            const db = data.sound.db || 0;
-            const currentData = window.soundChart.data.datasets[0].data;
-            currentData.shift();
-            currentData.push(db);
-            window.soundChart.update('none');
+        // Send update request
+        fetch(`/api/environment/${environmentId}/settings`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                name: newName
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Close modal
+                closeEnvironmentModal();
+                
+                // Show success message
+                showFlashMessage('Environment name updated successfully!', 'success');
+                
+                // Update display immediately
+                updateEnvironmentDisplayName(environmentId, newName);
+                
+                // Refresh environment scores to get updated data
+                setTimeout(() => {
+                    updateEnvironmentScores();
+                }, 500);
+            } else {
+                alert('Failed to update environment name: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error updating environment name:', error);
+            alert('Error updating environment name. Please try again.');
+        });
+    }
+
+    function updateEnvironmentDisplayName(environmentId, newName) {
+        // Update dashboard environment cards
+        const envCard = document.querySelector(`[data-environment-id="${environmentId}"]`);
+        if (envCard) {
+            const nameSpan = envCard.querySelector('.env-name-text');
+            if (nameSpan) {
+                nameSpan.textContent = newName;
+            }
         }
     }
-    
-    // Load initial data
-    document.addEventListener('DOMContentLoaded', function() {
-        initMiniCharts();
-        loadEvents();
+
+    function showFlashMessage(message, type) {
+        // Create flash message element
+        const flashDiv = document.createElement('div');
+        flashDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show`;
+        flashDiv.style.position = 'fixed';
+        flashDiv.style.top = '20px';
+        flashDiv.style.right = '20px';
+        flashDiv.style.zIndex = '1060';
+        flashDiv.style.maxWidth = '400px';
+        flashDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+        `;
         
-        // Initialize environment scores
+        document.body.appendChild(flashDiv);
+        
+        // Auto-remove after 3 seconds
+        setTimeout(() => {
+            if (flashDiv.parentElement) {
+                flashDiv.remove();
+            }
+        }, 3000);
+    }
+
+    // Initialize everything when DOM is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize charts
+        initThreatGauge();
+        initQualityGauge();
+        initMiniCharts();
+        
+        // Load initial data
+        loadEvents();
         updateEnvironmentScores();
         
-        // Fetch live data immediately on page load
+        // Fetch live data immediately
         const fetchData = () => {
             fetch('/api/live')
                 .then(response => response.json())
@@ -1401,367 +1601,13 @@
         
         fetchData();
         
-        // Refresh events every 30 seconds
-        setInterval(loadEvents, 30000);
-        
-        // Then continue with regular updates every 2 seconds
-        setInterval(fetchData, 2000);
-        
-        // Update environment scores every 2 seconds (to match main dashboard updates)
-        setInterval(updateEnvironmentScores, 2000);
+        // Set up regular updates
+        setInterval(fetchData, 2000);  // Update every 2 seconds
+        setInterval(loadEvents, 30000);  // Update events every 30 seconds
+        setInterval(updateEnvironmentScores, 2000);  // Update environment scores every 2 seconds
         
         // Initialize dashboard with current time
         document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
     });
-
-// Function to update environment scores grid
-function generateIntelligentAnalysis(data) {
-    const temp = data.temperature || 20;
-    const people = data.people_count || 0;
-    const threat = data.threat?.overall_threat || 0;
-    const aqi = data.odor?.air_quality_index || 50;
-    const sound = data.sound?.db || 40;
-    
-    let recommendations = [];
-    let riskLevel = 'LOW';
-    let actions = [];
-    
-    // Temperature-based analysis
-    if (temp > 30) {
-        recommendations.push('🌡️ High temperature detected - Ensure adequate ventilation');
-        riskLevel = 'MODERATE';
-    } else if (temp > 25) {
-        recommendations.push('🌡️ Warm environment - Monitor for heat stress indicators');
-    } else if (temp < 18) {
-        recommendations.push('❄️ Cold environment - Check heating system efficiency');
-    }
-    
-    // People-based analysis
-    if (people > 3) {
-        recommendations.push('👥 High occupancy - Consider crowd management measures');
-        riskLevel = 'ELEVATED';
-    } else if (people > 1) {
-        recommendations.push('👥 Multiple occupants - Maintain situational awareness');
-    }
-    
-    // Environment quality analysis
-    if (aqi > 100) {
-        recommendations.push('🌫️ Poor air quality - Activate air purification systems');
-        riskLevel = 'HIGH';
-    } else if (aqi > 70) {
-        recommendations.push('⚠️ Moderate air pollution - Increase fresh air circulation');
-    }
-    
-    // Sound level analysis
-    if (sound > 80) {
-        recommendations.push('🔊 Excessive noise - Implement noise reduction measures');
-        riskLevel = 'ELEVATED';
-    } else if (sound > 60) {
-        recommendations.push('🔊 Elevated noise levels - Consider acoustic dampening');
-    }
-    
-    // Threat-based actions
-    if (threat > 70) {
-        actions.push('🚨 Activate security protocols');
-        actions.push('📹 Notify security personnel');
-        actions.push('🔍 Lock down sensitive areas');
-    } else if (threat > 50) {
-        actions.push('⚠️ Increase surveillance frequency');
-        actions.push('👁 Verify access credentials');
-    } else if (threat > 30) {
-        actions.push('📋 Document unusual activities');
-        actions.push('🔍 Check perimeter security');
-    }
-    
-    // General recommendations
-    if (riskLevel === 'HIGH') {
-        recommendations.push('🚨 IMMEDIATE ATTENTION REQUIRED');
-    } else if (riskLevel === 'ELEVATED') {
-        recommendations.push('⚠️ Increased monitoring recommended');
-    }
-    
-    const summary = recommendations.length > 0 ? recommendations.join('<br>') : '✅ All systems normal';
-    
-    return {
-        summary,
-        riskLevel,
-        actions,
-        temperature: temp.toFixed(1),
-        people,
-        threat: threat.toFixed(1),
-        aqi: aqi.toFixed(0),
-        sound: sound.toFixed(1)
-    };
-}
-
-function updateIntelligentDisplay(data) {
-    const analysis = generateIntelligentAnalysis(data);
-    
-    // Update AI summary
-    document.getElementById('recommendations').innerHTML = analysis.summary;
-    
-    // Update conditions display
-    document.getElementById('temperature-value').textContent = analysis.temperature + '°C';
-    document.getElementById('people-condition').textContent = analysis.people;
-    document.getElementById('air-quality-condition').textContent = getAirQualityLevel(analysis.aqi);
-    
-    // Update risk indicators
-    updateRiskIndicators(analysis.riskLevel);
-}
-
-function getAirQualityLevel(aqi) {
-    if (aqi > 150) return 'HAZARDOUS';
-    if (aqi > 100) return 'POOR';
-    if (aqi > 50) return 'MODERATE';
-    return 'GOOD';
-}
-
-function updateRiskIndicators(riskLevel) {
-    const alertElement = document.getElementById('ai-summary');
-    alertElement.className = 'alert';
-    
-    if (riskLevel === 'HIGH') {
-        alertElement.classList.add('alert-danger');
-    } else if (riskLevel === 'ELEVATED') {
-        alertElement.classList.add('alert-warning');
-    } else {
-        alertElement.classList.add('alert-info');
-    }
-}
-
-function updateEnvironmentScores() {
-    fetch('/api/environments')
-        .then(response => response.json())
-        .then(environments => {
-            const grid = document.getElementById('environment-scores-grid');
-            if (!grid) return;
-            
-            let html = '';
-            let highestThreatEnv = null;
-            let highestThreatScore = -1;
-            
-            Object.entries(environments).forEach(([envId, envData]) => {
-                const threatScore = envData.threat_score || 0;
-                
-                if (threatScore > highestThreatScore) {
-                    highestThreatScore = threatScore;
-                    highestThreatEnv = envId;
-                }
-                
-                // Determine card classes
-                let cardClass = 'env-score-card';
-                if (envId === '{{ current_environment }}') {
-                    cardClass += ' active';
-                }
-                if (envId === highestThreatEnv) {
-                    cardClass += ' highest-threat';
-                }
-                
-                // Determine threat level class
-                const levelClass = `threat-${getThreatLevel(threatScore).toLowerCase()}`;
-                
-                html += `
-                    <div class="${cardClass}" data-environment-id="${envId}">
-                        <div class="env-score-name">
-                            <i class="bi ${envData.icon || 'bi-house'}" style="color: ${envData.color || '#007bff'}"></i>
-                            <span class="env-name-text" onclick="editEnvironmentName('${envId}', '${(envData.name || '').replace(/'/g, "\\'")}')">${envData.name || 'Unknown'}</span>
-                        </div>
-                        <div class="env-score-value">${threatScore.toFixed(1)}</div>
-                        <div class="env-score-level ${levelClass}">${getThreatLevel(threatScore)}</div>
-                    </div>
-                `;
-            });
-            
-            grid.innerHTML = html;
-            
-            // Update highest threat display
-            const highestNameElement = document.getElementById('dashboard-highest-name');
-            const highestThreatElement = document.getElementById('dashboard-highest-threat');
-            
-            if (highestThreatEnv) {
-                const highestEnv = environments[highestThreatEnv];
-                highestNameElement.textContent = highestEnv.name || 'Unknown';
-                highestThreatElement.textContent = `Highest: ${getThreatLevel(highestThreatScore)}`;
-            } else {
-                highestNameElement.textContent = 'No active threats';
-                highestThreatElement.textContent = 'System Stable';
-            }
-        })
-        .then(() => {
-            // Update intelligent analysis with current data
-            fetch('/api/live')
-                .then(response => response.json())
-                .then(data => {
-                    updateIntelligentDisplay(data);
-                });
-        })
-        .catch(error => {
-            console.error('Error updating environment scores:', error);
-        });
-}
-
-function getThreatLevel(score) {
-    if (score >= 80) return 'CRITICAL';
-    if (score >= 60) return 'HIGH';
-    if (score >= 40) return 'ELEVATED';
-    if (score >= 20) return 'MODERATE';
-    return 'LOW';
-}
-
-// Function to edit environment name
-function editEnvironmentName(environmentId, currentName) {
-    // Create modal HTML
-    const modalHtml = `
-        <div class="environment-edit-modal" id="environment-edit-modal">
-            <div class="environment-edit-modal-content">
-                <h5><i class="bi bi-gear me-2"></i>Edit Environment Name</h5>
-                <div class="form-group">
-                    <label for="env-name-input">Environment Name:</label>
-                    <input type="text" id="env-name-input" value="${currentName}" 
-                           placeholder="Enter environment name" maxlength="50" autofocus>
-                </div>
-                <div class="modal-buttons">
-                    <button type="button" class="btn btn-secondary" onclick="closeEnvironmentModal()">
-                        <i class="bi bi-x-lg me-1"></i>Cancel
-                    </button>
-                    <button type="button" class="btn btn-primary" onclick="saveEnvironmentName('${environmentId}')">
-                        <i class="bi bi-check-lg me-1"></i>Save
-                    </button>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    // Add modal to page
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
-    
-    // Focus on input
-    setTimeout(() => {
-        const input = document.getElementById('env-name-input');
-        if (input) {
-            input.focus();
-            input.select();
-        }
-    }, 100);
-    
-    // Add event listeners
-    document.getElementById('environment-edit-modal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            closeEnvironmentModal();
-        }
-    });
-    
-    document.getElementById('env-name-input').addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            saveEnvironmentName(environmentId);
-        } else if (e.key === 'Escape') {
-            closeEnvironmentModal();
-        }
-    });
-}
-
-function closeEnvironmentModal() {
-    const modal = document.getElementById('environment-edit-modal');
-    if (modal) {
-        modal.remove();
-    }
-}
-
-function saveEnvironmentName(environmentId) {
-    const nameInput = document.getElementById('env-name-input');
-    
-    const newName = nameInput.value.trim();
-    
-    if (!newName) {
-        alert('Environment name is required');
-        return;
-    }
-    
-    // Send update request
-    fetch(`/api/environment/${environmentId}/settings`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            name: newName
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Close modal
-            closeEnvironmentModal();
-            
-            // Show success message
-            showFlashMessage('Environment name updated successfully!', 'success');
-            
-            // Update the display immediately
-            updateEnvironmentDisplayName(environmentId, newName);
-            
-            // Refresh environment scores to get updated data
-            setTimeout(() => {
-                updateEnvironmentScores();
-            }, 500);
-        } else {
-            alert('Failed to update environment name: ' + (data.error || 'Unknown error'));
-        }
-    })
-    .catch(error => {
-        console.error('Error updating environment name:', error);
-        alert('Error updating environment name. Please try again.');
-    });
-}
-
-function updateEnvironmentDisplayName(environmentId, newName) {
-    // Update dashboard environment cards
-    const envCard = document.querySelector(`[data-environment-id="${environmentId}"]`);
-    if (envCard) {
-        const nameSpan = envCard.querySelector('.env-name-text');
-        if (nameSpan) {
-            nameSpan.textContent = newName;
-        }
-    }
-    
-    // Update sidebar environment list if it exists
-    const sidebarItem = document.querySelector(`#sidebarEnvironmentList [data-env-id="${environmentId}"] .environment-name`);
-    if (sidebarItem) {
-        sidebarItem.textContent = newName;
-    }
-    
-    // Update highest threat display if needed
-    const highestNameElement = document.getElementById('dashboard-highest-name');
-    if (highestNameElement && highestNameElement.textContent.includes('Loading...')) {
-        // Refresh to get the updated highest threat environment
-        updateEnvironmentScores();
-    }
-}
-
-function showFlashMessage(message, type) {
-    // Create flash message element
-    const flashDiv = document.createElement('div');
-    flashDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show`;
-    flashDiv.style.position = 'fixed';
-    flashDiv.style.top = '20px';
-    flashDiv.style.right = '20px';
-    flashDiv.style.zIndex = '1060';
-    flashDiv.style.maxWidth = '400px';
-    flashDiv.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" onclick="this.parentElement.remove()">
-            <span>&times;</span>
-        </button>
-    `;
-    
-    document.body.appendChild(flashDiv);
-    
-    // Auto-remove after 3 seconds
-    setTimeout(() => {
-        if (flashDiv.parentElement) {
-            flashDiv.remove();
-        }
-    }, 3000);
-}
 </script>
 {% endblock %}
