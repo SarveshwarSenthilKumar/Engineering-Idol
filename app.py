@@ -1947,6 +1947,40 @@ def api_components():
     components = get_average_threat_components(hours)
     return jsonify(components)
 
+@app.route("/api/test-notification", methods=['POST'])
+def api_test_notification():
+    """Test notification channels (fake data mode only)"""
+    # Only allow in fake data mode
+    fake_mode = session.get('fake_mode', True)
+    if not fake_mode:
+        return jsonify({'success': False, 'error': 'Test notifications only available in fake data mode'})
+    
+    try:
+        data = request.get_json()
+        channel = data.get('channel', 'all')
+        message = data.get('message', 'Test notification from Environmental Monitoring System')
+        
+        # Import fake data generator
+        from fake_data_generator import FakeDataGenerator
+        generator = FakeDataGenerator()
+        
+        if channel == 'all':
+            results = generator.send_test_notifications(message)
+        elif channel == 'email':
+            results = {'email': generator.send_test_email(message)}
+        elif channel == 'teams':
+            results = {'teams': generator.send_test_teams(message)}
+        elif channel == 'sms':
+            results = {'sms': generator.send_test_sms(message)}
+        else:
+            return jsonify({'success': False, 'error': f'Unknown channel: {channel}'})
+        
+        return jsonify({'success': True, 'results': results})
+        
+    except Exception as e:
+        app.logger.error(f"Error testing notifications: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
 @app.route("/api/events/stream")
 def events_stream():
     """Server-Sent Events stream for real-time updates"""

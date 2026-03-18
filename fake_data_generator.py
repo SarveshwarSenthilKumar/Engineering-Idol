@@ -12,6 +12,15 @@ import numpy as np
 import json
 import os
 import sys
+import smtplib
+import ssl
+from email.mime.text import MimeText
+from email.mime.multipart import MimeMultipart
+import requests
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Configuration
 DB_PATH = 'events.db'
@@ -688,6 +697,150 @@ class FakeDataGenerator:
         self.conn.commit()
         print(f"✅ Generated {count} events successfully!")
         
+    def send_test_email(self, message="Test notification from fake data generator"):
+        """Send test email notification"""
+        try:
+            smtp_server = os.getenv('GMAIL_SMTP_SERVER', 'smtp.gmail.com')
+            smtp_port = int(os.getenv('GMAIL_SMTP_PORT', 587))
+            sender_email = os.getenv('GMAIL_SENDER_EMAIL')
+            sender_password = os.getenv('GMAIL_SENDER_PASSWORD')
+            recipient_email = os.getenv('GMAIL_RECIPIENT_EMAIL')
+            
+            if not all([sender_email, sender_password, recipient_email]):
+                print("⚠️ Gmail credentials not configured")
+                return False
+            
+            msg = MimeMultipart()
+            msg['From'] = sender_email
+            msg['To'] = recipient_email
+            msg['Subject'] = '🧪 TEST: Fake Data Generator Notification'
+            
+            body = f"""
+🕐 Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+📊 System: Fake Data Generator
+
+{message}
+
+---
+This is a test message from the Environmental Monitoring System Fake Data Generator.
+            """
+            msg.attach(MimeText(body, 'plain'))
+            
+            context = ssl.create_default_context()
+            with smtplib.SMTP(smtp_server, smtp_port) as server:
+                server.starttls(context=context)
+                server.login(sender_email, sender_password)
+                server.send_message(msg)
+                
+            print("✅ Test email sent successfully")
+            return True
+            
+        except Exception as e:
+            print(f"❌ Failed to send test email: {e}")
+            return False
+    
+    def send_test_teams(self, message="Test notification from fake data generator"):
+        """Send test Teams notification"""
+        try:
+            webhook_url = os.getenv('TEAMS_WEBHOOK_URL')
+            if not webhook_url or webhook_url == 'https://your-tenant.webhook.office.com/webhookb3/...':
+                print("⚠️ Teams webhook not configured")
+                return False
+            
+            payload = {
+                "@type": "MessageCard",
+                "@context": "http://schema.org/extensions",
+                "themeColor": "0078D4",
+                "summary": "🧪 TEST: Fake Data Generator",
+                "sections": [{
+                    "activityTitle": "🧪 TEST NOTIFICATION",
+                    "activitySubtitle": f"🕐 {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+                    "facts": [{
+                        "name": "System",
+                        "value": "Fake Data Generator"
+                    }, {
+                        "name": "Purpose",
+                        "value": "Test Notification"
+                    }],
+                    "text": message
+                }]
+            }
+            
+            response = requests.post(webhook_url, 
+                                    json=payload, 
+                                    headers={'Content-Type': 'application/json'},
+                                    timeout=10)
+            
+            if response.status_code == 200:
+                print("✅ Test Teams message sent successfully")
+                return True
+            else:
+                print(f"❌ Teams notification failed: {response.status_code}")
+                return False
+                
+        except Exception as e:
+            print(f"❌ Failed to send test Teams message: {e}")
+            return False
+    
+    def send_test_sms(self, message="Test notification from fake data generator"):
+        """Send test SMS notification"""
+        try:
+            account_sid = os.getenv('TWILIO_ACCOUNT_SID')
+            auth_token = os.getenv('TWILIO_AUTH_TOKEN')
+            from_number = os.getenv('TWILIO_PHONE_NUMBER')
+            to_number = os.getenv('RECIPIENT_PHONE_NUMBER')
+            
+            if not all([account_sid, auth_token, from_number, to_number]):
+                print("⚠️ Twilio credentials not configured")
+                return False
+            
+            try:
+                from twilio.rest import Client
+                client = Client(account_sid, auth_token)
+                
+                # Add test prefix and truncate if needed
+                message = "🧪 TEST: " + message
+                if len(message) > 160:
+                    message = message[:157] + "..."
+                
+                message_obj = client.messages.create(
+                    body=message,
+                    from_=from_number,
+                    to=to_number
+                )
+                
+                print(f"✅ Test SMS sent successfully: SID {message_obj.sid}")
+                return True
+                
+            except ImportError:
+                print("⚠️ Twilio library not installed")
+                return False
+                
+        except Exception as e:
+            print(f"❌ Failed to send test SMS: {e}")
+            return False
+    
+    def send_test_notifications(self, message="Test notification from fake data generator"):
+        """Send test notifications to all configured channels"""
+        print("🧪 Sending test notifications...")
+        
+        results = {
+            'email': self.send_test_email(message),
+            'teams': self.send_test_teams(message),
+            'sms': self.send_test_sms(message)
+        }
+        
+        success_count = sum(1 for success in results.values() if success)
+        total_count = len([r for r in results.values() if r is not False])
+        
+        print(f"\n📊 Test Results: {success_count}/{total_count} notifications sent successfully")
+        
+        for channel, success in results.items():
+            status = "✅" if success else "❌"
+            print(f"   {status} {channel.capitalize()}: {'Sent' if success else 'Failed'}")
+        
+        return results
+
     def run(self):
         """Main execution"""
         try:

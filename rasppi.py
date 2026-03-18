@@ -28,6 +28,11 @@ from email.mime.text import MimeText
 from email.mime.multipart import MimeMultipart
 import requests
 import json as json_lib
+import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 from datetime import datetime
 import threading
 from dataclasses import dataclass
@@ -48,78 +53,56 @@ VERSION = "2.0.0"
 LOG_LEVEL = logging.INFO
 
 # Database Configuration
-DATABASE_PATH = 'events.db'
+DATABASE_PATH = os.getenv('DATABASE_PATH', 'events.db')
 
 # Sound Analysis Parameters
-SAMPLE_RATE = 200
-WINDOW_TIME = 1
+SAMPLE_RATE = int(os.getenv('SAMPLE_RATE', 200))
+WINDOW_TIME = int(os.getenv('WINDOW_TIME', 1))
 WINDOW_SIZE = SAMPLE_RATE * WINDOW_TIME
-REFERENCE_VOLTAGE = 0.05
-SPIKE_THRESHOLD_DB = 15
-LOUD_THRESHOLD_DB = 65
+REFERENCE_VOLTAGE = float(os.getenv('REFERENCE_VOLTAGE', 0.05))
+SPIKE_THRESHOLD_DB = int(os.getenv('SPIKE_THRESHOLD_DB', 15))
+LOUD_THRESHOLD_DB = int(os.getenv('LOUD_THRESHOLD_DB', 65))
 
 # Gas Sensor Parameters
-RLOAD = 10000
+RLOAD = int(os.getenv('RLOAD', 10000))
 VCC = 5.0
-R0 = 20000
-MQ135_CLEAN_AIR_RATIO = 3.6
+R0 = int(os.getenv('R0', 20000))
+MQ135_CLEAN_AIR_RATIO = float(os.getenv('MQ135_CLEAN_AIR_RATIO', 3.6))
 
 # Odor Classification Thresholds
-VOC_CLEAN_THRESHOLD = 50
-VOC_ACTIVITY_THRESHOLD = 80
-VOC_CHEMICAL_THRESHOLD = 120
-VOC_SMOKING_THRESHOLD = 150
-VOC_VAPING_THRESHOLD = 180
-PM_CLEAN_THRESHOLD = 10
-PM_SMOKE_THRESHOLD = 40
-PM_VAPING_THRESHOLD = 60
-# Notification Configuration
-GMAIL_SMTP_SERVER = "smtp.gmail.com"
-GMAIL_SMTP_PORT = 587
-GMAIL_SENDER_EMAIL = "your-email@gmail.com"  # Update with your email
-GMAIL_SENDER_PASSWORD = "your-app-password"  # Update with your app password
-GMAIL_RECIPIENT_EMAIL = "front-office@school.edu"  # Update with recipient
+VOC_CLEAN_THRESHOLD = int(os.getenv('VOC_CLEAN_THRESHOLD', 50))
+VOC_ACTIVITY_THRESHOLD = int(os.getenv('VOC_ACTIVITY_THRESHOLD', 80))
+VOC_CHEMICAL_THRESHOLD = int(os.getenv('VOC_CHEMICAL_THRESHOLD', 120))
+VOC_SMOKING_THRESHOLD = int(os.getenv('VOC_SMOKING_THRESHOLD', 150))
+VOC_VAPING_THRESHOLD = int(os.getenv('VOC_VAPING_THRESHOLD', 180))
+PM_CLEAN_THRESHOLD = int(os.getenv('PM_CLEAN_THRESHOLD', 10))
+PM_SMOKE_THRESHOLD = int(os.getenv('PM_SMOKE_THRESHOLD', 40))
+PM_VAPING_THRESHOLD = int(os.getenv('PM_VAPING_THRESHOLD', 60))
 
-TEAMS_WEBHOOK_URL = "https://your-tenant.webhook.office.com/webhookb3/..."  # Update with your Teams webhook
+# Notification Configuration
+GMAIL_SMTP_SERVER = os.getenv('GMAIL_SMTP_SERVER', 'smtp.gmail.com')
+GMAIL_SMTP_PORT = int(os.getenv('GMAIL_SMTP_PORT', 587))
+GMAIL_SENDER_EMAIL = os.getenv('GMAIL_SENDER_EMAIL', 'your-email@gmail.com')
+GMAIL_SENDER_PASSWORD = os.getenv('GMAIL_SENDER_PASSWORD', 'your-app-password')
+GMAIL_RECIPIENT_EMAIL = os.getenv('GMAIL_RECIPIENT_EMAIL', 'front-office@school.edu')
+
+TEAMS_WEBHOOK_URL = os.getenv('TEAMS_WEBHOOK_URL', 'https://your-tenant.webhook.office.com/webhookb3/...')
 
 # Notification thresholds
-ALARM_NOTIFICATION_THRESHOLD = 80  # Send alarm notification when threat >= this
-MISBEHAVIOR_NOTIFICATION_THRESHOLD = 60  # Track misbehavior above this level
-MISBEHAVIOR_EXIT_THRESHOLD = 40  # Send exit notification when threat drops below this
+ALARM_NOTIFICATION_THRESHOLD = int(os.getenv('ALARM_NOTIFICATION_THRESHOLD', 80))
+MISBEHAVIOR_NOTIFICATION_THRESHOLD = int(os.getenv('MISBEHAVIOR_NOTIFICATION_THRESHOLD', 60))
+MISBEHAVIOR_EXIT_THRESHOLD = int(os.getenv('MISBEHAVIOR_EXIT_THRESHOLD', 40))
+NOTIFICATION_COOLDOWN = int(os.getenv('NOTIFICATION_COOLDOWN', 300))
 
 # Radar Configuration
-RADAR_CONFIGS = {
-    'rd03d': {
-        'baudrate': 256000,
-        'protocol': 'uart',
-        'data_format': 'binary',
-        'max_targets': 3,
-        'has_velocity': True,
-        'has_angle': True,
-        'has_distance': True,
-        'has_snr': True,
-        'frame_size': 22,
-        'detection_threshold': 0.6
-    },
-    'ld2410': {
-        'baudrate': 256000,
-        'protocol': 'uart',
-        'data_format': 'packet',
-        'max_targets': 3,
-        'has_velocity': False,
-        'has_angle': False,
-        'has_distance': True,
-        'has_energy': True,
-        'has_motion': True,
-        'detection_threshold': 0.5
-    }
-}
-
-RADAR_TYPE = 'auto'
-RADAR_PORT = "/dev/ttyUSB0"
+RADAR_TYPE = os.getenv('RADAR_TYPE', 'auto')
+RADAR_PORT = os.getenv('RADAR_PORT', '/dev/ttyUSB0')
 
 # Breathing detection parameters
-BREATHING_FREQ_RANGE = (0.15, 0.4)  # Hz (9-24 breaths per minute)
+BREATHING_FREQ_RANGE = (
+    float(os.getenv('BREATHING_FREQ_RANGE_MIN', 0.15)), 
+    float(os.getenv('BREATHING_FREQ_RANGE_MAX', 0.4))
+)  # Hz (9-24 breaths per minute)
 BREATHING_HISTORY_SIZE = 150
 
 # ==================== TEMPORAL THREAT SCORING PARAMETERS ====================
@@ -128,10 +111,10 @@ BREATHING_HISTORY_SIZE = 150
 class ThreatConfig:
     """Configuration for temporal threat scoring"""
     # Exponential escalation factors
-    BASE_ESCALATION_FACTOR: float = 1.5
-    TIME_DECAY_HALF_LIFE: float = 300  # 5 minutes
-    PERSISTENCE_THRESHOLD: int = 3  # Number of occurrences for persistence
-    PERSISTENCE_MULTIPLIER: float = 2.0
+    BASE_ESCALATION_FACTOR: float = float(os.getenv('BASE_ESCALATION_FACTOR', 1.5))
+    TIME_DECAY_HALF_LIFE: float = float(os.getenv('TIME_DECAY_HALF_LIFE', 300))  # 5 minutes
+    PERSISTENCE_THRESHOLD: int = int(os.getenv('PERSISTENCE_THRESHOLD', 3))  # Number of occurrences for persistence
+    PERSISTENCE_MULTIPLIER: float = float(os.getenv('PERSISTENCE_MULTIPLIER', 2.0))
     
     # Intensity thresholds (exponential jumps)
     INTENSITY_LEVELS: List[float] = None  # Will be initialized
@@ -2173,13 +2156,13 @@ quality_scorer = EnvironmentalQualityScorer()
 # ==================== NOTIFICATION MANAGER ====================
 
 class NotificationManager:
-    """Manages notifications via Gmail and Microsoft Teams"""
+    """Manages notifications via Gmail, Microsoft Teams, and SMS/Twilio"""
     
     def __init__(self):
         self.last_alarm_notification = 0
         self.last_misbehavior_notification = 0
         self.misbehavior_active = False
-        self.notification_cooldown = 300  # 5 minutes between same notification type
+        self.notification_cooldown = NOTIFICATION_COOLDOWN
         
         # Check if credentials are properly configured
         self.gmail_configured = (
@@ -2192,11 +2175,39 @@ class NotificationManager:
             TEAMS_WEBHOOK_URL != "https://your-tenant.webhook.office.com/webhookb3/..."
         )
         
+        # Check Twilio configuration
+        self.twilio_configured = (
+            os.getenv('TWILIO_ACCOUNT_SID') != 'your-twilio-account-sid' and
+            os.getenv('TWILIO_AUTH_TOKEN') != 'your-twilio-auth-token' and
+            os.getenv('TWILIO_PHONE_NUMBER') != '+1234567890' and
+            os.getenv('RECIPIENT_PHONE_NUMBER') != '+1234567890'
+        )
+        
+        # Initialize Twilio client if configured
+        self.twilio_client = None
+        if self.twilio_configured:
+            try:
+                from twilio.rest import Client
+                self.twilio_client = Client(
+                    os.getenv('TWILIO_ACCOUNT_SID'),
+                    os.getenv('TWILIO_AUTH_TOKEN')
+                )
+                logger.info("✅ Twilio client initialized")
+            except ImportError:
+                logger.warning("⚠️ Twilio library not installed - SMS notifications disabled")
+                self.twilio_configured = False
+            except Exception as e:
+                logger.error(f"❌ Failed to initialize Twilio client: {e}")
+                self.twilio_configured = False
+        
         if not self.gmail_configured:
             logger.warning("⚠️ Gmail credentials not configured - email notifications disabled")
         if not self.teams_configured:
             logger.warning("⚠️ Teams webhook not configured - Teams notifications disabled")
-        if self.gmail_configured or self.teams_configured:
+        if not self.twilio_configured:
+            logger.warning("⚠️ Twilio credentials not configured - SMS notifications disabled")
+        
+        if self.gmail_configured or self.teams_configured or self.twilio_configured:
             logger.info("✅ Notification system initialized")
         else:
             logger.warning("⚠️ No notification channels configured - running without notifications")
@@ -2283,6 +2294,36 @@ class NotificationManager:
             logger.error(f"❌ Failed to send Teams notification: {e}")
             return False
     
+    def send_sms_notification(self, message: str, is_urgent: bool = False):
+        """Send notification via SMS/Twilio"""
+        if not self.twilio_configured or not self.twilio_client:
+            logger.debug("Twilio not configured - skipping SMS notification")
+            return False
+            
+        try:
+            # Truncate message for SMS (160 character limit per segment)
+            max_length = 160
+            if len(message) > max_length:
+                message = message[:max_length-3] + "..."
+            
+            # Add urgency prefix if needed
+            if is_urgent:
+                message = "🚨 " + message
+            
+            # Send SMS
+            message_obj = self.twilio_client.messages.create(
+                body=message,
+                from_=os.getenv('TWILIO_PHONE_NUMBER'),
+                to=os.getenv('RECIPIENT_PHONE_NUMBER')
+            )
+            
+            logger.info(f"✅ SMS notification sent: SID {message_obj.sid}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to send SMS notification: {e}")
+            return False
+    
     def send_alarm_notification(self, threat_data: Dict, sensor_data: Dict = None):
         """Send alarm notification when threat level is critical"""
         current_time = time.time()
@@ -2334,8 +2375,9 @@ class NotificationManager:
         # Send notifications
         gmail_success = self.send_gmail_notification(subject, message, is_urgent=True)
         teams_success = self.send_teams_notification(message, is_urgent=True)
+        sms_success = self.send_sms_notification(f"ALARM: {threat_data['level']} ({threat_data['overall_threat']:.0f}/100) - {threat_data['response']}", is_urgent=True)
         
-        if gmail_success or teams_success:
+        if gmail_success or teams_success or sms_success:
             self.last_alarm_notification = current_time
             return True
         
@@ -2378,8 +2420,9 @@ class NotificationManager:
         # Send notifications
         gmail_success = self.send_gmail_notification(subject, message, is_urgent=False)
         teams_success = self.send_teams_notification(message, is_urgent=False)
+        sms_success = self.send_sms_notification(f"RESOLVED: Threat {threat_data['level']} ({threat_data['overall_threat']:.0f}/100)", is_urgent=False)
         
-        if gmail_success or teams_success:
+        if gmail_success or teams_success or sms_success:
             self.last_misbehavior_notification = current_time
             self.misbehavior_active = False
             return True
