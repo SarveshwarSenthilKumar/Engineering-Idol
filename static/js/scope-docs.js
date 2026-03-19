@@ -27,24 +27,11 @@ function initializeDocumentation() {
     initializePrintOptimization();
     initializeAccessibility();
     initializeAnalytics();
-    initializeTheme();
+    
+    // Set dark mode by default
+    document.body.classList.add('dark-mode');
     
     console.log('SCOPE Documentation initialized successfully');
-}
-
-/**
- * Initialize theme from localStorage
- */
-function initializeTheme() {
-    const savedTheme = localStorage.getItem('theme');
-    const themeButton = document.querySelector('[onclick="toggleTheme()"]');
-    
-    if (savedTheme === 'dark') {
-        document.body.classList.add('dark-mode');
-        if (themeButton) {
-            themeButton.innerHTML = '<i class="bi bi-sun"></i>';
-        }
-    }
 }
 
 /**
@@ -900,7 +887,6 @@ window.ScopeDocs = {
     throttle,
     formatBytes,
     timeAgo,
-    toggleTheme,
     printDocumentation,
     showQuickGuide,
     closeQuickGuide,
@@ -911,26 +897,6 @@ window.ScopeDocs = {
     shareDocumentation,
     openWebApp
 };
-
-/**
- * Theme Toggle
- */
-function toggleTheme() {
-    const body = document.body;
-    const themeButton = document.querySelector('[onclick="toggleTheme()"]');
-    
-    body.classList.toggle('dark-mode');
-    
-    if (body.classList.contains('dark-mode')) {
-        themeButton.innerHTML = '<i class="bi bi-sun"></i>';
-        localStorage.setItem('theme', 'dark');
-        showNotification('Dark mode enabled', 'info', 2000);
-    } else {
-        themeButton.innerHTML = '<i class="bi bi-moon"></i>';
-        localStorage.setItem('theme', 'light');
-        showNotification('Light mode enabled', 'info', 2000);
-    }
-}
 
 /**
  * Print Documentation
