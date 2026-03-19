@@ -8,6 +8,7 @@ Usage: python promote_admin.py <username>
 import sqlite3
 import sys
 from datetime import datetime
+import werkzeug
 from werkzeug.security import generate_password_hash
 
 def get_user_input(prompt, field_name, required=True):

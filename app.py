@@ -3692,6 +3692,10 @@ def scenario_status():
         'scenario_active': active_scenario is not None
     })
 
+@app.route("/")
+def rerouted():
+    return redirect("/dashboard")
+
 @app.route("/documentation")
 @login_required
 def documentation():
