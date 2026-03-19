@@ -2607,6 +2607,12 @@ def api_live():
     """Get current live sensor data"""
     fake_mode = session.get('fake_mode', True)
     
+    # Check if a scenario is active
+    if active_scenario:
+        # Return scenario data with real-time variations
+        data = generate_scenario_data(active_scenario)
+        return jsonify(data)
+    
     if fake_mode:
         # Get current environment data
         current_env = live_data.get_current_environment()
@@ -3447,6 +3453,244 @@ def generate_weekly_report():
     except Exception as e:
         app.logger.error(f"Error generating weekly report: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
+
+# ==================== SCENARIO SIMULATION ====================
+
+# Global scenario state
+active_scenario = None
+scenario_data_override = {}
+
+def generate_scenario_data(scenario_config):
+    """Generate fake data based on scenario configuration"""
+    # Base values from scenario
+    threat_base = scenario_config.get('threatScore', 50)
+    voc_base = random.uniform(scenario_config.get('voc', {}).get('min', 30), 
+                             scenario_config.get('voc', {}).get('max', 50))
+    people_base = random.uniform(scenario_config.get('people', {}).get('min', 1), 
+                                scenario_config.get('people', {}).get('max', 3))
+    noise_base = random.uniform(scenario_config.get('noise', {}).get('min', 40), 
+                                scenario_config.get('noise', {}).get('max', 60))
+    pm25_base = random.uniform(scenario_config.get('pm25', {}).get('min', 10), 
+                               scenario_config.get('pm25', {}).get('max', 25))
+    
+    # Add realistic variations
+    threat = max(0, min(100, threat_base + random.uniform(-5, 5)))
+    voc = max(0, voc_base + random.uniform(-10, 10))
+    people = max(0, int(people_base + random.uniform(-1, 1)))
+    noise = max(0, noise_base + random.uniform(-5, 5))
+    pm25 = max(0, pm25_base + random.uniform(-5, 5))
+    
+    # Generate scenario-specific components
+    components = {
+        'proximity': {
+            'score': threat * 0.8 if scenario_config.get('name') in ['Fighting/Altercation', 'Unauthorized Intrusion'] else threat * 0.3,
+            'confidence': 0.9,
+            'weight': 0.25
+        },
+        'count': {
+            'score': min(100, people * 20),
+            'confidence': 0.95,
+            'weight': 0.15
+        },
+        'behavior': {
+            'score': threat * 0.9 if scenario_config.get('name') in ['Fighting/Altercation', 'Bullying Incident'] else threat * 0.4,
+            'confidence': 0.85,
+            'weight': 0.20
+        },
+        'vital_signs': {
+            'score': threat * 0.7 if scenario_config.get('name') == 'Medical Emergency' else threat * 0.2,
+            'confidence': 0.8,
+            'weight': 0.15
+        },
+        'air_quality': {
+            'score': min(100, (voc / 200) * 100) if scenario_config.get('name') in ['Vaping Detection', 'Chemical Spill', 'Fire/Smoke Detection'] else threat * 0.3,
+            'confidence': 0.9,
+            'weight': 0.15
+        },
+        'noise': {
+            'score': min(100, (noise / 100) * 100) if scenario_config.get('name') in ['Fighting/Altercation', 'Crowd Rush/Panic'] else threat * 0.2,
+            'confidence': 0.8,
+            'weight': 0.10
+        }
+    }
+    
+    # Generate targets based on scenario
+    targets = []
+    for i in range(people):
+        target = {
+            'id': f"T{i+1:02d}",
+            'target_x': random.uniform(-5, 5),
+            'target_y': random.uniform(-5, 5),
+            'target_distance': random.uniform(0.5, 8),
+            'target_angle': random.uniform(-60, 60),
+            'target_velocity': random.uniform(0, 2) if scenario_config.get('name') in ['Fighting/Altercation', 'Crowd Rush/Panic'] else random.uniform(0, 0.5),
+            'target_direction': random.choice(['incoming', 'outgoing']),
+            'target_orientation': random.choice(['toward', 'away', 'stationary']),
+            'target_confidence': random.uniform(0.7, 0.95),
+            'target_activity': random.choice(['running', 'walking', 'stationary']) if scenario_config.get('name') in ['Fighting/Altercation', 'Crowd Rush/Panic'] else random.choice(['walking', 'stationary']),
+            'target_activity_confidence': random.uniform(0.6, 0.9),
+            'target_breathing_rate': random.uniform(15, 35) if scenario_config.get('name') == 'Medical Emergency' else random.uniform(10, 20),
+            'target_breathing_confidence': random.uniform(0.5, 0.9),
+            'target_abnormal_breathing': scenario_config.get('name') in ['Medical Emergency', 'Fighting/Altercation'] or random.random() < 0.1,
+            'target_vx': random.uniform(-2, 2),
+            'target_vy': random.uniform(-2, 2),
+            'target_ax': 0,
+            'target_ay': 0,
+            'target_speed': random.uniform(0, 2)
+        }
+        targets.append(target)
+    
+    # Generate threat data structure
+    threat_data = {
+        'overall_threat': threat,
+        'level': 'CRITICAL' if threat > 70 else 'HIGH' if threat > 50 else 'ELEVATED' if threat > 30 else 'MODERATE' if threat > 15 else 'LOW',
+        'components': components,
+        'temporal': {
+            'trend': 'worsening' if threat > 60 else 'stable',
+            'slope': random.uniform(-0.5, 0.5),
+            'acceleration': random.uniform(-0.1, 0.1),
+            'persistence': random.uniform(1.0, 1.5)
+        },
+        'trajectory': {
+            '5min': min(100, threat + random.uniform(-10, 10)),
+            '15min': min(100, threat + random.uniform(-20, 20)),
+            '30min': min(100, threat + random.uniform(-30, 30))
+        }
+    }
+    
+    return {
+        'fake_mode': True,
+        'people_count': people,
+        'active_targets': sum(1 for t in targets if t['target_velocity'] > 0.1),
+        'abnormal_count': sum(1 for t in targets if t['target_abnormal_breathing']),
+        'threat': threat_data,
+        'components': components,
+        'targets': targets,
+        'voc': voc,
+        'pm25': pm25,
+        'aqi': (voc / 200 * 50) + (pm25 / 35 * 50),
+        'odor_type': 'strong_chemical' if voc > 120 else 'human_activity' if voc > 50 else 'clean_air',
+        'odor_confidence': 0.85,
+        'odor_intensity': voc / 25,
+        'sound_db': noise,
+        'sound_event': 'shouting' if noise > 80 else 'conversation' if noise > 60 else 'quiet',
+        'sound_spike': noise > 75,
+        'sound_baseline': noise - 10,
+        'uptime': (datetime.now() - START_TIME).total_seconds(),
+        'data_rate': random.uniform(10, 50),
+        'packet_count': random.randint(1000, 9999),
+        'last_update': datetime.now().strftime('%H:%M:%S.%f')[:-3],
+        'scenario_active': True,
+        'scenario_name': scenario_config.get('name', 'Unknown Scenario')
+    }
+
+@app.route("/scenarios")
+@login_required
+def scenarios():
+    """Scenario simulator page"""
+    fake_mode = session.get('fake_mode', True)
+    
+    # Get environment data for consistency
+    all_environments = live_data.get_all_environments()
+    current_env = live_data.get_current_environment()
+    highest_threat_env = live_data.get_highest_threat_environment()
+    
+    # Get current data or scenario data
+    if active_scenario:
+        data = scenario_data_override
+    elif fake_mode:
+        data = get_cached_fake_data()
+    else:
+        data = get_realtime_sensor_data()
+        if not data:
+            data = {'no_data': True}
+    
+    # Extract template data
+    template_data = {
+        'fake_mode': fake_mode,
+        'active_scenario': active_scenario,
+        'environments': all_environments,
+        'current_environment': current_env,
+        'highest_threat_environment': highest_threat_env,
+        'last_update': data.get('last_update', datetime.now().strftime('%H:%M:%S')),
+        'threat_score': data.get('threat', {}).get('overall_threat', 0),
+        'threat_level': data.get('threat', {}).get('level', 'UNKNOWN'),
+        'components': data.get('components', {}),
+        'voc': data.get('voc', 0),
+        'pm25': data.get('pm25', 0),
+        'aqi': data.get('aqi', 0),
+        'people_count': data.get('people_count', 0),
+        'sound_db': data.get('sound_db', 0),
+        'targets': data.get('targets', []),
+        'no_data': data.get('no_data', False)
+    }
+    
+    return render_template('scenarios.html', **template_data)
+
+@app.route("/api/activate-scenario", methods=['POST'])
+@login_required
+def activate_scenario():
+    """API endpoint to activate a scenario"""
+    global active_scenario, scenario_data_override
+    
+    try:
+        data = request.get_json()
+        scenario_config = data.get('scenario')
+        
+        if not scenario_config:
+            return jsonify({'success': False, 'error': 'No scenario provided'})
+        
+        active_scenario = scenario_config
+        scenario_data_override = generate_scenario_data(scenario_config)
+        
+        # Update live data store with scenario data
+        live_data.update(scenario_data_override)
+        
+        app.logger.info(f"Activated scenario: {scenario_config.get('name', 'Unknown')}")
+        
+        return jsonify({
+            'success': True,
+            'scenario': scenario_config.get('name'),
+            'message': f"Scenario '{scenario_config.get('name')}' activated successfully"
+        })
+        
+    except Exception as e:
+        app.logger.error(f"Error activating scenario: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route("/api/stop-scenario", methods=['POST'])
+@login_required
+def stop_scenario():
+    """API endpoint to stop the current scenario"""
+    global active_scenario, scenario_data_override
+    
+    try:
+        scenario_name = active_scenario.get('name', 'Unknown') if active_scenario else 'None'
+        
+        active_scenario = None
+        scenario_data_override = {}
+        
+        app.logger.info(f"Stopped scenario: {scenario_name}")
+        
+        return jsonify({
+            'success': True,
+            'message': f"Scenario '{scenario_name}' stopped successfully"
+        })
+        
+    except Exception as e:
+        app.logger.error(f"Error stopping scenario: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route("/api/scenario-status")
+@login_required
+def scenario_status():
+    """API endpoint to get current scenario status"""
+    global active_scenario
+    
+    return jsonify({
+        'active_scenario': active_scenario,
+        'scenario_active': active_scenario is not None
+    })
 
 # ==================== ERROR HANDLERS ====================
 # ==================== MAIN ====================

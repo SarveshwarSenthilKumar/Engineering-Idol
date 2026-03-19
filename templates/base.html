@@ -367,6 +367,12 @@
                             </a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'scenarios' %}active{% endif %}" 
+                               href="{{ url_for('scenarios') }}">
+                                <i class="bi bi-bug"></i> Scenarios
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link {% if request.endpoint == 'history' %}active{% endif %}" 
                                href="{{ url_for('history') }}">
                                 <i class="bi bi-clock-history"></i> Event History

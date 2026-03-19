@@ -1,0 +1,2228 @@
+{% extends "base.html" %}
+
+{% block title %}Scenario Simulator{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary-color: #007bff;
+        --secondary-color: #6c757d;
+        --success-color: #28a745;
+        --warning-color: #ffc107;
+        --danger-color: #dc3545;
+        --info-color: #17a2b8;
+        --light-bg: #f8f9fa;
+        --card-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    /* Enhanced Readability Design */
+    body {
+        background: #fafbfc;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        color: #24292f;
+        line-height: 1.6;
+        font-size: 16px;
+    }
+    
+    .main-content {
+        background: #fafbfc;
+        position: relative;
+        padding: 0 16px;
+    }
+    
+    /* Clean Professional Card Design */
+    .scenario-card {
+        background: #ffffff;
+        border: 1px solid #d0d7de;
+        border-radius: 8px;
+        padding: 24px;
+        margin-bottom: 24px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        cursor: pointer;
+    }
+    
+    .scenario-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+        border-color: #0969da;
+    }
+    
+    .scenario-card.active {
+        border-color: #0969da;
+        background: linear-gradient(135deg, #f8f9ff 0%, #e8f0ff 100%);
+        box-shadow: 0 4px 20px rgba(9, 105, 218, 0.15);
+    }
+    
+    .scenario-card.danger-active {
+        border-color: #dc3545;
+        background: linear-gradient(135deg, #fff5f5 0%, #ffe0e0 100%);
+        box-shadow: 0 4px 20px rgba(220, 53, 69, 0.15);
+    }
+    
+    /* Clean Header */
+    .professional-header {
+        font-weight: 600;
+        margin-bottom: 32px;
+        position: relative;
+        color: #24292f;
+        font-size: 2rem;
+        line-height: 1.25;
+    }
+    
+    .professional-header::after {
+        content: '';
+        position: absolute;
+        bottom: -12px;
+        left: 0;
+        width: 64px;
+        height: 3px;
+        background: #0969da;
+        border-radius: 2px;
+    }
+    
+    .professional-header p {
+        font-size: 1.125rem;
+        color: #656d76;
+        margin-top: 8px;
+        font-weight: 400;
+    }
+    
+    /* Scenario Grid */
+    .scenarios-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 24px;
+        margin-bottom: 32px;
+    }
+    
+    /* Scenario Type Badge */
+    .scenario-badge {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .scenario-badge.low { background: #d4edda; color: #155724; }
+    .scenario-badge.moderate { background: #fff3cd; color: #856404; }
+    .scenario-badge.high { background: #f8d7da; color: #721c24; }
+    .scenario-badge.critical { background: #f5c6cb; color: #491217; }
+    
+    /* Scenario Icon */
+    .scenario-icon {
+        font-size: 3rem;
+        margin-bottom: 16px;
+        display: block;
+    }
+    
+    /* Scenario Title */
+    .scenario-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #24292f;
+        margin-bottom: 8px;
+    }
+    
+    .scenario-description {
+        color: #656d76;
+        font-size: 0.875rem;
+        margin-bottom: 16px;
+        line-height: 1.5;
+    }
+    
+    /* Scenario Metrics */
+    .scenario-metrics {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+    
+    .metric-tag {
+        background: #f6f8fa;
+        border: 1px solid #d0d7de;
+        border-radius: 6px;
+        padding: 4px 8px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: #24292f;
+    }
+    
+    .metric-tag.high { background: #ffe0e0; color: #d1242f; border-color: #f8b4b4; }
+    .metric-tag.moderate { background: #fff0c1; color: #d29922; border-color: #f4d88a; }
+    .metric-tag.low { background: #d4edda; color: #1f883d; border-color: #b8e6c1; }
+    
+    /* Control Panel */
+    .control-panel {
+        background: #ffffff;
+        border: 1px solid #d0d7de;
+        border-radius: 8px;
+        padding: 24px;
+        margin-bottom: 24px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+    
+    /* Status Display */
+    .status-display {
+        background: #f6f8fa;
+        border: 1px solid #d0d7de;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 24px;
+    }
+    
+    .status-indicator {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 8px;
+        box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+    }
+    
+    .status-indicator.green { background: #1f883d; }
+    .status-indicator.yellow { background: #d29922; }
+    .status-indicator.red { background: #d1242f; }
+    .status-indicator.blue { background: #0969da; }
+    .status-indicator.purple { background: #8250df; }
+    .status-indicator.gray { background: #6c757d; }
+    
+    /* Live Sensor Display */
+    .sensor-display {
+        background: #ffffff;
+        border: 1px solid #d0d7de;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 16px;
+        transition: all 0.3s ease;
+    }
+    
+    .sensor-display.elevated {
+        border-color: #ffc107;
+        background: #fffdf7;
+    }
+    
+    .sensor-display.high {
+        border-color: #fd7e14;
+        background: #fff8f0;
+    }
+    
+    .sensor-display.critical {
+        border-color: #dc3545;
+        background: #fff5f5;
+    }
+    
+    .sensor-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #24292f;
+    }
+    
+    .sensor-label {
+        font-size: 0.875rem;
+        color: #656d76;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 600;
+    }
+    
+    /* Progress Bars */
+    .progress {
+        height: 8px;
+        background: #e1e4e8;
+        border-radius: 4px;
+        overflow: hidden;
+        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
+    }
+    
+    .progress-bar {
+        border-radius: 4px;
+        transition: all 0.3s ease;
+        font-size: 0.75rem;
+        font-weight: 600;
+        line-height: 8px;
+    }
+    
+    /* AI Ping Card Styling */
+    .ai-ping-card-container {
+        min-width: 280px;
+    }
+    
+    .ai-ping-card {
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%) !important;
+        border: 1px solid #34495e !important;
+        box-shadow: 0 4px 20px rgba(52, 73, 94, 0.3) !important;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .ai-ping-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #e74c3c, #f39c12, #e74c3c);
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+    
+    .ai-ping-card .btn-light {
+        background: rgba(255, 255, 255, 0.95) !important;
+        color: #2c3e50 !important;
+        border: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .ai-ping-card .btn-light:hover {
+        background: #ffffff !important;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .ai-ping-card .btn-outline-light {
+        border-color: rgba(255, 255, 255, 0.6) !important;
+        color: rgba(255, 255, 255, 0.9) !important;
+        transition: all 0.3s ease;
+    }
+    
+    .ai-ping-card .btn-outline-light:hover {
+        background: rgba(255, 255, 255, 0.1) !important;
+        border-color: rgba(255, 255, 255, 0.9) !important;
+        color: #ffffff !important;
+    }
+    
+    .ai-ping-card .alert-light {
+        background: rgba(255, 255, 255, 0.95) !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        color: #2c3e50 !important;
+    }
+    
+    /* Toggle switch */
+    .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 24px;
+    }
+    
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    
+    .toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: .4s;
+        border-radius: 24px;
+    }
+    
+    .toggle-slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+    
+    input:checked + .toggle-slider {
+        background-color: var(--success-color);
+    }
+    
+    input:checked + .toggle-slider:before {
+        transform: translateX(26px);
+    }
+    
+    /* Animation Classes */
+    .fade-in {
+        animation: fadeIn 0.5s ease-in;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Graph Container */
+    .graph-container {
+        background: #ffffff;
+        border: 1px solid #d0d7de;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 24px;
+        height: 300px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .graph-container:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+        border-color: #0969da;
+    }
+    
+    .graph-canvas {
+        width: 100%;
+        height: 100%;
+        border-radius: 4px;
+    }
+    
+    /* Gauge styling */
+    .gauge-simple {
+        margin-bottom: 15px;
+    }
+    
+    .gauge-circle {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        margin: 0 auto 10px;
+        position: relative;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .gauge-center {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+    }
+    
+    .gauge-number {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #24292f;
+        line-height: 1;
+    }
+    
+    .gauge-unit {
+        font-size: 0.7rem;
+        color: #656d76;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .gauge-title {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #24292f;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    /* Data display */
+    .data-display {
+        background: #f6f8fa;
+        border: 1px solid #d0d7de;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 16px;
+        transition: all 0.3s ease;
+    }
+    
+    .data-display:hover {
+        background: #f0f3f6;
+        border-color: #0969da;
+        box-shadow: 0 2px 8px rgba(9, 105, 218, 0.1);
+    }
+    
+    /* Radar container */
+    .radar-container {
+        position: relative;
+        background: #000;
+        border-radius: 8px;
+        overflow: hidden;
+        margin-bottom: 15px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+    
+    #scenario-radar-canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+    }
+    
+    /* Glow text effects */
+    .glow-text {
+        text-shadow: 0 0 10px currentColor, 0 0 20px currentColor;
+        animation: pulse-glow 2s infinite;
+    }
+    
+    @keyframes pulse-glow {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.8; }
+    }
+    
+    /* Sensor card enhancements */
+    .sensor-card {
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        border: 1px solid #d0d7de;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 24px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .sensor-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #007bff, #28a745, #ffc107, #dc3545, #007bff);
+        background-size: 200% 100%;
+        animation: gradient-shift 3s ease infinite;
+    }
+    
+    @keyframes gradient-shift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+    
+    .sensor-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        border-color: #0969da;
+    }
+    
+    /* Progress bar enhancements */
+    .progress {
+        background: rgba(0, 0, 0, 0.1);
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .progress-bar {
+        border-radius: 10px;
+        transition: all 0.6s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .progress-bar::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        animation: shimmer 2s infinite;
+    }
+    
+    @keyframes shimmer {
+        0% { left: -100%; }
+        100% { left: 100%; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="position-relative" style="min-height: 100vh;">
+    <!-- CSRF Token for AJAX requests -->
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+
+    <!-- Header -->
+    <div class="professional-header">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <h1 class="display-5">
+                    <i class="bi bi-bug"></i> Scenario Simulator
+                </h1>
+                <p class="text-muted">
+                    Realistic threat scenario testing and demonstration
+                </p>
+            </div>
+            {% if fake_mode %}
+            <div class="text-end ai-ping-card-container">
+                <!-- AI Ping Button -->
+                <div class="sensor-card p-3 ai-ping-card">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="mb-0 text-white">
+                            <i class="bi bi-broadcast"></i> Scenario Ping
+                        </h6>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="demoDataToggle" checked disabled>
+                            <label class="form-check-label text-white-50 small" for="demoDataToggle">DEMO MODE: ON</label>
+                        </div>
+                    </div>
+                    <p class="small mb-3" style="color: rgba(255,255,255,0.9);">
+                        Send scenario analysis to all notification channels
+                    </p>
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-light btn-lg" onclick="sendScenarioAIPing('all')" id="scenario-ping-btn">
+                            <i class="bi bi-send"></i> 🎭 Send Scenario Ping
+                        </button>
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-outline-light" onclick="sendScenarioAIPing('email')" title="Email">
+                                <i class="bi bi-envelope"></i>
+                            </button>
+                            <button class="btn btn-outline-light" onclick="sendScenarioAIPing('teams')" title="Teams">
+                                <i class="bi bi-people"></i>
+                            </button>
+                            <button class="btn btn-outline-light" onclick="sendScenarioAIPing('sms')" title="SMS">
+                                <i class="bi bi-phone"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="scenario-ping-results" class="mt-2" style="display: none;">
+                        <div class="alert alert-light py-2 mb-0">
+                            <div id="scenario-ping-results-content" class="small"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Control Panel -->
+    <div class="control-panel">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h4 class="mb-3">
+                    <i class="bi bi-sliders"></i> Scenario Control
+                </h4>
+                <div class="d-flex gap-3">
+                    <button class="btn btn-primary" onclick="activateScenario()" id="activate-btn">
+                        <i class="bi bi-play-circle"></i> Activate Scenario
+                    </button>
+                    <button class="btn btn-secondary" onclick="stopScenario()" id="stop-btn" disabled>
+                        <i class="bi bi-stop-circle"></i> Stop Scenario
+                    </button>
+                    <button class="btn btn-warning" onclick="resetScenario()">
+                        <i class="bi bi-arrow-clockwise"></i> Reset
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="status-display">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="status-indicator gray" id="scenario-status-indicator"></span>
+                            <strong>Current Scenario:</strong> 
+                            <span id="current-scenario-name">None Selected</span>
+                        </div>
+                        <div class="text-end">
+                            <div class="small text-muted">Threat Level</div>
+                            <div class="h5 mb-0" id="scenario-threat-level">--</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scenarios Grid -->
+    <div class="scenarios-grid">
+        <!-- Vaping Scenario -->
+        <div class="scenario-card fade-in" onclick="selectScenario('vaping')" data-scenario="vaping">
+            <div class="scenario-badge moderate">Moderate</div>
+            <div class="scenario-icon">🌬️</div>
+            <h5 class="scenario-title">Vaping Detection</h5>
+            <p class="scenario-description">
+                Simulates vaping activity with elevated VOC levels, moderate people count, and characteristic chemical signatures.
+            </p>
+            <div class="scenario-metrics">
+                <span class="metric-tag high">VOC: 150-200 ppm</span>
+                <span class="metric-tag moderate">People: 2-3</span>
+                <span class="metric-tag low">Noise: 45-55 dB</span>
+                <span class="metric-tag high">Air Quality: Poor</span>
+            </div>
+        </div>
+
+        <!-- Fighting Scenario -->
+        <div class="scenario-card fade-in" onclick="selectScenario('fighting')" data-scenario="fighting">
+            <div class="scenario-badge critical">Critical</div>
+            <div class="scenario-icon">🥊</div>
+            <h5 class="scenario-title">Fighting/Altercation</h5>
+            <p class="scenario-description">
+                Simulates physical conflict with high noise levels, multiple people, rapid movement, and elevated threat indicators.
+            </p>
+            <div class="scenario-metrics">
+                <span class="metric-tag moderate">VOC: 40-60 ppm</span>
+                <span class="metric-tag high">People: 3-5</span>
+                <span class="metric-tag high">Noise: 85-100 dB</span>
+                <span class="metric-tag high">Threat: Critical</span>
+            </div>
+        </div>
+
+        <!-- Bullying Scenario -->
+        <div class="scenario-card fade-in" onclick="selectScenario('bullying')" data-scenario="bullying">
+            <div class="scenario-badge high">High</div>
+            <div class="scenario-icon">😤</div>
+            <h5 class="scenario-title">Bullying Incident</h5>
+            <p class="scenario-description">
+                Simulates bullying behavior with grouped people, elevated psychological stress indicators, and abnormal breathing patterns.
+            </p>
+            <div class="scenario-metrics">
+                <span class="metric-tag low">VOC: 30-45 ppm</span>
+                <span class="metric-tag moderate">People: 3-4</span>
+                <span class="metric-tag moderate">Noise: 60-75 dB</span>
+                <span class="metric-tag high">Stress: Elevated</span>
+            </div>
+        </div>
+
+        <!-- Medical Emergency Scenario -->
+        <div class="scenario-card fade-in" onclick="selectScenario('medical')" data-scenario="medical">
+            <div class="scenario-badge critical">Critical</div>
+            <div class="scenario-icon">🚑</div>
+            <h5 class="scenario-title">Medical Emergency</h5>
+            <p class="scenario-description">
+                Simulates medical crisis with abnormal breathing, low movement, and critical vital signs indicators.
+            </p>
+            <div class="scenario-metrics">
+                <span class="metric-tag low">VOC: 25-35 ppm</span>
+                <span class="metric-tag low">People: 1-2</span>
+                <span class="metric-tag moderate">Noise: 50-65 dB</span>
+                <span class="metric-tag high">Vitals: Critical</span>
+            </div>
+        </div>
+
+        <!-- Fire/Smoke Scenario -->
+        <div class="scenario-card fade-in" onclick="selectScenario('fire')" data-scenario="fire">
+            <div class="scenario-badge critical">Critical</div>
+            <div class="scenario-icon">🔥</div>
+            <h5 class="scenario-title">Fire/Smoke Detection</h5>
+            <p class="scenario-description">
+                Simulates fire conditions with very high PM2.5, smoke particles, elevated temperature, and critical air quality.
+            </p>
+            <div class="scenario-metrics">
+                <span class="metric-tag high">PM2.5: 150-200 μg/m³</span>
+                <span class="metric-tag high">Temp: 35-40°C</span>
+                <span class="metric-tag high">Smoke: Detected</span>
+                <span class="metric-tag high">Air Quality: Hazardous</span>
+            </div>
+        </div>
+
+        <!-- Chemical Spill Scenario -->
+        <div class="scenario-card fade-in" onclick="selectScenario('chemical')" data-scenario="chemical">
+            <div class="scenario-badge critical">Critical</div>
+            <div class="scenario-icon">☢️</div>
+            <h5 class="scenario-title">Chemical Spill</h5>
+            <p class="scenario-description">
+                Simulates hazardous chemical release with extreme VOC levels, toxic gas detection, and evacuation-level threats.
+            </p>
+            <div class="scenario-metrics">
+                <span class="metric-tag high">VOC: 300-500 ppm</span>
+                <span class="metric-tag low">People: 0-1</span>
+                <span class="metric-tag moderate">Noise: 40-50 dB</span>
+                <span class="metric-tag high">Toxic: Critical</span>
+            </div>
+        </div>
+
+        <!-- Crowd Rush Scenario -->
+        <div class="scenario-card fade-in" onclick="selectScenario('crowd')" data-scenario="crowd">
+            <div class="scenario-badge high">High</div>
+            <div class="scenario-icon">👥</div>
+            <h5 class="scenario-title">Crowd Rush/Panic</h5>
+            <p class="scenario-description">
+                Simulates crowd panic with many people, chaotic movement, high noise, and overwhelmed capacity indicators.
+            </p>
+            <div class="scenario-metrics">
+                <span class="metric-tag moderate">VOC: 60-80 ppm</span>
+                <span class="metric-tag high">People: 8-12</span>
+                <span class="metric-tag high">Noise: 80-95 dB</span>
+                <span class="metric-tag high">Chaos: Extreme</span>
+            </div>
+        </div>
+
+        <!-- Intrusion Scenario -->
+        <div class="scenario-card fade-in" onclick="selectScenario('intrusion')" data-scenario="intrusion">
+            <div class="scenario-badge high">High</div>
+            <div class="scenario-icon">🚷</div>
+            <h5 class="scenario-title">Unauthorized Intrusion</h5>
+            <p class="scenario-description">
+                Simulates unauthorized access with single person, abnormal movement patterns, proximity threats, and security breach.
+            </p>
+            <div class="scenario-metrics">
+                <span class="metric-tag low">VOC: 25-35 ppm</span>
+                <span class="metric-tag low">People: 1</span>
+                <span class="metric-tag low">Noise: 35-45 dB</span>
+                <span class="metric-tag high">Security: Breach</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live Sensor Display -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="sensor-display" id="threat-display">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="sensor-label">Threat Score</span>
+                    <span class="status-indicator green" id="threat-indicator"></span>
+                </div>
+                <div class="sensor-value" id="threat-value">0.0</div>
+                <div class="progress mt-2">
+                    <div class="progress-bar bg-success" id="threat-bar" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="sensor-display" id="voc-display">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="sensor-label">VOC Level</span>
+                    <span class="status-indicator green" id="voc-indicator"></span>
+                </div>
+                <div class="sensor-value" id="voc-value">0 ppm</div>
+                <div class="progress mt-2">
+                    <div class="progress-bar bg-success" id="voc-bar" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="sensor-display" id="people-display">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="sensor-label">People Count</span>
+                    <span class="status-indicator green" id="people-indicator"></span>
+                </div>
+                <div class="sensor-value" id="people-value">0</div>
+                <div class="progress mt-2">
+                    <div class="progress-bar bg-success" id="people-bar" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="sensor-display" id="noise-display">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="sensor-label">Noise Level</span>
+                    <span class="status-indicator green" id="noise-indicator"></span>
+                </div>
+                <div class="sensor-value" id="noise-value">0 dB</div>
+                <div class="progress mt-2">
+                    <div class="progress-bar bg-success" id="noise-bar" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Real-time Graphs -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="sensor-card">
+                <h5 class="mb-3 text-primary">
+                    <i class="bi bi-graph-up"></i> Threat Score Timeline
+                </h5>
+                <div style="height: 300px; position: relative;">
+                    <canvas id="threat-graph" style="width: 100%; height: 100%;"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="sensor-card">
+                <h5 class="mb-3 text-success">
+                    <i class="bi bi-activity"></i> Sensor Readings
+                </h5>
+                <div style="height: 300px; position: relative;">
+                    <canvas id="sensor-graph" style="width: 100%; height: 100%;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Radar Visualization -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="sensor-card">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="mb-0 text-primary">
+                        <i class="bi bi-geo-alt"></i> Person Tracking
+                    </h4>
+                    <span class="badge bg-primary">
+                        <span class="status-indicator blue"></span> Active Monitoring
+                    </span>
+                </div>
+                
+                <!-- Radar Visualization -->
+                <div class="radar-container">
+                    <canvas id="scenario-radar-canvas" width="600" height="300" style="width: 100%; height: 100%;"></canvas>
+                    
+                    <!-- Target info overlay -->
+                    <div class="position-absolute top-0 start-0 p-2" id="scenario-targets-info">
+                        <!-- Targets will be populated here -->
+                    </div>
+                </div>
+                
+                <!-- Target Stats -->
+                <div class="row mt-3">
+                    <div class="col-4 text-center">
+                        <div class="text-muted small">Count</div>
+                        <div class="h4 scenario-people-count">0</div>
+                    </div>
+                    <div class="col-4 text-center">
+                        <div class="text-muted small">Active</div>
+                        <div class="h4 scenario-active-targets">0</div>
+                    </div>
+                    <div class="col-4 text-center">
+                        <div class="text-muted small">Alerts</div>
+                        <div class="h4 text-success scenario-abnormal-count">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Air Quality Hub -->
+        <div class="col-md-6">
+            <div class="sensor-card">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="mb-0 text-success">
+                        <i class="bi bi-wind"></i> Air Quality
+                    </h4>
+                    <span class="badge bg-success">
+                        <span class="status-indicator green"></span> Real-time
+                    </span>
+                </div>
+                
+                <!-- Air Quality Gauges -->
+                <div class="row">
+                    <div class="col-4 text-center">
+                        <div class="gauge-simple">
+                            <div class="gauge-circle" style="background: conic-gradient(#0969da 0deg, #f6f8fa 0deg);" id="scenario-voc-gauge">
+                                <div class="gauge-center">
+                                    <div class="gauge-number scenario-voc-value">0</div>
+                                    <div class="gauge-unit">ppm</div>
+                                </div>
+                            </div>
+                            <div class="gauge-title">VOC</div>
+                        </div>
+                    </div>
+                    <div class="col-4 text-center">
+                        <div class="gauge-simple">
+                            <div class="gauge-circle" style="background: conic-gradient(#1f883d 0deg, #f6f8fa 0deg);" id="scenario-pm25-gauge">
+                                <div class="gauge-center">
+                                    <div class="gauge-number scenario-pm25-value">0</div>
+                                    <div class="gauge-unit">μg/m³</div>
+                                </div>
+                            </div>
+                            <div class="gauge-title">PM2.5</div>
+                        </div>
+                    </div>
+                    <div class="col-4 text-center">
+                        <div class="gauge-simple">
+                            <div class="gauge-circle" style="background: conic-gradient(#d29922 0deg, #f6f8fa 0deg);" id="scenario-aqi-gauge">
+                                <div class="gauge-center">
+                                    <div class="gauge-number scenario-aqi-value">0</div>
+                                    <div class="gauge-unit">AQI</div>
+                                </div>
+                            </div>
+                            <div class="gauge-title">Air Quality</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Odor Analysis -->
+                <div class="data-display mt-3 p-3">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <span class="text-muted small">Odor Detection</span>
+                            <h5 class="text-warning scenario-odor-type">clean_air</h5>
+                        </div>
+                        <div class="text-end">
+                            <span class="text-muted small">Confidence</span>
+                            <h5 class="scenario-odor-confidence">85%</h5>
+                        </div>
+                    </div>
+                    <div class="progress mt-2" style="height: 8px;">
+                        <div class="progress-bar bg-warning" role="progressbar" 
+                             style="width: 0%;" id="scenario-odor-progress">
+                            Intensity: 0.0/10
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sound and Threat Analysis -->
+    <div class="row mt-4">
+        <!-- Sound Analysis -->
+        <div class="col-md-4">
+            <div class="sensor-card">
+                <h4 class="mb-3 text-primary">
+                    <i class="bi bi-soundwave"></i> Acoustic Monitor
+                </h4>
+                
+                <div class="text-center">
+                    <div class="display-4 fw-bold text-info scenario-sound-db">
+                        0.0
+                        <small class="fs-6 text-muted">dB</small>
+                    </div>
+                    
+                    <!-- Simple Level Indicator -->
+                    <div class="my-3">
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-info" 
+                                 style="width: 0%" id="scenario-sound-bar"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-3">
+                        <div class="col-6">
+                            <span class="text-muted small">Event</span>
+                            <h6 class="fw-normal scenario-sound-event">quiet</h6>
+                        </div>
+                        <div class="col-6">
+                            <span class="text-muted small">Baseline</span>
+                            <h6 class="fw-normal scenario-sound-baseline">40.0 dB</h6>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Threat Components -->
+        <div class="col-md-4">
+            <div class="sensor-card">
+                <h4 class="glow-text mb-3" style="color: #ff5500;">
+                    <i class="bi bi-shield"></i> THREAT MATRIX
+                </h4>
+                
+                <div id="scenario-components">
+                    <!-- Components will be populated here -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Temporal Dynamics -->
+        <div class="col-md-4">
+            <div class="sensor-card">
+                <h4 class="glow-text mb-3" style="color: #aa00ff;">
+                    <i class="bi bi-graph-up"></i> TEMPORAL ANALYSIS
+                </h4>
+                
+                <!-- Trend Indicator -->
+                <div class="text-center mb-4">
+                    <div style="font-size: 3rem;" id="scenario-trend-icon">
+                        ➡️
+                    </div>
+                    <h5 class="glow-text scenario-trend-text">STABLE</h5>
+                </div>
+                
+                <div class="row">
+                    <div class="col-6">
+                        <div class="small text-uppercase text-secondary">Slope</div>
+                        <div class="h4 scenario-slope">0.00/min</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="small text-uppercase text-secondary">Acceleration</div>
+                        <div class="h4 scenario-acceleration">0.000</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Scenario definitions
+    const scenarios = {
+        vaping: {
+            name: 'Vaping Detection',
+            threatLevel: 'MODERATE',
+            threatScore: 45,
+            voc: { min: 150, max: 200 },
+            people: { min: 2, max: 3 },
+            noise: { min: 45, max: 55 },
+            pm25: { min: 20, max: 35 },
+            description: 'Vaping activity detected with elevated VOC levels'
+        },
+        fighting: {
+            name: 'Fighting/Altercation',
+            threatLevel: 'CRITICAL',
+            threatScore: 85,
+            voc: { min: 40, max: 60 },
+            people: { min: 3, max: 5 },
+            noise: { min: 85, max: 100 },
+            pm25: { min: 15, max: 25 },
+            description: 'Physical altercation detected with high threat indicators'
+        },
+        bullying: {
+            name: 'Bullying Incident',
+            threatLevel: 'HIGH',
+            threatScore: 65,
+            voc: { min: 30, max: 45 },
+            people: { min: 3, max: 4 },
+            noise: { min: 60, max: 75 },
+            pm25: { min: 10, max: 20 },
+            description: 'Bullying behavior detected with elevated stress indicators'
+        },
+        medical: {
+            name: 'Medical Emergency',
+            threatLevel: 'CRITICAL',
+            threatScore: 90,
+            voc: { min: 25, max: 35 },
+            people: { min: 1, max: 2 },
+            noise: { min: 50, max: 65 },
+            pm25: { min: 8, max: 15 },
+            description: 'Medical emergency with critical vital signs indicators'
+        },
+        fire: {
+            name: 'Fire/Smoke Detection',
+            threatLevel: 'CRITICAL',
+            threatScore: 95,
+            voc: { min: 80, max: 120 },
+            people: { min: 0, max: 2 },
+            noise: { min: 70, max: 85 },
+            pm25: { min: 150, max: 200 },
+            description: 'Fire or smoke detected with hazardous air quality'
+        },
+        chemical: {
+            name: 'Chemical Spill',
+            threatLevel: 'CRITICAL',
+            threatScore: 98,
+            voc: { min: 300, max: 500 },
+            people: { min: 0, max: 1 },
+            noise: { min: 40, max: 50 },
+            pm25: { min: 50, max: 80 },
+            description: 'Hazardous chemical spill detected - evacuation required'
+        },
+        crowd: {
+            name: 'Crowd Rush/Panic',
+            threatLevel: 'HIGH',
+            threatScore: 75,
+            voc: { min: 60, max: 80 },
+            people: { min: 8, max: 12 },
+            noise: { min: 80, max: 95 },
+            pm25: { min: 25, max: 40 },
+            description: 'Crowd panic detected with chaotic movement patterns'
+        },
+        intrusion: {
+            name: 'Unauthorized Intrusion',
+            threatLevel: 'HIGH',
+            threatScore: 70,
+            voc: { min: 25, max: 35 },
+            people: { min: 1, max: 1 },
+            noise: { min: 35, max: 45 },
+            pm25: { min: 8, max: 15 },
+            description: 'Unauthorized access detected - security breach'
+        }
+    };
+
+    let currentScenario = null;
+    let scenarioInterval = null;
+    let graphData = {
+        threat: [],
+        voc: [],
+        people: [],
+        noise: [],
+        timestamps: []
+    };
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        initGraphs();
+        initRadar();
+        startLiveUpdates();
+    });
+
+    function selectScenario(scenarioId) {
+        // Remove previous selection
+        document.querySelectorAll('.scenario-card').forEach(card => {
+            card.classList.remove('active', 'danger-active');
+        });
+
+        // Add selection to clicked card
+        const selectedCard = document.querySelector(`[data-scenario="${scenarioId}"]`);
+        if (!selectedCard) {
+            console.error('Scenario card not found:', scenarioId);
+            return;
+        }
+        
+        selectedCard.classList.add('active');
+        
+        if (scenarios[scenarioId].threatScore > 70) {
+            selectedCard.classList.add('danger-active');
+        }
+
+        currentScenario = scenarios[scenarioId];
+        
+        // Update status display
+        document.getElementById('current-scenario-name').textContent = currentScenario.name;
+        document.getElementById('scenario-threat-level').textContent = currentScenario.threatLevel;
+        
+        const indicator = document.getElementById('scenario-status-indicator');
+        indicator.className = `status-indicator ${getThreatColor(currentScenario.threatScore)}`;
+        
+        // Enable activate button
+        document.getElementById('activate-btn').disabled = false;
+        
+        // Pre-load scenario data preview
+        updateScenarioDataPreview();
+    }
+
+    function updateScenarioDataPreview() {
+        if (!currentScenario) return;
+
+        // Generate preview data
+        const threat = currentScenario.threatScore + (Math.random() - 0.5) * 10;
+        const voc = randomInRange(currentScenario.voc.min, currentScenario.voc.max);
+        const people = Math.floor(randomInRange(currentScenario.people.min, currentScenario.people.max));
+        const noise = randomInRange(currentScenario.noise.min, currentScenario.noise.max);
+
+        // Update displays with preview
+        updateSensorDisplay('threat', threat, 100);
+        updateSensorDisplay('voc', voc, 500);
+        updateSensorDisplay('people', people, 15);
+        updateSensorDisplay('noise', noise, 120);
+    }
+
+    function activateScenario() {
+        if (!currentScenario) {
+            alert('Please select a scenario first');
+            return;
+        }
+
+        // Update UI
+        document.getElementById('activate-btn').disabled = true;
+        document.getElementById('stop-btn').disabled = false;
+        
+        // Send scenario activation to server
+        fetch('/api/activate-scenario', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                scenario: currentScenario
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log('Scenario activated:', data.message);
+                // Start real-time updates
+                scenarioInterval = setInterval(() => {
+                    fetchLiveScenarioData();
+                }, 1000);
+            } else {
+                console.error('Failed to activate scenario:', data.error);
+                // Reset UI on failure
+                document.getElementById('activate-btn').disabled = false;
+                document.getElementById('stop-btn').disabled = true;
+                alert('Failed to activate scenario: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error activating scenario:', error);
+            // Reset UI on error
+            document.getElementById('activate-btn').disabled = false;
+            document.getElementById('stop-btn').disabled = true;
+            alert('Error activating scenario: ' + error.message);
+        });
+    }
+
+    function fetchLiveScenarioData() {
+        fetch('/api/live')
+            .then(response => response.json())
+            .then(data => {
+                if (data.scenario_active) {
+                    // Update all sensor displays
+                    updateAllSensorDisplays(data);
+                    
+                    // Update graph data
+                    const timestamp = new Date().toLocaleTimeString();
+                    graphData.threat.push(data.threat?.overall_threat || 0);
+                    graphData.voc.push(data.voc || 0);
+                    graphData.people.push(data.people_count || 0);
+                    graphData.noise.push(data.sound_db || 0);
+                    graphData.timestamps.push(timestamp);
+
+                    // Keep only last 20 data points
+                    if (graphData.threat.length > 20) {
+                        Object.keys(graphData).forEach(key => {
+                            graphData[key].shift();
+                        });
+                    }
+
+                    updateGraphs();
+                    updateRadarTargets(data.targets || []);
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching live scenario data:', error);
+            });
+    }
+
+    function updateAllSensorDisplays(data) {
+        // Update threat displays
+        const threat = data.threat?.overall_threat || 0;
+        updateSensorDisplay('threat', threat, 100);
+        
+        // Update air quality displays
+        const voc = data.voc || 0;
+        const pm25 = data.pm25 || 0;
+        const aqi = data.aqi || 0;
+        
+        updateSensorDisplay('voc', voc, 500);
+        updateSensorDisplay('pm25', pm25, 100);
+        updateSensorDisplay('aqi', aqi, 500);
+        
+        // Update people displays
+        const peopleCount = data.people_count || 0;
+        const activeTargets = data.active_targets || 0;
+        const abnormalCount = data.abnormal_count || 0;
+        
+        updateSensorDisplay('people', peopleCount, 15);
+        
+        // Update scenario-specific displays
+        const peopleCountElement = document.querySelector('.scenario-people-count');
+        if (peopleCountElement) peopleCountElement.textContent = peopleCount;
+        
+        const activeTargetsElement = document.querySelector('.scenario-active-targets');
+        if (activeTargetsElement) activeTargetsElement.textContent = activeTargets;
+        
+        const abnormalCountElement = document.querySelector('.scenario-abnormal-count');
+        if (abnormalCountElement) abnormalCountElement.textContent = abnormalCount;
+        
+        // Update sound displays
+        const soundDb = data.sound_db || 0;
+        updateSensorDisplay('noise', soundDb, 120);
+        
+        const soundDbElement = document.querySelector('.scenario-sound-db');
+        if (soundDbElement) soundDbElement.innerHTML = `${Math.round(soundDb)}<small class="fs-6 text-muted">dB</small>`;
+        
+        const soundEventElement = document.querySelector('.scenario-sound-event');
+        if (soundEventElement) soundEventElement.textContent = data.sound_event || 'quiet';
+        
+        const soundBaselineElement = document.querySelector('.scenario-sound-baseline');
+        if (soundBaselineElement) soundBaselineElement.textContent = `${Math.round(data.sound_baseline || 40)} dB`;
+        
+        // Update air quality gauges with no decimals
+        updateGauge('scenario-voc-gauge', voc, 200, '#0969da');
+        updateGauge('scenario-pm25-gauge', pm25, 100, '#1f883d');
+        updateGauge('scenario-aqi-gauge', aqi, 500, '#d29922');
+        
+        const vocValueElement = document.querySelector('.scenario-voc-value');
+        if (vocValueElement) vocValueElement.textContent = Math.round(voc);
+        
+        const pm25ValueElement = document.querySelector('.scenario-pm25-value');
+        if (pm25ValueElement) pm25ValueElement.textContent = Math.round(pm25);
+        
+        const aqiValueElement = document.querySelector('.scenario-aqi-value');
+        if (aqiValueElement) aqiValueElement.textContent = Math.round(aqi);
+        
+        // Update odor analysis
+        const odorTypeElement = document.querySelector('.scenario-odor-type');
+        if (odorTypeElement) odorTypeElement.textContent = data.odor_type || 'clean_air';
+        
+        const odorConfidenceElement = document.querySelector('.scenario-odor-confidence');
+        if (odorConfidenceElement) odorConfidenceElement.textContent = `${Math.round((data.odor_confidence || 0.85) * 100)}%`;
+        
+        const odorIntensity = data.odor_intensity || 0;
+        const odorProgressElement = document.querySelector('#scenario-odor-progress');
+        if (odorProgressElement) {
+            odorProgressElement.style.width = `${Math.min(100, odorIntensity * 10)}%`;
+            odorProgressElement.textContent = `Intensity: ${odorIntensity.toFixed(1)}/10`;
+        }
+        
+        // Update threat components
+        if (data.threat?.components) {
+            updateThreatComponents(data.threat.components);
+        }
+        
+        // Update temporal analysis
+        if (data.threat?.temporal) {
+            updateTemporalAnalysis(data.threat.temporal);
+        }
+    }
+
+    function updateGauge(gaugeId, value, maxValue, color) {
+        const gauge = document.getElementById(gaugeId);
+        if (gauge) {
+            const percentage = Math.min(100, (value / maxValue) * 100);
+            gauge.style.background = `conic-gradient(${color} ${percentage}deg, #f6f8fa ${percentage}deg)`;
+        }
+    }
+
+    function updateThreatComponents(components) {
+        const container = document.getElementById('scenario-components');
+        if (!container) return;
+        
+        let html = '';
+        for (const [name, data] of Object.entries(components)) {
+            const score = Math.round(data.score || 0);
+            const colorClass = score > 60 ? 'danger' : score > 30 ? 'warning' : 'success';
+            
+            html += `
+                <div class="mb-2">
+                    <div class="d-flex justify-content-between">
+                        <span class="text-uppercase small">${name.replace('_', ' ')}</span>
+                        <span class="text-${colorClass}" style="color: ${score > 60 ? '#dc3545' : score > 30 ? '#ffc107' : '#28a745'};">
+                            ${score}/100
+                        </span>
+                    </div>
+                    <div class="progress" style="height: 8px; background: rgba(0,0,0,0.5);">
+                        <div class="progress-bar" style="width: ${score}%; background: linear-gradient(90deg, cyan, magenta);"></div>
+                    </div>
+                    <div class="d-flex justify-content-between small text-secondary">
+                        <span>Weight: ${(data.weight || 0).toFixed(2)}</span>
+                        <span>Conf: ${Math.round((data.confidence || 0) * 100)}%</span>
+                    </div>
+                </div>
+            `;
+        }
+        container.innerHTML = html;
+    }
+
+    function updateTemporalAnalysis(temporal) {
+        const trend = temporal.trend || 'stable';
+        const slope = temporal.slope || 0;
+        const acceleration = temporal.acceleration || 0;
+        
+        // Update trend icon
+        const trendIcons = {
+            'rapidly_worsening': '⬆️⬆️',
+            'worsening': '⬆️',
+            'stable': '➡️',
+            'improving': '⬇️',
+            'rapidly_improving': '⬇️⬇️'
+        };
+        
+        document.getElementById('scenario-trend-icon').textContent = trendIcons[trend] || '➡️';
+        document.getElementById('scenario-trend-text').textContent = trend.toUpperCase();
+        document.querySelector('.scenario-slope').textContent = `${slope.toFixed(2)}/min`;
+        document.querySelector('.scenario-acceleration').textContent = acceleration.toFixed(3);
+    }
+
+    function updateRadarTargets(targets) {
+        const container = document.getElementById('scenario-targets-info');
+        if (!container) return;
+        
+        let html = '';
+        targets.forEach(target => {
+            html += `
+                <div class="small mb-1 bg-white p-1 rounded" style="border-left: 3px solid ${target.target_abnormal_breathing ? 'danger' : 'primary'}; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                    <span class="status-indicator ${target.target_abnormal_breathing ? 'red' : 'blue'}"></span>
+                    ${target.target_id}: ${target.target_distance.toFixed(1)}m 
+                    ${target.target_activity ? `(${target.target_activity})` : ''}
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    }
+
+    function stopScenario() {
+        if (scenarioInterval) {
+            clearInterval(scenarioInterval);
+            scenarioInterval = null;
+        }
+
+        // Update UI
+        document.getElementById('activate-btn').disabled = false;
+        document.getElementById('stop-btn').disabled = true;
+        
+        // Send scenario stop to server
+        fetch('/api/stop-scenario', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log('Scenario stopped:', data.message);
+                // Reset displays to normal
+                resetSensorDisplays();
+            } else {
+                console.error('Failed to stop scenario:', data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error stopping scenario:', error);
+        });
+    }
+
+    function resetScenario() {
+        stopScenario();
+        
+        // Clear selection
+        document.querySelectorAll('.scenario-card').forEach(card => {
+            card.classList.remove('active', 'danger-active');
+        });
+        
+        currentScenario = null;
+        graphData = {
+            threat: [],
+            voc: [],
+            people: [],
+            noise: [],
+            timestamps: []
+        };
+        
+        // Reset displays
+        document.getElementById('current-scenario-name').textContent = 'None Selected';
+        document.getElementById('scenario-threat-level').textContent = '--';
+        document.getElementById('scenario-status-indicator').className = 'status-indicator gray';
+        
+        resetSensorDisplays();
+    }
+
+    function updateSensorDisplay(sensor, value, maxValue) {
+        const valueElement = document.getElementById(`${sensor}-value`);
+        const barElement = document.getElementById(`${sensor}-bar`);
+        const indicatorElement = document.getElementById(`${sensor}-indicator`);
+        const displayElement = document.getElementById(`${sensor}-display`);
+
+        // Update value
+        if (sensor === 'threat') {
+            if (valueElement) valueElement.textContent = value.toFixed(1);
+        } else if (sensor === 'voc') {
+            if (valueElement) valueElement.textContent = Math.round(value) + ' ppm';
+        } else if (sensor === 'people') {
+            if (valueElement) valueElement.textContent = Math.round(value);
+        } else if (sensor === 'noise') {
+            if (valueElement) valueElement.textContent = Math.round(value) + ' dB';
+        }
+
+        // Update progress bar
+        if (barElement) {
+            const percentage = (value / maxValue) * 100;
+            barElement.style.width = percentage + '%';
+        }
+
+        // Update colors and indicators
+        const color = getThreatColor(value);
+        const colorClass = getThreatColorClass(value);
+        
+        if (barElement) {
+            barElement.className = `progress-bar bg-${colorClass}`;
+        }
+        
+        if (indicatorElement) {
+            indicatorElement.className = `status-indicator ${color}`;
+        }
+        
+        // Update display card styling
+        if (displayElement) {
+            displayElement.className = 'sensor-display';
+            if (value > maxValue * 0.7) {
+                displayElement.classList.add('critical');
+            } else if (value > maxValue * 0.5) {
+                displayElement.classList.add('high');
+            } else if (value > maxValue * 0.3) {
+                displayElement.classList.add('elevated');
+            }
+        }
+    }
+
+    function getThreatColor(value) {
+        if (value > 70) return 'red';
+        if (value > 50) return 'yellow';
+        if (value > 30) return 'blue';
+        return 'green';
+    }
+
+    function getThreatColorClass(value) {
+        if (value > 70) return 'danger';
+        if (value > 50) return 'warning';
+        if (value > 30) return 'info';
+        return 'success';
+    }
+
+    function resetSensorDisplays() {
+        ['threat', 'voc', 'people', 'noise'].forEach(sensor => {
+            updateSensorDisplay(sensor, 0, 100);
+            const displayElement = document.getElementById(`${sensor}-display`);
+            if (displayElement) {
+                displayElement.className = 'sensor-display';
+            }
+        });
+        
+        // Reset scenario-specific displays
+        const peopleCountElement = document.querySelector('.scenario-people-count');
+        if (peopleCountElement) peopleCountElement.textContent = '0';
+        
+        const activeTargetsElement = document.querySelector('.scenario-active-targets');
+        if (activeTargetsElement) activeTargetsElement.textContent = '0';
+        
+        const abnormalCountElement = document.querySelector('.scenario-abnormal-count');
+        if (abnormalCountElement) abnormalCountElement.textContent = '0';
+        
+        const soundDbElement = document.querySelector('.scenario-sound-db');
+        if (soundDbElement) soundDbElement.innerHTML = '0.0<small class="fs-6 text-muted">dB</small>';
+        
+        const soundEventElement = document.querySelector('.scenario-sound-event');
+        if (soundEventElement) soundEventElement.textContent = 'quiet';
+        
+        const soundBaselineElement = document.querySelector('.scenario-sound-baseline');
+        if (soundBaselineElement) soundBaselineElement.textContent = '40.0 dB';
+        
+        // Reset gauges
+        ['scenario-voc-gauge', 'scenario-pm25-gauge', 'scenario-aqi-gauge'].forEach(id => {
+            const gauge = document.getElementById(id);
+            if (gauge) {
+                gauge.style.background = 'conic-gradient(#f6f8fa 0deg, #f6f8fa 0deg)';
+            }
+        });
+        
+        // Clear radar
+        const radarInfo = document.getElementById('scenario-targets-info');
+        if (radarInfo) radarInfo.innerHTML = '';
+    }
+
+    function randomInRange(min, max) {
+        return min + Math.random() * (max - min);
+    }
+
+    function initGraphs() {
+        // Initialize threat graph
+        const threatCanvas = document.getElementById('threat-graph');
+        if (threatCanvas) {
+            threatCanvas.width = threatCanvas.offsetWidth;
+            threatCanvas.height = threatCanvas.offsetHeight;
+        }
+        
+        // Initialize sensor graph
+        const sensorCanvas = document.getElementById('sensor-graph');
+        if (sensorCanvas) {
+            sensorCanvas.width = sensorCanvas.offsetWidth;
+            sensorCanvas.height = sensorCanvas.offsetHeight;
+        }
+        
+        // Start with some initial data for visualization
+        initializeGraphData();
+    }
+
+    function initRadar() {
+        const canvas = document.getElementById('scenario-radar-canvas');
+        if (!canvas) return;
+        
+        const ctx = canvas.getContext('2d');
+        
+        // Set canvas size properly
+        canvas.width = 600;
+        canvas.height = 300;
+        
+        const width = canvas.width;
+        const height = canvas.height;
+        const centerX = width / 2;
+        const centerY = height / 2;
+        const maxRadius = Math.min(width, height) * 0.4;
+        
+        let sweepAngle = 0;
+        let targets = [];
+        
+        function drawRadar() {
+            ctx.clearRect(0, 0, width, height);
+            
+            // Dark background
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, width, height);
+            
+            // Draw grid
+            ctx.strokeStyle = '#00ff00';
+            ctx.lineWidth = 0.5;
+            ctx.setLineDash([2, 3]);
+            
+            // Distance rings
+            for (let i = 1; i <= 5; i++) {
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, (maxRadius / 5) * i, 0, Math.PI * 2);
+                ctx.stroke();
+                
+                // Distance labels
+                ctx.fillStyle = '#00ff00';
+                ctx.font = '8px monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText(`${i * 2}m`, centerX, centerY - (maxRadius / 5) * i - 5);
+            }
+            
+            // Angle lines
+            for (let i = 0; i < 360; i += 30) {
+                const rad = (i - 90) * Math.PI / 180;
+                const x = centerX + Math.cos(rad) * maxRadius;
+                const y = centerY + Math.sin(rad) * maxRadius;
+                
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.lineTo(x, y);
+                ctx.stroke();
+                
+                // Angle labels
+                if (i % 90 === 0) {
+                    ctx.fillStyle = '#00ff00';
+                    ctx.font = '10px monospace';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(`${i}°`, centerX + Math.cos(rad) * (maxRadius + 15), centerY + Math.sin(rad) * (maxRadius + 15));
+                }
+            }
+            
+            ctx.setLineDash([]);
+            
+            // Sweep animation
+            sweepAngle = (sweepAngle + 2) % 360;
+            const sweepRad = (sweepAngle - 90) * Math.PI / 180;
+            
+            // Sweep line with glow
+            ctx.strokeStyle = '#00ff00';
+            ctx.lineWidth = 2;
+            ctx.shadowColor = '#00ff00';
+            ctx.shadowBlur = 10;
+            
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(centerX + Math.cos(sweepRad) * maxRadius, 
+                      centerY + Math.sin(sweepRad) * maxRadius);
+            ctx.stroke();
+            
+            ctx.shadowBlur = 0;
+            
+            // Draw targets
+            drawTargets(ctx, centerX, centerY, maxRadius);
+            
+            requestAnimationFrame(drawRadar);
+        }
+        
+        function drawTargets(ctx, centerX, centerY, maxRadius) {
+            // Get current targets from scenario or generate demo targets
+            const currentTargets = getCurrentTargets();
+            
+            currentTargets.forEach((target, index) => {
+                const angle = (target.angle || (index * 72)) * Math.PI / 180;
+                const distance = (target.distance || 3 + Math.random() * 3) / 10; // Convert to 0-1 range
+                const x = centerX + Math.cos(angle) * maxRadius * distance;
+                const y = centerY + Math.sin(angle) * maxRadius * distance;
+                
+                // Target dot
+                ctx.fillStyle = target.abnormal ? '#ff0000' : '#00ff00';
+                ctx.shadowColor = target.abnormal ? '#ff0000' : '#00ff00';
+                ctx.shadowBlur = target.abnormal ? 15 : 8;
+                
+                ctx.beginPath();
+                ctx.arc(x, y, target.abnormal ? 6 : 4, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Target info
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '8px monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText(`T${index + 1}`, x, y + 3);
+                
+                // Movement trail
+                if (target.velocity > 0.5) {
+                    ctx.strokeStyle = target.abnormal ? '#ff0000' : '#00ff00';
+                    ctx.lineWidth = 1;
+                    ctx.globalAlpha = 0.3;
+                    
+                    const trailAngle = angle - (target.velocity * 0.1);
+                    const trailX = centerX + Math.cos(trailAngle) * maxRadius * distance;
+                    const trailY = centerY + Math.sin(trailAngle) * maxRadius * distance;
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(trailX, trailY);
+                    ctx.lineTo(x, y);
+                    ctx.stroke();
+                    
+                    ctx.globalAlpha = 1;
+                }
+            });
+        }
+        
+        function getCurrentTargets() {
+            // If scenario is active, use scenario targets
+            if (currentScenario && window.graphData && window.graphData.people) {
+                const peopleCount = Math.floor(window.graphData.people[window.graphData.people.length - 1] || 0);
+                const targets = [];
+                
+                for (let i = 0; i < Math.min(peopleCount, 5); i++) {
+                    targets.push({
+                        angle: (i * 72 + Math.random() * 30 - 15), // Spread targets around
+                        distance: 0.3 + Math.random() * 0.4,
+                        abnormal: Math.random() < 0.2, // 20% chance of abnormal
+                        velocity: currentScenario.name === 'Fighting/Altercation' ? 1.5 : 0.5
+                    });
+                }
+                return targets;
+            }
+            
+            // Demo targets when no scenario
+            return [
+                { angle: 45, distance: 0.4, abnormal: false, velocity: 0.3 },
+                { angle: 180, distance: 0.6, abnormal: false, velocity: 0.2 },
+                { angle: 270, distance: 0.3, abnormal: true, velocity: 0.8 }
+            ];
+        }
+        
+        drawRadar();
+    }
+
+    function initializeGraphData() {
+        // Initialize with some sample data for immediate visualization
+        const now = new Date();
+        for (let i = 0; i < 10; i++) {
+            const timestamp = new Date(now - (9 - i) * 1000).toLocaleTimeString();
+            graphData.timestamps.push(timestamp);
+            graphData.threat.push(20 + Math.random() * 30);
+            graphData.voc.push(30 + Math.random() * 40);
+            graphData.people.push(Math.floor(Math.random() * 5));
+            graphData.noise.push(40 + Math.random() * 30);
+        }
+        
+        // Initial draw
+        updateGraphs();
+    }
+
+    function updateGraphs() {
+        drawThreatGraph();
+        drawSensorGraph();
+    }
+
+    function drawThreatGraph() {
+        const canvas = document.getElementById('threat-graph');
+        if (!canvas) return;
+        
+        const ctx = canvas.getContext('2d');
+        const width = canvas.width;
+        const height = canvas.height;
+
+        // Clear canvas with fade effect
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+        ctx.fillRect(0, 0, width, height);
+        
+        ctx.clearRect(0, 0, width, height);
+
+        // Draw background gradient
+        const gradient = ctx.createLinearGradient(0, 0, 0, height);
+        gradient.addColorStop(0, 'rgba(240, 248, 255, 0.8)');
+        gradient.addColorStop(1, 'rgba(255, 255, 255, 0.95)');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, width, height);
+
+        if (graphData.threat.length < 1) {
+            // Draw "No Data" message
+            ctx.fillStyle = '#666';
+            ctx.font = '16px system-ui';
+            ctx.textAlign = 'center';
+            ctx.fillText('No Data Available', width / 2, height / 2);
+            return;
+        }
+
+        // Draw grid
+        ctx.strokeStyle = '#e0e0e0';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([5, 5]);
+        
+        for (let i = 0; i <= 4; i++) {
+            const y = (height / 4) * i;
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(width, y);
+            ctx.stroke();
+        }
+        
+        ctx.setLineDash([]);
+
+        // Draw threat line with smooth curve
+        if (graphData.threat.length > 1) {
+            ctx.strokeStyle = '#dc3545';
+            ctx.lineWidth = 3;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.shadowColor = 'rgba(220, 53, 69, 0.3)';
+            ctx.shadowBlur = 5;
+            
+            ctx.beginPath();
+            
+            graphData.threat.forEach((value, index) => {
+                const x = (width / Math.max(1, graphData.threat.length - 1)) * index;
+                const y = height - (value / 100) * height;
+                
+                if (index === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    // Smooth curve between points
+                    const prevX = (width / Math.max(1, graphData.threat.length - 1)) * (index - 1);
+                    const prevY = height - (graphData.threat[index - 1] / 100) * height;
+                    const cp1x = (prevX + x) / 2;
+                    const cp1y = prevY;
+                    const cp2x = (prevX + x) / 2;
+                    const cp2y = y;
+                    ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, x, y);
+                }
+            });
+
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+
+            // Draw points with glow effect
+            graphData.threat.forEach((value, index) => {
+                const x = (width / Math.max(1, graphData.threat.length - 1)) * index;
+                const y = height - (value / 100) * height;
+                
+                // Glow effect
+                ctx.shadowColor = '#dc3545';
+                ctx.shadowBlur = 8;
+                
+                ctx.fillStyle = '#dc3545';
+                ctx.beginPath();
+                ctx.arc(x, y, 4, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Inner point
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.arc(x, y, 2, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            
+            // Draw threshold lines
+            ctx.strokeStyle = 'rgba(255, 193, 7, 0.5)';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([10, 5]);
+            
+            // High threshold at 70
+            const highThresholdY = height - (70 / 100) * height;
+            ctx.beginPath();
+            ctx.moveTo(0, highThresholdY);
+            ctx.lineTo(width, highThresholdY);
+            ctx.stroke();
+            
+            // Critical threshold at 85
+            const criticalThresholdY = height - (85 / 100) * height;
+            ctx.beginPath();
+            ctx.moveTo(0, criticalThresholdY);
+            ctx.lineTo(width, criticalThresholdY);
+            ctx.stroke();
+            
+            ctx.setLineDash([]);
+        }
+    }
+
+    function drawSensorGraph() {
+        const canvas = document.getElementById('sensor-graph');
+        if (!canvas) return;
+        
+        const ctx = canvas.getContext('2d');
+        const width = canvas.width;
+        const height = canvas.height;
+
+        // Clear canvas with fade effect
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+        ctx.fillRect(0, 0, width, height);
+        
+        ctx.clearRect(0, 0, width, height);
+
+        // Draw background gradient
+        const gradient = ctx.createLinearGradient(0, 0, 0, height);
+        gradient.addColorStop(0, 'rgba(240, 248, 255, 0.8)');
+        gradient.addColorStop(1, 'rgba(255, 255, 255, 0.95)');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, width, height);
+
+        if (graphData.voc.length < 1) {
+            // Draw "No Data" message
+            ctx.fillStyle = '#666';
+            ctx.font = '16px system-ui';
+            ctx.textAlign = 'center';
+            ctx.fillText('No Data Available', width / 2, height / 2);
+            return;
+        }
+
+        // Draw grid
+        ctx.strokeStyle = '#e0e0e0';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([5, 5]);
+        
+        for (let i = 0; i <= 4; i++) {
+            const y = (height / 4) * i;
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(width, y);
+            ctx.stroke();
+        }
+        
+        ctx.setLineDash([]);
+
+        // Draw VOC line with smooth curve
+        drawSensorLine(ctx, graphData.voc, 500, '#ffc107', width, height, 3);
+        
+        // Draw People line with enhanced visibility
+        drawSensorLine(ctx, graphData.people, 15, '#007bff', width, height, 4);
+        
+        // Draw Noise line
+        drawSensorLine(ctx, graphData.noise, 120, '#28a745', width, height, 3);
+        
+        // Draw legend
+        drawLegend(ctx, width, height);
+    }
+
+    function drawSensorLine(ctx, data, maxValue, color, width, height, lineWidth = 2) {
+        if (data.length < 2) return;
+        
+        // Special handling for people data - make it more visible
+        const isPeopleData = maxValue === 15;
+        const actualLineWidth = isPeopleData ? lineWidth + 1 : lineWidth;
+        const actualShadowBlur = isPeopleData ? 8 : 4;
+        
+        ctx.strokeStyle = color;
+        ctx.lineWidth = actualLineWidth;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.shadowColor = color;
+        ctx.shadowBlur = actualShadowBlur;
+        
+        ctx.beginPath();
+        
+        data.forEach((value, index) => {
+            const x = (width / Math.max(1, data.length - 1)) * index;
+            const y = height - (value / maxValue) * height;
+            
+            if (index === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                // Smooth curve between points
+                const prevX = (width / Math.max(1, data.length - 1)) * (index - 1);
+                const prevY = height - (data[index - 1] / maxValue) * height;
+                const cp1x = (prevX + x) / 2;
+                const cp1y = prevY;
+                const cp2x = (prevX + x) / 2;
+                const cp2y = y;
+                ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, x, y);
+            }
+        });
+
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        // Draw points with enhanced visibility for people data
+        const pointSize = isPeopleData ? 4 : 3;
+        const innerPointSize = isPeopleData ? 2 : 1.5;
+        
+        data.forEach((value, index) => {
+            const x = (width / Math.max(1, data.length - 1)) * index;
+            const y = height - (value / maxValue) * height;
+            
+            // Glow effect
+            ctx.shadowColor = color;
+            ctx.shadowBlur = isPeopleData ? 10 : 6;
+            
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(x, y, pointSize, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Inner point
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(x, y, innerPointSize, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Add value label for people data points
+            if (isPeopleData && index === data.length - 1) {
+                ctx.fillStyle = color;
+                ctx.font = 'bold 10px system-ui';
+                ctx.textAlign = 'center';
+                ctx.fillText(Math.round(value), x, y - pointSize - 5);
+            }
+        });
+    }
+
+    function drawLegend(ctx, width, height) {
+        const legendY = height - 20;
+        const legendItems = [
+            { color: '#ffc107', label: 'VOC' },
+            { color: '#007bff', label: 'People' },
+            { color: '#28a745', label: 'Noise' }
+        ];
+        
+        ctx.font = '12px system-ui';
+        ctx.textAlign = 'left';
+        
+        legendItems.forEach((item, index) => {
+            const x = 10 + index * 80;
+            
+            // Legend line
+            ctx.strokeStyle = item.color;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(x, legendY);
+            ctx.lineTo(x + 20, legendY);
+            ctx.stroke();
+            
+            // Legend text
+            ctx.fillStyle = '#333';
+            ctx.fillText(item.label, x + 25, legendY + 4);
+        });
+    }
+
+    function startLiveUpdates() {
+        // Start continuous graph animation immediately
+        startGraphAnimation();
+        
+        // Fetch live data every 2 seconds when no scenario is active
+        setInterval(() => {
+            if (currentScenario) return; // Don't interfere with active scenario
+            
+            fetch('/api/live')
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.no_data && data.threat) {
+                        // Update with real data when no scenario is active
+                        updateAllSensorDisplays(data);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching live data:', error);
+                });
+        }, 2000);
+    }
+
+    function startGraphAnimation() {
+        // Animate graphs continuously with smooth transitions
+        setInterval(() => {
+            if (currentScenario) return; // Don't interfere with active scenario
+            
+            // Always add new data points to keep graphs moving
+            const lastThreat = graphData.threat.length > 0 ? 
+                graphData.threat[graphData.threat.length - 1] : 30;
+            const variation = (Math.random() - 0.5) * 10;
+            const newThreat = Math.max(10, Math.min(90, lastThreat + variation));
+            
+            graphData.threat.push(newThreat);
+            graphData.voc.push(20 + Math.random() * 60);
+            graphData.people.push(Math.floor(Math.random() * 5));
+            graphData.noise.push(35 + Math.random() * 40);
+            graphData.timestamps.push(new Date().toLocaleTimeString());
+            
+            // Keep only last 20 data points
+            if (graphData.threat.length > 20) {
+                Object.keys(graphData).forEach(key => {
+                    graphData[key].shift();
+                });
+            }
+            
+            updateGraphs();
+            
+            // Also update sensor displays for continuous movement
+            updateSensorDisplay('threat', newThreat, 100);
+            updateSensorDisplay('voc', graphData.voc[graphData.voc.length - 1], 500);
+            updateSensorDisplay('people', graphData.people[graphData.people.length - 1], 15);
+            updateSensorDisplay('noise', graphData.noise[graphData.noise.length - 1], 120);
+        }, 500); // Update every 500ms for smooth movement
+    }
+
+    // AI Ping functionality for scenarios page
+    function sendScenarioAIPing(channel) {
+        const message = currentScenario ? 
+            `SCOPE Scenario Analysis: ${currentScenario.name} - ${currentScenario.description}` :
+            'SCOPE Scenario Analysis from Scenario Simulator';
+        
+        const resultsDiv = document.getElementById('scenario-ping-results');
+        const resultsContent = document.getElementById('scenario-ping-results-content');
+        const pingBtn = document.getElementById('scenario-ping-btn');
+        
+        // Show loading state
+        resultsDiv.style.display = 'block';
+        resultsContent.innerHTML = `
+            <div class="spinner-border spinner-border-sm me-2"></div> Sending Scenario Analysis...
+            <div class="mt-1 small text-muted">
+                <strong>Scenario:</strong> ${currentScenario ? currentScenario.name : 'No active scenario'}
+                <br><strong>Message:</strong> "${message}"
+            </div>
+        `;
+        
+        // Disable button and show loading
+        if (pingBtn) {
+            pingBtn.disabled = true;
+            pingBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Sending...';
+        }
+        
+        // Prepare request data
+        const requestData = {
+            channel: channel,
+            message: message,
+            scenario: currentScenario,
+            use_ai_summary: true
+        };
+        
+        // Send request to test notification endpoint
+        fetch('/api/test-notification', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                let resultsHtml = '<div class="text-success"><h6>🎭 Scenario Analysis Results:</h6>';
+                
+                resultsHtml += `<div class="mb-1"><strong>Scenario:</strong> ${currentScenario ? currentScenario.name : 'No active scenario'}</div>`;
+                resultsHtml += `<div class="mb-1"><strong>Message Sent:</strong> "${message}"</div>`;
+                
+                // Show results for each channel
+                for (const [channelName, result] of Object.entries(data.results)) {
+                    const status = result ? '✅ Sent' : '❌ Failed';
+                    const statusClass = result ? 'text-success' : 'text-danger';
+                    resultsHtml += `<div class="mb-1"><strong>${channelName.toUpperCase()}:</strong> <span class="${statusClass}">${status}</span></div>`;
+                }
+                
+                resultsHtml += '</div>';
+                resultsContent.innerHTML = resultsHtml;
+                
+                // Show full summary preview
+                if (data.ai_summary) {
+                    resultsContent.innerHTML += `<div class="mt-2 small text-muted"><strong>Full Analysis:</strong><br><pre style="white-space: pre-wrap; font-size: 0.8em;">${data.ai_summary}</pre></div>`;
+                }
+            } else {
+                resultsContent.innerHTML = `<div class="text-danger"><h6>❌ Scenario Analysis Failed:</h6><p>${data.error}</p></div>`;
+            }
+        })
+        .catch(error => {
+            console.error('Error sending scenario analysis:', error);
+            resultsContent.innerHTML = `<div class="text-danger"><h6>❌ Scenario Analysis Failed:</h6><p>Error: ${error.message || 'Unknown error'}</p></div>`;
+        })
+        .finally(() => {
+            // Restore button state
+            if (pingBtn) {
+                pingBtn.disabled = false;
+                pingBtn.innerHTML = '<i class="bi bi-send"></i> 🎭 Send Scenario Ping';
+            }
+            resultsDiv.style.display = 'block';
+        });
+    }
+</script>
+{% endblock %}
