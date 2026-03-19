@@ -21,6 +21,8 @@
 18. [Integration Capabilities](#integration-capabilities)
 19. [Performance Features](#performance-features)
 20. [Advanced Features](#advanced-features)
+21. [Documentation System](#documentation-system)
+22. [Testing & Development Tools](#testing--development-tools)
 
 ---
 
@@ -39,6 +41,145 @@ SCOPE is an advanced environmental monitoring and threat detection system design
 - **Alert System**: Multi-channel notifications for critical events
 - **Data Persistence**: SQLite database with advanced querying capabilities
 - **Scenario Simulation**: Training and testing capabilities through simulated scenarios
+- **Documentation System**: Comprehensive technical documentation with interactive features
+- **Dark Mode Interface**: Professional dark theme for extended use sessions
+
+### Real-World Applications & Use Cases
+
+#### 🏫 Educational Facility Applications
+- **Classroom Monitoring**: Real-time student presence detection and activity analysis
+- **Hallway Safety**: Automated detection of unusual gatherings or conflicts
+- **Library Management**: Occupancy monitoring and noise level control
+- **Cafeteria Operations**: Queue management and crowd flow optimization
+- **Emergency Response**: Instant alerts for security threats or medical emergencies
+- **Attendance Tracking**: Automated student presence verification
+- **Behavioral Analysis**: Pattern recognition for at-risk student identification
+
+#### 🏢 Corporate Environment Applications
+- **Office Security**: Unauthorized access detection and perimeter monitoring
+- **Meeting Room Utilization**: Automated space usage optimization
+- **Employee Safety**: Workplace violence prevention and emergency detection
+- **Facility Management**: HVAC optimization based on occupancy and air quality
+- **Compliance Monitoring**: Regulatory compliance for safety and health standards
+- **Productivity Analysis**: Workspace utilization and employee presence patterns
+
+#### 🏥 Healthcare Facility Applications
+- **Patient Monitoring**: Non-intrusive patient presence and vital signs detection
+- **Fall Detection**: Automatic detection of patient falls or medical emergencies
+- **Staff Safety**: Healthcare worker protection from workplace violence
+- **Infection Control**: Air quality monitoring for infection prevention
+- **Privacy Compliance**: Patient privacy while maintaining security monitoring
+- **Emergency Response**: Rapid alert system for medical emergencies
+
+#### 🏪 Retail & Commercial Applications
+- **Store Security**: Shoplifting detection and loss prevention
+- **Customer Analytics**: Foot traffic patterns and dwell time analysis
+- **Staff Safety**: Workplace violence prevention in retail environments
+- **Queue Management**: Checkout line optimization and customer flow
+- **Inventory Protection**: Warehouse and stock room security monitoring
+- **Energy Optimization**: HVAC and lighting control based on occupancy
+
+#### 🏛️ Public Space Applications
+- **Crowd Management**: Public gathering safety and density monitoring
+- **Vandalism Prevention**: Real-time detection of property damage
+- **Public Safety**: Emergency detection in parks and public areas
+- **Traffic Flow**: People movement optimization in public venues
+- **Event Security**: Large gathering monitoring and threat assessment
+- **Accessibility Monitoring**: Ensuring safe access for all visitors
+
+### Operational Scenarios & Workflows
+
+#### 🚨 Emergency Response Scenarios
+- **Active Threat Detection**: Immediate identification of security threats
+- **Automated Lockdown**: Integration with building security systems
+- **First Responder Notification**: Instant alerts to security personnel
+- **Evacuation Guidance**: Real-time guidance for safe evacuation routes
+- **Post-Incident Analysis**: Detailed reporting for investigation and improvement
+- **Drill Simulation**: Training scenarios for emergency preparedness
+
+#### 📊 Daily Operational Workflows
+- **Morning Setup**: Automated system health checks and sensor calibration
+- **Shift Change Monitoring**: Seamless handover with current status reports
+- **Incident Logging**: Automatic documentation of all security events
+- **Maintenance Alerts**: Proactive notifications for system maintenance needs
+- **End-of-Day Reports**: Automated daily summaries and trend analysis
+- **Weekly Briefings**: AI-generated executive summaries for management
+
+#### 🎯 Strategic Planning Applications
+- **Capacity Planning**: Data-driven facility utilization analysis
+- **Security Assessment**: Historical threat pattern analysis for risk mitigation
+- **Resource Allocation**: Optimized security staff placement based on threat patterns
+- **Budget Justification**: ROI analysis for security investments
+- **Compliance Reporting**: Automated generation of regulatory compliance reports
+- **Continuous Improvement**: AI-powered recommendations for system enhancements
+
+### Business Value & ROI
+
+#### 💰 Cost Benefits
+- **Reduced Security Staff Requirements**: Automated monitoring reduces manual surveillance needs
+- **Lower Insurance Premiums**: Proactive security monitoring can reduce insurance costs
+- **Prevention of Losses**: Early threat detection prevents property damage and theft
+- **Operational Efficiency**: Automated systems reduce administrative overhead
+- **Energy Savings**: Occupancy-based HVAC optimization reduces utility costs
+- **Litigation Protection**: Comprehensive documentation reduces legal liability
+
+#### 📈 Performance Metrics
+- **Threat Reduction Rate**: Measurable decrease in security incidents
+- **Response Time Improvement**: Faster emergency response through automated alerts
+- **Operational Uptime**: Increased facility availability through proactive monitoring
+- **User Satisfaction**: Improved sense of safety for students, employees, and visitors
+- **Compliance Rate**: Higher adherence to safety and security regulations
+- **Training Effectiveness**: Better preparedness through realistic simulation scenarios
+
+### Integration with Existing Systems
+
+#### 🔗 Security System Integration
+- **Access Control Systems**: Integration with keycard and biometric systems
+- **CCTV Systems**: Correlation with video surveillance for comprehensive monitoring
+- **Alarm Systems**: Integration with existing intrusion detection systems
+- **Fire Safety Systems**: Coordination with smoke detectors and fire alarms
+- **Communication Systems**: Integration with intercom and emergency notification systems
+
+#### 🏢 Building Management Integration
+- **HVAC Systems**: Climate control based on occupancy and air quality data
+- **Lighting Systems**: Automated lighting control based on presence detection
+- **Energy Management**: Optimization of building energy consumption
+- **Maintenance Systems**: Predictive maintenance based on sensor data
+- **Space Management**: Real-time facility utilization tracking
+
+### Compliance & Regulatory Requirements
+
+#### 📋 Educational Compliance
+- **FERPA Compliance**: Student privacy protection while maintaining security
+- **Title IX Requirements**: Gender-based discrimination prevention and reporting
+- **Emergency Preparedness**: Compliance with school safety regulations
+- **Accessibility**: ADA compliance for all monitoring systems
+- **Reporting Requirements**: Automated generation of required safety reports
+
+#### 🏢 Corporate Compliance
+- **OSHA Standards**: Workplace safety compliance and reporting
+- **HIPAA Compliance**: Healthcare privacy protection (where applicable)
+- **Industry Regulations**: Sector-specific compliance requirements
+- **Data Protection**: GDPR and privacy law compliance
+- **Audit Requirements**: Automated audit trail generation and reporting
+
+### User Experience & Adoption
+
+#### 👥 Stakeholder Benefits
+- **Administrators**: Comprehensive overview with actionable insights
+- **Security Staff**: Real-time alerts and detailed incident information
+- **Facility Managers**: Occupancy data and maintenance predictions
+- **Teachers/Employees**: Safe environment with minimal disruption
+- **Students/Visitors**: Enhanced safety with privacy protection
+- **Parents**: Peace of mind through transparent safety measures
+
+#### 🎯 Adoption Strategies
+- **Phased Implementation**: Gradual rollout to minimize disruption
+- **Staff Training**: Comprehensive training programs for all users
+- **Change Management**: Clear communication of benefits and procedures
+- **User Support**: Ongoing technical assistance and system optimization
+- **Feedback Integration**: Continuous improvement based on user input
+- **Success Metrics**: Clear KPIs for measuring implementation success
 
 ---
 
@@ -51,6 +192,10 @@ SCOPE is an advanced environmental monitoring and threat detection system design
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
 │  │   Flask App  │  │   Templates  │  │   Static     │      │
 │  │   (app.py)   │  │   (HTML/JS)  │  │   (CSS/IMG)  │      │
+│  └──────────────┘  └──────────────┘  └──────────────┘      │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
+│  │   Auth Sys   │  │   API Routes │  │   Session    │      │
+│  │  (Security)  │  │   (REST/SSE) │  │ Management   │      │
 │  └──────────────┘  └──────────────┘  └──────────────┘      │
 └─────────────────────────────────────────────────────────────┘
                               │
@@ -75,6 +220,11 @@ SCOPE is an advanced environmental monitoring and threat detection system design
 │    │   Fake Data     │◄─────┼─────►│   Hardware      │   │
 │    │  Generator      │      │      │   Interface     │   │
 │    └─────────────────┘      │      └─────────────────┘   │
+│                             │                             │
+│    ┌─────────────────┐      │      ┌─────────────────┐   │
+│    │   PDF Reports   │◄─────┼─────►│   Notification  │   │
+│    │ (WeasyPrint)    │      │      │   System        │   │
+│    └─────────────────┘      │      └─────────────────┘   │
 └─────────────────────────────────────────────────────────────┘
                               │
                     ┌─────────┴─────────┐
@@ -84,19 +234,1365 @@ SCOPE is an advanced environmental monitoring and threat detection system design
 ```
 
 ### Technology Stack
-- **Backend**: Python 3.11+, Flask 2.3.3
+- **Backend**: Python 3.11+, Flask 2.3.3, Flask-Session
 - **Frontend**: HTML5, CSS3, JavaScript, Bootstrap 5.1.3, Chart.js 3.9.1
-- **Database**: SQLite3 with optimized indexing
-- **AI/ML**: Google Gemini AI, scikit-learn, numpy
-- **Real-time**: Server-Sent Events (SSE), WebSockets-ready
-- **Hardware**: Raspberry Pi, I2C/UART sensors, mmWave radar
+- **Database**: SQLite3 with optimized indexing and multiple table schemas
+- **AI/ML**: Google Gemini AI, scikit-learn, numpy, scipy
+- **Real-time**: Server-Sent Events (SSE), WebSocket-ready architecture
+- **Hardware**: Raspberry Pi, I2C/UART sensors, mmWave radar (LD2410/RD03D)
 - **Notifications**: SMTP (Gmail), Microsoft Teams Webhooks
-- **PDF Generation**: WeasyPrint, Matplotlib
-- **Authentication**: Flask-Session, Werkzeug security
+- **PDF Generation**: WeasyPrint, Matplotlib with advanced charting
+- **Authentication**: Flask-Session, Werkzeug security, role-based access
+- **Documentation**: Interactive docs with Prism.js syntax highlighting
+- **Environment**: dotenv configuration management
 
 ---
 
 ## Hardware Components
+
+### Sensor Integration
+
+#### 1. mmWave Radar Sensors
+- **LD2410**: 24GHz mmWave radar for human presence detection
+  - Detection range: 0.5-8 meters
+  - Target tracking: Up to 20 simultaneous targets
+  - Movement patterns: Stationary, sitting, walking, running
+  - Breathing detection: Vital signs monitoring
+  - Velocity and acceleration tracking
+  - **Classroom Implementation**: Ceiling-mounted for student presence and activity monitoring
+  - **Office Deployment**: Wall-mounted for conference room occupancy tracking
+  - **Healthcare Use**: Bed-level installation for patient monitoring without cameras
+- **RD03D**: Alternative mmWave sensor option
+  - Similar capabilities with different detection characteristics
+  - Auto-detection of radar type
+  - **Large Space Coverage**: Auditoriums and gymnasiums with wider detection patterns
+  - **Outdoor Applications**: Covered walkways and building perimeter monitoring
+
+#### 2. Air Quality Sensors
+- **PMS5003/7003**: Particulate Matter Sensor
+  - PM1.0, PM2.5, PM10 concentration measurement
+  - Range: 0-1000 μg/m³
+  - Real-time particle counting
+  - **Health Monitoring**: School nurse offices and patient waiting areas
+  - **Industrial Applications**: Workshop and laboratory air quality control
+  - **Regulatory Compliance**: Meeting air quality standards for educational facilities
+- **MQ135**: VOC Gas Sensor
+  - Volatile Organic Compounds detection
+  - Range: 0-1000 ppm
+  - Odor classification: Clean, Activity, Chemical, Smoking, Vaping
+  - Temperature and humidity compensation
+  - **Restroom Monitoring**: Detection of smoking/vaping in school restrooms
+  - **Chemistry Labs**: Early detection of chemical spills or dangerous fumes
+  - **Food Service Areas**: Kitchen ventilation and air quality monitoring
+
+#### 3. Sound Sensors
+- **I2S Microphone Array**: Multi-microphone setup
+  - Sample rate: 200 Hz (configurable)
+  - Sound pressure level: 0-120 dB
+  - FFT analysis: Frequency spectrum analysis
+  - Event classification: Quiet, Conversation, Crowd, Door Slam, Shouting
+  - Spike detection: Sudden noise changes
+  - Spectral features: Energy, centroid, spread, skewness, kurtosis
+  - **Library Quiet Zones**: Automated noise level monitoring and alerts
+  - **Exam Proctoring**: Detection of unauthorized communication during tests
+  - **Bullying Detection**: Aggressive sound pattern identification in hallways
+  - **Emergency Detection**: Glass break, gunshots, or screams recognition
+
+#### 4. Environmental Sensors
+- **Temperature/Humidity**: Environmental monitoring
+  - **HVAC Optimization**: Climate control based on occupancy and comfort levels
+  - **Energy Conservation**: Automated temperature adjustment for empty rooms
+  - **Comfort Monitoring**: Student and employee comfort level tracking
+- **Light Sensors**: Ambient light detection
+  - **Energy Management**: Automated lighting control based on natural light availability
+  - **Security Enhancement**: Lighting automation for after-hours security
+  - **Circadian Rhythm**: Lighting optimization for student well-being
+- **Motion Sensors**: PIR for presence detection
+  - **Backup Systems**: Secondary detection when primary sensors fail
+  - **Energy Savings**: Motion-activated lighting and systems
+  - **Security Zones**: Perimeter monitoring for after-hours protection
+
+### Hardware Interface Layer
+- **ADC (ADS1115)**: 16-bit analog-to-digital converter
+  - **Precision Measurement**: High-accuracy sensor data conversion
+  - **Multi-channel Support**: Simultaneous sensor reading
+  - **Low Power Consumption**: Energy-efficient operation
+- **I2C Communication**: Sensor data acquisition
+  - **Reliable Data Transfer**: Error-checked communication protocols
+  - **Scalability**: Support for multiple sensors on same bus
+- **UART Communication**: Radar sensor interface
+  - **High-Speed Data**: Real-time radar data streaming
+  - **Error Detection**: Communication error handling and recovery
+- **GPIO Control**: Hardware control and status LEDs
+  - **System Indicators**: Visual feedback for system status
+  - **Control Signals**: Relay control for external systems
+- **Power Management**: Sensor power optimization
+  - **Energy Efficiency**: Low-power sensor operation modes
+  - **Backup Power**: UPS integration for continuous operation
+  - **Remote Power**: Power cycling for sensor reset capabilities
+
+### Sensor Data Processing
+- **Real-time Processing**: Continuous data stream processing
+  - **Edge Computing**: Local processing to reduce bandwidth requirements
+  - **Data Validation**: Quality checks and error detection
+  - **Prioritization**: Critical data processing for immediate alerts
+- **Noise Filtering**: Digital signal processing for noise reduction
+  - **Environmental Compensation**: Temperature and humidity correction
+  - **Sensor Fusion**: Combining multiple sensor inputs for accuracy
+- **Calibration**: Automatic sensor calibration and drift compensation
+  - **Self-Calibration**: Automatic adjustment for sensor drift
+  - **Reference Points**: Known baseline measurements for calibration
+  - **Maintenance Alerts**: Notification when calibration is needed
+- **Fault Detection**: Sensor health monitoring and error handling
+  - **Redundancy**: Multiple sensors for critical measurements
+  - **Failover**: Automatic switching to backup sensors
+  - **Diagnostics**: Detailed sensor health reporting
+- **Data Fusion**: Multi-sensor data correlation and validation
+  - **Cross-Validation**: Verifying data consistency across sensors
+  - **Pattern Recognition**: Identifying patterns from combined sensor data
+  - **Confidence Scoring**: Reliability assessment for sensor readings
+
+### Deployment Considerations
+
+#### 🏫 Educational Facility Deployment
+- **Classroom Installation**: 
+  - Ceiling-mounted radar for student presence and activity monitoring
+  - Wall-mounted air quality sensors at breathing height
+  - Microphone arrays near doors for hallway noise detection
+  - Temperature sensors for HVAC optimization
+- **Common Areas**:
+  - Library: Noise level monitoring and occupancy tracking
+  - Cafeteria: Queue management and crowd flow analysis
+  - Gymnasium: Large area coverage with multiple sensors
+  - Auditorium: Event monitoring and emergency detection
+
+#### 🏢 Corporate Environment Deployment
+- **Office Spaces**:
+  - Meeting room occupancy and utilization tracking
+  - Open office noise level monitoring
+  - Perimeter security monitoring
+  - Energy management integration
+- **Facility Management**:
+  - HVAC system integration for climate control
+  - Lighting automation based on occupancy
+  - Maintenance prediction through sensor data
+  - Compliance monitoring for safety standards
+
+#### 🏥 Healthcare Facility Deployment
+- **Patient Rooms**:
+  - Non-intrusive patient monitoring without cameras
+  - Fall detection and vital signs monitoring
+  - Privacy-compliant monitoring solutions
+  - Emergency detection and response
+- **Staff Areas**:
+  - Workplace violence prevention
+  - Staff safety monitoring
+  - Emergency response coordination
+  - Compliance with healthcare regulations
+
+### Installation Best Practices
+
+#### 📋 Planning Phase
+- **Site Survey**: Comprehensive assessment of facility layout and requirements
+- **Coverage Analysis**: Determining optimal sensor placement for complete coverage
+- **Integration Planning**: Coordination with existing building systems
+- **Regulatory Review**: Ensuring compliance with privacy and safety regulations
+- **Stakeholder Engagement**: Involving all relevant departments in planning
+
+#### 🔧 Installation Process
+- **Professional Installation**: Certified technicians for sensor deployment
+- **Minimal Disruption**: Installation during off-hours to minimize impact
+- **Testing Phase**: Comprehensive testing of all sensor functionality
+- **Training Programs**: Staff training for system operation and response
+- **Documentation**: Complete installation and operation documentation
+
+#### 🎯 Optimization Strategies
+- **Sensor Placement**: Strategic positioning for maximum effectiveness
+- **Coverage Overlap**: Ensuring no blind spots in monitoring areas
+- **Environmental Adaptation**: Adjusting sensor settings for specific environments
+- **Performance Monitoring**: Continuous monitoring of system effectiveness
+- **Continuous Improvement**: Regular system optimization based on usage data
+
+### Maintenance & Support
+
+#### 🔧 Preventive Maintenance
+- **Regular Calibration**: Scheduled sensor calibration for accuracy
+- **Cleaning Procedures**: Regular sensor cleaning to maintain performance
+- **Firmware Updates**: Keeping sensor software up to date
+- **Battery Replacement**: Proactive battery replacement for wireless sensors
+- **Performance Monitoring**: Continuous monitoring of sensor health
+
+#### 🚨 Troubleshooting & Support
+- **Remote Diagnostics**: Remote troubleshooting capabilities
+- **On-Site Support**: Rapid response for hardware issues
+- **Spare Parts**: Inventory of critical spare parts for quick replacement
+- **Technical Support**: 24/7 technical support for critical issues
+- **System Redundancy**: Backup systems for continuous operation
+
+### Cost-Benefit Analysis
+
+#### 💰 Initial Investment
+- **Hardware Costs**: Sensors, controllers, and installation equipment
+- **Installation Costs**: Professional installation and setup
+- **Training Costs**: Staff training and system familiarization
+- **Integration Costs**: Connection with existing building systems
+
+#### 📈 Long-Term Benefits
+- **Reduced Security Costs**: Lower insurance premiums and reduced security staff needs
+- **Operational Efficiency**: Automated monitoring reduces manual inspection requirements
+- **Energy Savings**: Optimized HVAC and lighting based on occupancy
+- **Risk Reduction**: Early threat detection prevents costly incidents
+- **Compliance Benefits**: Automated reporting reduces compliance costs
+
+### Future Expansion Planning
+
+#### 🚀 Scalability Considerations
+- **Modular Design**: Easy addition of new sensors and monitoring areas
+- **System Integration**: Connection with future building management systems
+- **Technology Upgrades**: Path for upgrading to newer sensor technologies
+- **Capacity Planning**: System designed for future growth and expansion
+- **Standardization**: Consistent deployment across multiple facilities
+
+---
+
+## Software Components
+
+### Core Application (app.py)
+
+#### Flask Web Application
+- **Framework**: Flask 2.3.3 with session management
+- **Routes**: 30+ endpoints for comprehensive functionality
+- **Middleware**: Authentication, error handling, logging
+- **Templates**: Jinja2 templating with dynamic content
+- **Static Assets**: CSS, JavaScript, images optimization
+
+#### Authentication System
+- **User Management**: Registration, login, logout functionality
+- **Role-Based Access**: Admin and user roles with different permissions
+- **Session Management**: Secure session handling with Flask-Session
+- **Password Security**: Werkzeug password hashing
+- **Account Status**: Active/inactive user management
+
+#### Data Management
+- **SQLite Integration**: Multi-table database schema
+- **Live Data Store**: Real-time data caching and management
+- **Fake Data Generator**: Realistic simulation for testing
+- **Data Archival**: Automated data retention and cleanup
+- **Export Capabilities**: JSON, CSV data export
+
+#### AI Integration
+- **Google Gemini AI**: Natural language processing and analysis
+- **Threat Assessment**: AI-powered threat level determination
+- **Report Generation**: AI-generated summaries and recommendations
+- **Pattern Recognition**: Machine learning for behavior analysis
+- **Predictive Analytics**: Trend analysis and forecasting
+
+### Sensor Hub (rasppi.py)
+
+#### Sensor Interface
+- **Multi-sensor Support**: Radar, air quality, sound sensors
+- **Real-time Processing**: Continuous data acquisition and processing
+- **Signal Processing**: Advanced DSP algorithms
+- **Calibration Management**: Automatic sensor calibration
+- **Error Handling**: Robust error detection and recovery
+
+#### Threat Detection Engine
+- **Multi-factor Analysis**: 8+ threat assessment factors
+- **Temporal Dynamics**: Time-based threat escalation
+- **Behavior Analysis**: Pattern recognition and anomaly detection
+- **Vital Signs Monitoring**: Breathing rate and health indicators
+- **Environmental Assessment**: Air quality and noise analysis
+
+#### Notification System
+- **Multi-channel Alerts**: Email, Teams, SMS capabilities
+- **Threshold Management**: Configurable alert thresholds
+- **Cooldown Management**: Alert rate limiting
+- **Escalation Protocols**: Multi-level alert escalation
+- **Message Templates**: Customizable notification content
+
+### Documentation System (scope-docs.*)
+
+#### Interactive Documentation
+- **Modern Interface**: Responsive design with dark mode
+- **Syntax Highlighting**: Prism.js for code examples
+- **Search Functionality**: Full-text search with highlighting
+- **Navigation**: Table of contents with smooth scrolling
+- **Print Support**: Optimized print layouts
+
+#### Documentation Features
+- **Floating Action Menu**: Quick access to common actions
+- **Fullscreen Mode**: Distraction-free reading
+- **PDF Download**: Export documentation as PDF
+- **Share Functionality**: Easy sharing capabilities
+- **Back to Top**: Smooth scroll navigation
+
+---
+
+## Web Application Features
+
+### User Interface
+
+#### Modern Dashboard
+- **Responsive Design**: Mobile-first responsive layout
+- **Dark Theme**: Professional dark mode interface
+- **Real-time Updates**: Live data streaming with SSE
+- **Interactive Charts**: Chart.js visualizations
+- **Customizable Layout**: Drag-and-drop dashboard widgets
+
+#### Navigation System
+- **Sidebar Navigation**: Collapsible menu with icons
+- **Breadcrumb Navigation**: Clear page hierarchy
+- **Quick Actions**: Floating action button menu
+- **Environment Switcher**: Multi-environment navigation
+- **Search Integration**: Global search functionality
+
+#### Page Templates
+1. **Dashboard**: Main monitoring interface
+   - **Real-time Threat Assessment**: Live threat level gauges with color-coded indicators
+   - **Environmental Overview**: Current air quality, noise levels, and occupancy status
+   - **Alert Management**: Active alerts display with response actions
+   - **System Health**: Sensor connectivity and system status monitoring
+   - **Quick Actions**: One-click access to common functions like lockdown or evacuation
+
+2. **Sensors**: Detailed sensor data display
+   - **Sensor Status Dashboard**: Real-time sensor health and connectivity monitoring
+   - **Historical Data Trends**: Sensor performance and data quality over time
+   - **Calibration Management**: Sensor calibration schedules and procedures
+   - **Maintenance Alerts**: Proactive notifications for sensor maintenance needs
+   - **Performance Analytics**: Sensor accuracy and reliability metrics
+
+3. **Targets**: Person tracking visualization
+   - **Real-time Tracking**: Live visualization of people movement and positions
+   - **Heat Maps**: Density visualization showing high-traffic areas
+   - **Behavioral Analysis**: Pattern recognition for unusual activities
+   - **Privacy Controls**: Anonymized data display to protect individual privacy
+   - **Historical Patterns**: Movement pattern analysis for security planning
+
+4. **Analytics**: Charts and statistical analysis
+   - **Threat Trend Analysis**: Historical threat levels and escalation patterns
+   - **Environmental Quality Reports**: Air quality and noise level trends
+   - **Occupancy Analytics**: Facility utilization and space planning insights
+   - **Performance Metrics**: System effectiveness and ROI measurements
+   - **Predictive Analytics**: AI-powered forecasting for resource planning
+
+5. **History**: Event log and timeline
+   - **Comprehensive Event Log**: Detailed record of all system events and alerts
+   - **Incident Timeline**: Chronological view of security incidents and responses
+   - **Search and Filter**: Advanced search capabilities for incident investigation
+   - **Export Capabilities**: Data export for compliance and analysis
+   - **Trend Analysis**: Long-term pattern identification and reporting
+
+6. **Reports**: Weekly and custom reports
+   - **Automated Weekly Reports**: AI-generated executive summaries with recommendations
+   - **Custom Report Builder**: Flexible report creation for specific needs
+   - **Compliance Reports**: Automated generation for regulatory requirements
+   - **Performance Reports**: System effectiveness and operational metrics
+   - **PDF Export**: Professional report formatting and distribution
+
+7. **Settings**: System configuration
+   - **Alert Configuration**: Threshold settings and notification preferences
+   - **User Management**: Account creation and permission management
+   - **System Integration**: Connection with external systems and APIs
+   - **Environmental Settings**: Multi-environment configuration and switching
+   - **Maintenance Scheduling**: Automated maintenance and calibration scheduling
+
+8. **Users**: User management (admin only)
+   - **User Directory**: Complete user listing with status and roles
+   - **Role Management**: Permission assignment and access control
+   - **Activity Monitoring**: User login and system usage tracking
+   - **Account Administration**: User creation, modification, and deletion
+   - **Security Settings**: Password policies and authentication configuration
+
+9. **Profile**: User profile management
+   - **Personal Settings**: Notification preferences and display options
+   - **Security Settings**: Password change and two-factor authentication
+   - **Activity History**: Personal system usage and login history
+   - **Notification Preferences**: Custom alert routing and frequency settings
+   - **Help and Support**: Access to documentation and support resources
+
+10. **Documentation**: Interactive system documentation
+    - **User Manuals**: Comprehensive guides for system operation
+    - **Technical Documentation**: Detailed system architecture and API reference
+    - **Training Materials**: Interactive tutorials and best practices
+    - **Troubleshooting Guide**: Common issues and resolution procedures
+    - **Search Functionality**: Full-text search across all documentation
+
+### Real-World User Scenarios
+
+#### 🏫 School Administrator Daily Workflow
+- **Morning Briefing**: Review overnight system status and any incidents
+- **Live Monitoring**: Real-time observation of school safety and security
+- **Incident Response**: Immediate alerts and coordinated response to threats
+- **Compliance Reporting**: Automated generation of required safety reports
+- **Parent Communication**: Transparent safety updates for school community
+- **Strategic Planning**: Data-driven decisions for security improvements
+
+#### 👮 Security Officer Operations
+- **Real-time Surveillance**: Continuous monitoring of all school areas
+- **Threat Assessment**: Immediate evaluation and response to security alerts
+- **Incident Documentation**: Detailed reporting of all security events
+- **Patrol Optimization**: Data-driven patrol route planning and scheduling
+- **Emergency Coordination**: Integration with first responders and emergency services
+- **Training Management**: Scenario-based training for emergency preparedness
+
+#### 🏢 Facility Manager Daily Tasks
+- **Occupancy Monitoring**: Real-time space utilization tracking
+- **Energy Management**: HVAC and lighting optimization based on occupancy
+- **Maintenance Coordination**: Proactive maintenance based on sensor data
+- **Compliance Monitoring**: Ensuring adherence to safety and environmental standards
+- **Cost Optimization**: Data-driven decisions for resource allocation
+- **Reporting**: Automated generation of facility performance reports
+
+### Interactive Dashboard Features
+
+#### 📊 Real-time Monitoring Dashboard
+- **Threat Level Gauges**: Visual indicators with color-coded severity levels
+- **Environmental Metrics**: Live air quality, temperature, and humidity displays
+- **Occupancy Tracking**: Real-time people count and density visualization
+- **System Status**: Sensor connectivity and health monitoring
+- **Alert Panel**: Active alerts with recommended actions and response options
+
+#### 🎯 Actionable Insights
+- **Trend Analysis**: Visual representation of historical data patterns
+- **Predictive Alerts**: Early warning system for potential issues
+- **Resource Optimization**: Recommendations for efficient resource allocation
+- **Compliance Status**: Real-time compliance monitoring and reporting
+- **Performance Metrics**: System effectiveness and ROI measurements
+
+### Mobile Optimization
+
+#### 📱 Mobile Device Features
+- **Responsive Design**: Optimized interface for smartphones and tablets
+- **Touch-Friendly Controls**: Large tap targets and gesture support
+- **Offline Capability**: Basic functionality available without internet connection
+- **Push Notifications**: Instant alerts for critical events on mobile devices
+- **Location-Aware Features**: Context-aware functionality based on user location
+
+#### 🔄 Cross-Platform Compatibility
+- **Web App Support**: Progressive web app functionality for mobile devices
+- **Native Integration**: Integration with mobile device features (camera, GPS)
+- **Offline Sync**: Data synchronization when connection restored
+- **Battery Optimization**: Efficient power usage for mobile devices
+- **Security**: Mobile-specific security features and encryption
+
+### User Experience Design
+
+#### 👥 User-Centered Design Principles
+- **Intuitive Navigation**: Clear information architecture and user flow
+- **Accessibility**: WCAG compliance for users with disabilities
+- **Multi-Language Support**: Internationalization for diverse user populations
+- **Customizable Interface**: Personalizable dashboards and layouts
+- **Contextual Help**: In-application guidance and documentation
+
+#### 🎨 Visual Design Elements
+- **Professional Aesthetics**: Clean, modern interface design
+- **Dark Mode Support**: Eye-friendly interface for extended use sessions
+- **Color-Coded Information**: Intuitive use of color for threat levels and status
+- **Consistent Branding**: Cohesive visual identity across all interfaces
+- **Responsive Graphics**: Scalable visualizations for all screen sizes
+
+### Integration Capabilities
+
+#### 🔗 External System Integration
+- **Building Management Systems**: HVAC, lighting, and security system integration
+- **Communication Platforms**: Email, SMS, and messaging app integration
+- **Emergency Services**: Direct connection to police, fire, and medical services
+- **Administrative Systems**: Student information systems and HR database integration
+- **Third-Party APIs**: Integration with external services and applications
+
+#### 📊 Data Integration and Analytics
+- **Real-time Data Synchronization**: Live data updates from multiple sources
+- **Historical Data Analysis**: Long-term trend identification and reporting
+- **Predictive Analytics**: AI-powered forecasting and recommendations
+- **Custom Reporting**: Flexible report generation for various stakeholders
+- **Data Export**: Multiple format support for data sharing and analysis
+
+### Real-time Features
+
+#### Live Data Streaming
+- **Server-Sent Events**: Real-time data updates
+- **WebSocket Ready**: Future WebSocket integration
+- **Auto-refresh**: Automatic data refresh
+- **Connection Management**: Robust connection handling
+- **Error Recovery**: Automatic reconnection
+
+#### Interactive Elements
+- **Threat Gauges**: Visual threat level indicators
+- **Status Indicators**: Real-time status displays
+- **Alert Banners**: Critical event notifications
+- **Progress Bars**: Loading and processing indicators
+- **Tooltips**: Contextual help and information
+
+### Mobile Optimization
+
+#### Responsive Design
+- **Mobile-First**: Optimized for mobile devices
+- **Touch Interface**: Touch-friendly controls
+- **Gesture Support**: Swipe and tap interactions
+- **Performance**: Optimized for mobile performance
+- **Offline Support**: Basic offline functionality
+
+---
+
+## Database Schema
+
+### Core Tables
+
+#### 1. Users Table
+```sql
+CREATE TABLE users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT NOT NULL,
+    password TEXT NOT NULL,
+    dateJoined TEXT,
+    salt TEXT,
+    accountStatus TEXT,
+    role TEXT,
+    twoFactorAuth INTEGER,
+    lastLogin TEXT,
+    emailAddress TEXT,
+    phoneNumber TEXT,
+    name TEXT,
+    dateOfBirth TEXT,
+    gender TEXT
+);
+```
+
+#### 2. Environment Settings Table
+```sql
+CREATE TABLE environment_settings (
+    environment_id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT,
+    color TEXT DEFAULT '#007bff',
+    icon TEXT DEFAULT 'bi-house',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+#### 3. Events Table (Main Data Store)
+```sql
+CREATE TABLE events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    timestamp TEXT NOT NULL,
+    
+    -- Threat Assessment Metrics
+    threat_overall REAL,
+    threat_base REAL,
+    threat_level TEXT,
+    threat_color TEXT,
+    threat_response TEXT,
+    threat_confidence REAL,
+    
+    -- Temporal Dynamics
+    temporal_trend TEXT,
+    temporal_slope REAL,
+    temporal_acceleration REAL,
+    temporal_volatility REAL,
+    temporal_persistence_factor REAL,
+    
+    -- Threat Trajectory
+    trajectory_5min REAL,
+    trajectory_15min REAL,
+    trajectory_30min REAL,
+    
+    -- Component Threat Scores
+    proximity_score REAL, proximity_raw REAL, proximity_confidence REAL, proximity_weight REAL,
+    count_score REAL, count_raw REAL, count_confidence REAL, count_weight REAL,
+    behavior_score REAL, behavior_raw REAL, behavior_confidence REAL, behavior_weight REAL,
+    vital_signs_score REAL, vital_signs_raw REAL, vital_signs_confidence REAL, vital_signs_weight REAL,
+    air_quality_score REAL, air_quality_raw REAL, air_quality_confidence REAL, air_quality_weight REAL,
+    noise_score REAL, noise_raw REAL, noise_confidence REAL, noise_weight REAL,
+    
+    -- Facility Quality Metrics
+    quality_score REAL, quality_base REAL, quality_category TEXT, quality_icon TEXT,
+    quality_trend TEXT, quality_sound_adjust REAL, quality_air_adjust REAL, quality_occupancy_adjust REAL,
+    
+    -- Sound Analysis
+    sound_db REAL, sound_baseline REAL, sound_spike INTEGER, sound_rate_of_change REAL,
+    sound_event TEXT, sound_confidence REAL,
+    sound_dominant_freq REAL, sound_spectral_energy REAL, sound_spectral_centroid REAL,
+    sound_peak REAL, sound_zero_crossings REAL, sound_spectral_spread REAL,
+    sound_skewness REAL, sound_kurtosis REAL,
+    sound_low_energy REAL, sound_mid_energy REAL, sound_high_energy REAL,
+    
+    -- Air Quality
+    air_voc_ppm REAL, air_voc_voltage REAL, air_pm1 INTEGER, air_pm25 INTEGER, air_pm10 INTEGER,
+    air_aqi REAL, air_odor_type TEXT, air_odor_confidence REAL, air_odor_intensity REAL,
+    air_odor_level TEXT, air_odor_trend REAL, air_baseline_intensity REAL, air_odor_anomaly INTEGER,
+    
+    -- Radar Data
+    radar_target_count INTEGER, radar_format TEXT,
+    motion_pattern TEXT, motion_activity_level REAL, motion_total_targets INTEGER, motion_active_targets INTEGER,
+    activity_events TEXT, radar_targets TEXT,
+    
+    -- Derived Metrics
+    physical_risk REAL, health_risk REAL, facility_risk REAL, danger_index REAL,
+    comfort_index REAL, urgency_score REAL,
+    
+    -- Sensor Status
+    sensor_radar_connected INTEGER, sensor_pms_connected INTEGER, sensor_mq135_connected INTEGER,
+    sensor_sound_connected INTEGER,
+    
+    -- Alerts
+    alert_critical_threat INTEGER, alert_high_threat INTEGER, alert_rapid_escalation INTEGER,
+    alert_abnormal_vitals INTEGER, alert_air_quality INTEGER,
+    
+    -- Metadata
+    notes TEXT
+);
+```
+
+#### 4. Targets Table (Per-Person Data)
+```sql
+CREATE TABLE targets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_id INTEGER,
+    timestamp TEXT NOT NULL,
+    target_id TEXT,
+    target_x REAL, target_y REAL, target_distance REAL, target_angle REAL,
+    target_velocity REAL, target_direction TEXT, target_orientation TEXT,
+    target_confidence REAL, target_activity TEXT, target_activity_confidence REAL,
+    target_breathing_rate REAL, target_breathing_confidence REAL, target_abnormal_breathing INTEGER,
+    target_vx REAL, target_vy REAL, target_ax REAL, target_ay REAL, target_speed REAL
+);
+```
+
+#### 5. Events Log Table (Simplified)
+```sql
+CREATE TABLE events_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    timestamp TEXT NOT NULL,
+    threat_level TEXT,
+    threat_score REAL,
+    quality_score REAL,
+    people_count INTEGER,
+    sound_db REAL,
+    air_aqi REAL,
+    event_type TEXT,
+    description TEXT,
+    temperature REAL
+);
+```
+
+### Database Features
+
+#### Performance Optimization
+- **Indexing**: Optimized indexes for common queries
+- **Query Optimization**: Efficient SQL queries
+- **Connection Pooling**: Database connection management
+- **Data Archival**: Automated old data cleanup
+- **Backup Systems**: Data backup and recovery
+
+#### Data Integrity
+- **Foreign Keys**: Referential integrity
+- **Constraints**: Data validation rules
+- **Transactions**: ACID compliance
+- **Error Handling**: Robust error management
+- **Migration Support**: Schema versioning
+
+---
+
+## API Endpoints
+
+### Authentication Routes
+
+#### User Management
+- `POST /login` - User authentication
+- `GET /logout` - User logout
+- `GET|POST /register` - User registration
+- `GET /profile` - User profile view
+- `GET /users` - User management (admin only)
+- `POST /users/create` - Create user (admin only)
+- `POST /users/<id>/status` - Update user status (admin only)
+- `POST /users/<id>/delete` - Delete user (admin only)
+
+### Main Application Routes
+
+#### Core Pages
+- `GET /` - Root redirect to dashboard
+- `GET /dashboard` - Main dashboard
+- `GET /sensors` - Sensor data display
+- `GET /targets` - Person tracking view
+- `GET /history` - Event history
+- `GET /analytics` - Analytics and charts
+- `GET /weekly-report` - Weekly report
+- `GET /settings` - System settings
+- `GET /documentation` - System documentation
+
+#### Test Routes (Development)
+- `GET /test/analytics` - Test analytics without auth
+- `GET /test/history` - Test history without auth
+
+### API Endpoints
+
+#### Data Retrieval
+- `GET /api/targets` - Get recent target data
+  - Parameters: `minutes` (default: 30)
+- `GET /api/events/recent` - Get recent events
+  - Parameters: `limit` (default: 50)
+- `GET /api/live` - Get current live sensor data
+- `GET /api/environments` - Get all environments data
+- `GET /api/environment/<id>/data` - Get specific environment data
+- `GET /api/timeline` - Get threat timeline data
+  - Parameters: `hours` (default: 24)
+- `GET /api/components` - Get threat components for radar chart
+  - Parameters: `hours` (default: 24)
+
+#### System Control
+- `POST /api/toggle_fake_mode` - Toggle fake data mode
+- `POST /api/pause` - Pause data updates
+- `POST /api/resume` - Resume data updates
+- `GET /api/pause_status` - Get pause status
+- `POST /api/environment/<id>/pause` - Pause specific environment
+- `POST /api/environment/<id>/resume` - Resume specific environment
+- `GET /api/environment/<id>/pause_status` - Get environment pause status
+
+#### Configuration
+- `GET|POST /api/config` - Handle system settings
+- `POST /api/environment/<id>/settings` - Update environment settings
+- `GET|POST /api/environment/current` - Update current environment
+
+#### Data Management
+- `POST /api/data/archive` - Archive old data
+- `POST /api/data/clear` - Clear all historical data
+- `GET /api/data/export` - Export data as JSON
+
+#### Reporting
+- `GET /api/reports/summary` - Get AI-powered weekly summary
+- `GET /api/reports/recommendations` - Get AI recommendations
+- `GET /api/reports/detailed-stats` - Get detailed statistics
+- `GET /api/reports/event-timerange` - Get event time range
+- `GET|POST /api/reports/weekly` - Generate weekly report PDF
+
+#### Notifications
+- `POST /api/test-notification` - Test notification system
+- `GET /api/events/stream` - Server-Sent Events stream
+
+#### System Updates
+- `POST /api/update` - Endpoint for system updates
+
+### API Features
+
+#### Response Format
+- **JSON Responses**: Standardized JSON format
+- **Error Handling**: Comprehensive error responses
+- **Status Codes**: Proper HTTP status codes
+- **Pagination**: Large dataset pagination
+- **Filtering**: Data filtering and sorting
+
+#### Security
+- **Authentication**: Login required for most endpoints
+- **Authorization**: Role-based access control
+- **Rate Limiting**: Request rate limiting
+- **Input Validation**: Comprehensive input validation
+- **SQL Injection Protection**: Parameterized queries
+
+---
+
+## Security & Authentication
+
+### Authentication System
+
+#### User Authentication
+- **Login System**: Secure user login with password hashing
+- **Session Management**: Flask-Session for secure session handling
+- **Password Security**: Werkzeug password hashing with salt
+- **Remember Me**: Persistent login options
+- **Multi-factor**: Two-factor authentication support (framework)
+
+#### Authorization System
+- **Role-Based Access**: Admin and user roles
+- **Permission System**: Granular permission control
+- **Route Protection**: Decorator-based route protection
+- **API Security**: Authentication for API endpoints
+- **Session Security**: Secure session configuration
+
+### Security Features
+
+#### Data Protection
+- **Password Hashing**: Secure password storage
+- **Session Encryption**: Encrypted session data
+- **CSRF Protection**: Cross-site request forgery protection
+- **XSS Prevention**: Cross-site scripting prevention
+- **SQL Injection Protection**: Parameterized queries
+
+#### Access Control
+- **Login Required**: Protected routes require authentication
+- **Admin Only**: Admin-only routes and functions
+- **User Management**: Admin can manage user accounts
+- **Account Status**: Active/inactive account management
+- **Last Login Tracking**: User activity monitoring
+
+#### Security Headers
+- **Content Security Policy**: CSP headers for XSS protection
+- **X-Frame-Options**: Clickjacking protection
+- **X-Content-Type-Options**: MIME type sniffing protection
+- **Referrer Policy**: Referrer information control
+- **Permissions Policy**: Feature permission control
+
+---
+
+## Real-time Monitoring
+
+### Live Data Streaming
+
+#### Server-Sent Events (SSE)
+- **Real-time Updates**: Live data streaming to clients
+- **Automatic Reconnection**: Automatic connection recovery
+- **Event Types**: Different event types for different data
+- **Connection Management**: Efficient connection handling
+- **Error Handling**: Robust error management
+
+#### Data Updates
+- **Sensor Data**: Live sensor readings
+- **Threat Levels**: Real-time threat assessment
+- **Status Changes**: System status updates
+- **Alert Notifications**: Real-time alert delivery
+- **Environment Switching**: Multi-environment updates
+
+### Monitoring Interface
+
+#### Dashboard Features
+- **Live Gauges**: Real-time threat level gauges
+- **Status Indicators**: System status displays
+- **Alert Banners**: Critical event notifications
+- **Data Tables**: Live data tables with updates
+- **Chart Updates**: Real-time chart updates
+
+#### Visual Indicators
+- **Threat Levels**: Color-coded threat indicators
+- **Sensor Status**: Online/offline sensor status
+- **Data Quality**: Data quality indicators
+- **Connection Status**: Connection status displays
+- **Activity Indicators**: System activity indicators
+
+### Performance Optimization
+
+#### Data Management
+- **Efficient Updates**: Optimized data update mechanisms
+- **Caching**: Data caching for performance
+- **Compression**: Data compression for transmission
+- **Batching**: Batch data updates
+- **Throttling**: Update rate throttling
+
+---
+
+## Analytics & Reporting
+
+### Analytics Features
+
+#### Data Visualization
+- **Chart.js Integration**: Interactive charts and graphs
+- **Threat Timeline**: Historical threat level trends
+- **Component Analysis**: Threat component breakdown
+- **Environmental Trends**: Environmental data trends
+- **Activity Patterns**: Human activity pattern analysis
+
+#### Statistical Analysis
+- **Threat Statistics**: Comprehensive threat statistics
+- **Quality Metrics**: Environmental quality analysis
+- **Sensor Performance**: Sensor reliability analysis
+- **Event Correlation**: Event correlation analysis
+- **Trend Analysis**: Long-term trend identification
+
+### Reporting System
+
+#### Weekly Reports
+- **AI-Generated Summaries**: Natural language summaries
+- **Executive Dashboard**: High-level overview
+- **Detailed Statistics**: Comprehensive statistics
+- **Recommendations**: AI-generated recommendations
+- **PDF Export**: Professional PDF reports
+
+#### Custom Reports
+- **Date Range Selection**: Custom date range reports
+- **Environment Filtering**: Environment-specific reports
+- **Data Export**: Multiple export formats
+- **Scheduled Reports**: Automated report generation
+- **Report Templates**: Customizable report templates
+
+### AI Integration
+
+#### Google Gemini AI
+- **Natural Language Processing**: Text analysis and generation
+- **Threat Analysis**: AI-powered threat assessment
+- **Report Generation**: Automated report creation
+- **Recommendations**: AI-generated recommendations
+- **Pattern Recognition**: Advanced pattern detection
+
+#### Machine Learning
+- **Random Forest**: Threat classification
+- **DBSCAN Clustering**: Pattern clustering
+- **Anomaly Detection**: Unusual pattern detection
+- **Predictive Analytics**: Trend prediction
+- **Behavior Analysis**: Behavior pattern analysis
+
+---
+
+## Notification System
+
+### Multi-Channel Notifications
+
+#### Email Notifications
+- **SMTP Integration**: Gmail SMTP support
+- **HTML Emails**: Rich HTML email templates
+- **Attachment Support**: PDF report attachments
+- **Scheduling**: Scheduled email notifications
+- **Template System**: Customizable email templates
+
+#### Teams Integration
+- **Webhook Support**: Microsoft Teams webhooks
+- **Rich Messages**: Adaptive card messages
+- **Alert Formatting**: Formatted alert messages
+- **Channel Routing**: Channel-specific routing
+- **Message Templates**: Customizable message templates
+
+#### Alert Management
+- **Threshold Configuration**: Configurable alert thresholds
+- **Escalation Rules**: Multi-level alert escalation
+- **Cooldown Period**: Alert rate limiting
+- **Priority Levels**: High/medium/low priority alerts
+- **Acknowledge System**: Alert acknowledgment
+
+### Notification Features
+
+#### Alert Types
+- **Critical Threats**: High-level threat alerts
+- **System Status**: System status changes
+- **Sensor Failures**: Sensor malfunction alerts
+- **Data Quality**: Data quality issues
+- **Maintenance**: Maintenance reminders
+
+#### Message Content
+- **Dynamic Content**: Dynamic message generation
+- **Context Information**: Relevant context included
+- **Action Links**: Direct action links
+- **Recommendations**: Recommended actions
+- **Historical Data**: Historical context included
+
+---
+
+## Multi-Environment Support
+
+### Environment Management
+
+#### Environment Configuration
+- **Multiple Environments**: Support for multiple monitoring areas
+- **Environment Settings**: Customizable environment parameters
+- **Visual Differentiation**: Color-coded environment identification
+- **Icon System**: Environment-specific icons
+- **Description System**: Environment descriptions
+
+#### Environment Switching
+- **Quick Switching**: Fast environment switching
+- **Session Persistence**: Environment preference persistence
+- **URL Parameters**: Environment-specific URLs
+- **API Support**: Environment-specific API endpoints
+- **Data Isolation**: Environment-specific data isolation
+
+### Multi-Environment Features
+
+#### Concurrent Monitoring
+- **Simultaneous Monitoring**: Multiple environments monitored simultaneously
+- **Independent Data**: Separate data for each environment
+- **Environment-Specific Alerts**: Environment-specific alerting
+- **Cross-Environment Analytics**: Cross-environment analysis
+- **Environment Comparison**: Environment comparison tools
+
+#### Configuration Management
+- **Environment Settings**: Per-environment configuration
+- **Sensor Mapping**: Environment-specific sensor mapping
+- **Threshold Configuration**: Environment-specific thresholds
+- **Notification Routing**: Environment-specific notifications
+- **User Permissions**: Environment-specific user permissions
+
+---
+
+## Scenario Simulation
+
+### Fake Data Generation
+
+#### Realistic Simulation
+- **Comprehensive Simulation**: All sensor types simulated
+- **Realistic Patterns**: Realistic data patterns
+- **Temporal Dynamics**: Time-based data evolution
+- **Event Simulation**: Specific event simulation
+- **Quality Metrics**: Data quality simulation
+
+#### Simulation Features
+- **Pattern Generation**: Various activity patterns
+- **Threat Scenarios**: Different threat level scenarios
+- **Environmental Changes**: Environmental condition simulation
+- **Sensor Failures**: Sensor failure simulation
+- **Data Quality Issues**: Data quality problem simulation
+
+### Training & Testing
+
+#### Training Scenarios
+- **User Training**: Training scenarios for users
+- **Admin Training**: Administrative training scenarios
+- **Response Training**: Emergency response training
+- **System Testing**: System functionality testing
+- **Performance Testing**: Performance scenario testing
+
+#### Scenario Management
+- **Scenario Library**: Predefined scenario library
+- **Custom Scenarios**: Custom scenario creation
+- **Scenario Playback**: Scenario replay functionality
+- **Scenario Analysis**: Scenario effectiveness analysis
+- **Scenario Sharing**: Scenario sharing capabilities
+
+---
+
+## User Management
+
+### User Account System
+
+#### User Registration
+- **Account Creation**: New user registration
+- **Profile Management**: User profile management
+- **Contact Information**: Contact detail management
+- **Preferences**: User preference settings
+- **Account Status**: Active/inactive account management
+
+#### User Authentication
+- **Login System**: Secure user authentication
+- **Password Management**: Password change and recovery
+- **Session Management**: User session management
+- **Remember Me**: Persistent login functionality
+- **Multi-Factor**: Two-factor authentication support
+
+### Admin Features
+
+#### User Management
+- **User List**: Complete user listing
+- **User Creation**: Admin user creation
+- **User Status**: Account status management
+- **User Deletion**: User account deletion
+- **Activity Monitoring**: User activity tracking
+
+#### Role Management
+- **Role Assignment**: User role assignment
+- **Permission System**: Granular permission control
+- **Access Control**: Feature access control
+- **Admin Tools**: Administrative tool access
+- **Audit Trail**: User action auditing
+
+---
+
+## Data Management
+
+### Data Collection
+
+#### Sensor Data
+- **Real-time Collection**: Continuous sensor data collection
+- **Data Validation**: Data quality validation
+- **Data Storage**: Efficient data storage
+- **Data Backup**: Automated data backup
+- **Data Recovery**: Data recovery capabilities
+
+#### Data Processing
+- **Signal Processing**: Advanced signal processing
+- **Data Cleaning**: Data cleaning and normalization
+- **Feature Extraction**: Feature extraction from raw data
+- **Data Fusion**: Multi-sensor data fusion
+- **Quality Assessment**: Data quality assessment
+
+### Data Storage
+
+#### Database Management
+- **SQLite Database**: Efficient SQLite database
+- **Table Management**: Optimized table structures
+- **Index Management**: Performance optimization
+- **Query Optimization**: Efficient query execution
+- **Data Integrity**: Data integrity maintenance
+
+#### Data Retention
+- **Retention Policies**: Configurable data retention
+- **Data Archival**: Automated data archival
+- **Data Cleanup**: Old data cleanup
+- **Storage Optimization**: Storage space optimization
+- **Data Export**: Data export capabilities
+
+---
+
+## Configuration & Settings
+
+### System Configuration
+
+#### Environment Variables
+- **Configuration Management**: Environment-based configuration
+- **Security Settings**: Security parameter configuration
+- **Database Settings**: Database configuration
+- **API Settings**: API endpoint configuration
+- **Notification Settings**: Notification system configuration
+
+#### Runtime Configuration
+- **Dynamic Settings**: Runtime configuration changes
+- **Feature Toggles**: Feature enable/disable
+- **Performance Settings**: Performance optimization settings
+- **Logging Configuration**: Logging level and output
+- **Debug Settings**: Debug mode configuration
+
+### User Settings
+
+#### Personal Preferences
+- **Dashboard Layout**: Customizable dashboard layout
+- **Notification Preferences**: Personal notification settings
+- **Theme Settings**: Theme and display preferences
+- **Language Settings**: Language and localization
+- **Accessibility**: Accessibility options
+
+#### Environment Settings
+- **Environment Configuration**: Per-environment settings
+- **Sensor Settings**: Sensor-specific configuration
+- **Threshold Settings**: Alert threshold configuration
+- **Notification Routing**: Environment-specific notifications
+- **Data Settings**: Data collection and storage settings
+
+---
+
+## Deployment & Operations
+
+### Deployment Options
+
+#### Development Environment
+- **Local Development**: Local development setup
+- **Debug Mode**: Development debugging features
+- **Test Data**: Test data generation
+- **Development Tools**: Development utility tools
+- **Documentation**: Development documentation
+
+#### Production Environment
+- **Production Setup**: Production deployment guide
+- **Security Hardening**: Production security measures
+- **Performance Optimization**: Production performance tuning
+- **Monitoring**: Production monitoring setup
+- **Backup Systems**: Production backup strategies
+
+### Operations Management
+
+#### System Monitoring
+- **Health Monitoring**: System health monitoring
+- **Performance Monitoring**: Performance metrics
+- **Error Monitoring**: Error tracking and alerting
+- **Usage Monitoring**: System usage statistics
+- **Resource Monitoring**: Resource utilization monitoring
+
+#### Maintenance
+- **Scheduled Maintenance**: Maintenance scheduling
+- **Updates**: System update management
+- **Backup Management**: Backup schedule management
+- **Log Management**: Log rotation and management
+- **Security Updates**: Security patch management
+
+---
+
+## Integration Capabilities
+
+### External Integrations
+
+#### Email Integration
+- **SMTP Support**: Gmail SMTP integration
+- **Email Templates**: Customizable email templates
+- **Attachment Support**: File attachment support
+- **Scheduling**: Scheduled email delivery
+- **Delivery Tracking**: Email delivery status
+
+#### Teams Integration
+- **Webhook Support**: Microsoft Teams webhooks
+- **Adaptive Cards**: Rich message formatting
+- **Channel Integration**: Teams channel integration
+- **Message Routing**: Intelligent message routing
+- **Response Handling**: Response processing
+
+#### AI Integration
+- **Google Gemini AI**: Natural language processing
+- **Text Analysis**: Advanced text analysis
+- **Content Generation**: Automated content generation
+- **Pattern Recognition**: AI pattern detection
+- **Predictive Analytics**: AI-powered predictions
+
+### API Integration
+
+#### REST API
+- **Comprehensive API**: Full-featured REST API
+- **Authentication**: Secure API authentication
+- **Documentation**: Complete API documentation
+- **Rate Limiting**: API rate limiting
+- **Versioning**: API version management
+
+#### Webhook Support
+- **Outbound Webhooks**: External system notifications
+- **Inbound Webhooks**: External data reception
+- **Event Streaming**: Real-time event streaming
+- **Data Transformation**: Data format transformation
+- **Error Handling**: Robust error management
+
+---
+
+## Performance Features
+
+### Optimization Strategies
+
+#### Database Optimization
+- **Indexing Strategy**: Optimized database indexes
+- **Query Optimization**: Efficient SQL queries
+- **Connection Pooling**: Database connection management
+- **Caching Strategy**: Multi-level caching
+- **Data Archival**: Automated data archival
+
+#### Application Performance
+- **Code Optimization**: Optimized code execution
+- **Memory Management**: Efficient memory usage
+- **Response Time**: Fast response times
+- **Concurrency**: Concurrent request handling
+- **Resource Management**: Efficient resource utilization
+
+### Monitoring & Analytics
+
+#### Performance Metrics
+- **Response Times**: API response time monitoring
+- **Throughput**: Request throughput measurement
+- **Error Rates**: Error rate tracking
+- **Resource Usage**: CPU, memory, disk usage
+- **User Experience**: Page load times, interaction delays
+
+#### Optimization Tools
+- **Profiling**: Application profiling tools
+- **Monitoring**: Real-time performance monitoring
+- **Alerting**: Performance alerting
+- **Reporting**: Performance reporting
+- **Optimization**: Automated optimization suggestions
+
+---
+
+## Advanced Features
+
+### AI-Powered Features
+
+#### Natural Language Processing
+- **Text Analysis**: Advanced text analysis
+- **Sentiment Analysis**: Sentiment detection
+- **Entity Recognition**: Named entity recognition
+- **Language Translation**: Multi-language support
+- **Content Generation**: Automated content creation
+
+#### Machine Learning
+- **Pattern Recognition**: Advanced pattern detection
+- **Anomaly Detection**: Unusual activity detection
+- **Predictive Analytics**: Future trend prediction
+- **Classification**: Multi-class classification
+- **Clustering**: Data clustering and segmentation
+
+### Advanced Analytics
+
+#### Statistical Analysis
+- **Time Series Analysis**: Temporal data analysis
+- **Correlation Analysis**: Data correlation analysis
+- **Regression Analysis**: Predictive modeling
+- **Hypothesis Testing**: Statistical hypothesis testing
+- **Data Mining**: Advanced data mining
+
+#### Visualization
+- **Interactive Charts**: Advanced chart interactions
+- **3D Visualization**: Three-dimensional data display
+- **Geospatial Analysis**: Location-based analysis
+- **Heat Maps**: Density and intensity visualization
+- **Network Analysis**: Relationship visualization
+
+---
+
+## Documentation System
+
+### Interactive Documentation
+
+#### Modern Interface
+- **Responsive Design**: Mobile-responsive documentation
+- **Dark Mode**: Professional dark theme interface
+- **Search Functionality**: Full-text search with highlighting
+- **Navigation**: Comprehensive table of contents
+- **Cross-References**: Interlinked documentation sections
+
+#### Documentation Features
+- **Syntax Highlighting**: Prism.js code highlighting
+- **Code Examples**: Comprehensive code examples
+- **API Documentation**: Complete API reference
+- **Tutorials**: Step-by-step tutorials
+- **Best Practices**: Development and deployment guidelines
+
+#### User Experience
+- **Print Support**: Optimized print layouts
+- **PDF Export**: Export documentation as PDF
+- **Share Functionality**: Easy sharing capabilities
+- **Bookmarking**: Section bookmarking
+- **Offline Access**: Offline documentation access
+
+### Documentation Content
+
+#### System Documentation
+- **Architecture Overview**: Complete system architecture
+- **Installation Guide**: Step-by-step installation
+- **Configuration Guide**: Detailed configuration instructions
+- **API Reference**: Complete API documentation
+- **Troubleshooting**: Common issues and solutions
+
+#### User Documentation
+- **User Guide**: Comprehensive user manual
+- **Feature Documentation**: Detailed feature descriptions
+- **Training Materials**: User training resources
+- **FAQ**: Frequently asked questions
+- **Support Information**: Support contact information
+
+---
+
+## Testing & Development Tools
+
+### Development Tools
+
+#### Database Tools
+- **Database Creation**: Automated database setup
+- **Data Generation**: Realistic test data generation
+- **Database Validation**: Database integrity checking
+- **Migration Tools**: Database migration utilities
+- **Backup Tools**: Database backup and recovery
+
+#### Testing Tools
+- **Test Scenarios**: Comprehensive test scenarios
+- **Performance Testing**: Performance testing tools
+- **Security Testing**: Security vulnerability testing
+- **Integration Testing**: System integration testing
+- **User Acceptance Testing**: UAT tools and frameworks
+
+### Utility Scripts
+
+#### Administrative Tools
+- **User Management**: User administration utilities
+- **System Maintenance**: System maintenance scripts
+- **Backup Automation**: Automated backup scripts
+- **Log Analysis**: Log analysis tools
+- **Health Checks**: System health monitoring
+
+#### Development Utilities
+- **Code Generation**: Code generation tools
+- **Documentation Generation**: Automated documentation
+- **Testing Frameworks**: Testing framework setup
+- **Deployment Scripts**: Automated deployment scripts
+- **Configuration Management**: Configuration management tools
+
+---
+
+## Conclusion
+
+The SCOPE system represents a comprehensive, enterprise-grade environmental monitoring and threat detection platform. With its advanced sensor integration, AI-powered analytics, real-time monitoring capabilities, and extensive documentation system, it provides a complete solution for facility monitoring and security.
+
+The system's modular architecture, robust security features, and scalable design make it suitable for various applications beyond educational facilities, including corporate environments, healthcare facilities, and public spaces.
+
+The comprehensive documentation system ensures that users, administrators, and developers have access to detailed information about every aspect of the system, from basic operation to advanced configuration and customization.
+
+This breakdown serves as a complete reference for understanding, implementing, and maintaining the SCOPE system in any environment.
 
 ### Primary Sensors
 
