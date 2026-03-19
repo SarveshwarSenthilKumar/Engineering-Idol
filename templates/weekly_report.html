@@ -979,19 +979,18 @@ function loadRecommendations() {
         .then(data => {
             const recDiv = document.getElementById('recommendations-content');
             if (data.recommendations) {
-                const recommendations = data.recommendations.split('\n').filter(r => r.trim());
-                const recList = recommendations.map(rec => `<li>${rec.replace('•', '').trim()}</li>`).join('');
-                recDiv.innerHTML = `<ul>${recList}</ul>`;
+                // Use markdown parser to properly format the AI response
+                recDiv.innerHTML = parseMarkdown(data.recommendations);
             } else {
                 recDiv.innerHTML = `
-                    <p>Recommendations generation is currently unavailable.</p>
+                    <p>Air quality analysis is currently unavailable.</p>
                 `;
             }
         })
         .catch(error => {
-            console.error('Error loading recommendations:', error);
+            console.error('Error loading air quality analysis:', error);
             document.getElementById('recommendations-content').innerHTML = `
-                <p>Unable to load recommendations at this time.</p>
+                <p>Unable to load air quality analysis at this time.</p>
             `;
         });
 }

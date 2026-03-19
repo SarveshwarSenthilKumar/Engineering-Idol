@@ -831,7 +831,7 @@ def generate_ai_recommendations(events_data, stats_data, time_period="weekly"):
     try:
         # Prepare data for AI
         prompt = f"""
-        As an expert environmental air quality analyst, analyze the following {time_period} environmental monitoring data from a school facility and provide specific, actionable recommendations for improving air quality and environmental health.
+        As an expert environmental air quality analyst, analyze the following {time_period} environmental monitoring data from a school facility and provide concise, actionable recommendations for improving air quality.
 
         KEY ENVIRONMENTAL STATISTICS:
         - Average Threat Score: {stats_data.get('avg_threat', 0):.1f}/100
@@ -842,14 +842,7 @@ def generate_ai_recommendations(events_data, stats_data, time_period="weekly"):
         - Critical Events: {stats_data.get('critical_count', 0)}
         - High Threat Events: {stats_data.get('high_count', 0)}
 
-        THREAT LEVEL DISTRIBUTION:
-        - Critical: {stats_data.get('critical_count', 0)} events - Immediate action required
-        - High: {stats_data.get('high_count', 0)} events - Urgent attention needed
-        - Elevated: {stats_data.get('elevated_count', 0)} events - Monitor closely
-        - Moderate: {stats_data.get('moderate_count', 0)} events - Normal monitoring
-        - Low: {stats_data.get('low_count', 0)} events - All clear
-
-        Please provide 5-7 specific, actionable air quality recommendations that the school administration can implement immediately. Focus on:
+        Provide 5-7 concise, actionable air quality recommendations. Focus on:
         1. Air quality monitoring improvements
         2. Ventilation system enhancements
         3. Air purification solutions
@@ -863,9 +856,8 @@ def generate_ai_recommendations(events_data, stats_data, time_period="weekly"):
         - Practical to implement
         - Cost-effective where possible
         - Focused on improving air quality and health outcomes
-        - Based on current AQI levels and environmental conditions
 
-        Format as a numbered list with brief explanations for each recommendation.
+        Format as a numbered list with brief explanations. Keep responses concise and actionable.
         """
         
         response = gemini_model.generate_content(prompt)
