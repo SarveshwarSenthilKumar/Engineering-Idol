@@ -1514,6 +1514,38 @@ code[class*="language-"] {
     color: #e9ecef !important;
 }
 
+/* Dark Mode Notifications */
+.dark-mode .notification {
+    background-color: #2d3748 !important;
+    color: #e9ecef !important;
+    border-left-color: var(--primary-color) !important;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.3) !important;
+}
+
+.dark-mode .notification.success {
+    background-color: #1a365d !important;
+    color: #e9ecef !important;
+    border-left-color: var(--success-color) !important;
+}
+
+.dark-mode .notification.warning {
+    background-color: #744210 !important;
+    color: #e9ecef !important;
+    border-left-color: var(--warning-color) !important;
+}
+
+.dark-mode .notification.error {
+    background-color: #742a2a !important;
+    color: #e9ecef !important;
+    border-left-color: var(--danger-color) !important;
+}
+
+.dark-mode .notification.info {
+    background-color: #2c5282 !important;
+    color: #e9ecef !important;
+    border-left-color: var(--info-color) !important;
+}
+
 /* Button Animations */
 @keyframes buttonPulse {
     0% { box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.7); }
