@@ -632,9 +632,258 @@ def generate_ai_summary(events_data, stats_data, time_period="weekly"):
         return "AI summary not available - Gemini API key not configured"
     
     try:
+        # Get current date for the report
+        current_date = datetime.now().strftime("%B %d, %Y")
+        
+        # Calculate date range (last 7 days)
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=7)
+        date_range = f"{start_date.strftime('%B %d')} - {end_date.strftime('%B %d, %Y')}"
+        
+        # Prepare detailed event data for AI analysis with attack types
+        events_summary = ""
+        attack_type_analysis = ""
+        if events_data and len(events_data) > 0:
+            events_summary = "\n\nDETAILED EVENT DATA (SAMPLE):\n"
+            attack_types = {}
+            
+            # Include first 15 events as representative sample
+            for i, event in enumerate(events_data[:15]):
+                timestamp = event.get('timestamp', 'N/A')
+                threat_score = event.get('threat_score', event.get('threat_overall', 0))
+                people_count = event.get('people_count', event.get('radar_target_count', 0))
+                sound_db = event.get('sound_db', 0)
+                air_aqi = event.get('air_aqi', 0)
+                threat_level = event.get('threat_level', 'UNKNOWN')
+                event_type = event.get('event_type', 'UNKNOWN')
+                description = event.get('description', '')
+                
+                events_summary += f"Event {i+1}: {timestamp}\n"
+                events_summary += f"  - Threat Score: {threat_score}/100 ({threat_level})\n"
+                events_summary += f"  - Event Type: {event_type}\n"
+                events_summary += f"  - People Count: {people_count}\n"
+                events_summary += f"  - Noise Level: {sound_db} dB\n"
+                events_summary += f"  - Air Quality Index: {air_aqi}\n"
+                events_summary += f"  - Description: {description}\n\n"
+                
+                # Track attack types for analysis
+                if event_type != 'UNKNOWN':
+                    attack_types[event_type] = attack_types.get(event_type, 0) + 1
+            
+            # Add attack type analysis
+            if attack_types:
+                attack_type_analysis = "\n\nATTACK/EVENT TYPE ANALYSIS:\n"
+                for event_type, count in sorted(attack_types.items(), key=lambda x: x[1], reverse=True):
+                    percentage = (count / len(events_data)) * 100
+                    attack_type_analysis += f"- {event_type}: {count} events ({percentage:.1f}%)\n"
+        
+        # Prepare additional statistics for deeper analysis
+        max_threat = stats_data.get('max_threat', 0)
+        min_threat = stats_data.get('min_threat', 0) if 'min_threat' in stats_data else 0
+        critical_ratio = (stats_data.get('critical_count', 0) / max(stats_data.get('total_events', 1), 1)) * 100
+        high_ratio = (stats_data.get('high_count', 0) / max(stats_data.get('total_events', 1), 1)) * 100
+        
+        # Prepare data for AI with enhanced prompt and no token limits
+        prompt = f"""
+        As an expert environmental safety and security analyst, conduct an extremely comprehensive and detailed analysis of the following {time_period} environmental monitoring data from a school facility. Provide an exhaustive, data-driven professional summary for school administration that demonstrates deep understanding of all security metrics, attack patterns, and operational insights.
+
+        COMPREHENSIVE SECURITY STATISTICS:
+        - Total Monitoring Events: {stats_data.get('total_events', 0)}
+        - Average Threat Score: {stats_data.get('avg_threat', 0):.1f}/100
+        - Maximum Threat Score: {max_threat:.1f}/100
+        - Minimum Threat Score: {min_threat:.1f}/100
+        - Average People Count: {stats_data.get('avg_people', 0):.1f}
+        - Average Noise Level: {stats_data.get('avg_noise', 0):.1f} dB
+        - Average Air Quality Index: {stats_data.get('avg_aqi', 0):.0f}
+        - Critical Events: {stats_data.get('critical_count', 0)} ({critical_ratio:.1f}% of total)
+        - High Threat Events: {stats_data.get('high_count', 0)} ({high_ratio:.1f}% of total)
+        - Elevated Events: {stats_data.get('elevated_count', 0)}
+        - Moderate Events: {stats_data.get('moderate_count', 0)}
+        - Low Events: {stats_data.get('low_count', 0)}
+
+        THREAT LEVEL ANALYSIS:
+        - Critical: {stats_data.get('critical_count', 0)} events - Immediate action required
+        - High: {stats_data.get('high_count', 0)} events - Urgent attention needed
+        - Elevated: {stats_data.get('elevated_count', 0)} events - Monitor closely
+        - Moderate: {stats_data.get('moderate_count', 0)} events - Normal monitoring
+        - Low: {stats_data.get('low_count', 0)} events - All clear
+        {events_summary}
+        {attack_type_analysis}
+
+        COMPREHENSIVE ANALYTICAL REQUIREMENTS:
+        Provide an extremely detailed analysis covering all aspects of the facility's security and environmental monitoring:
+
+        1. **Executive Summary** (5-6 sentences): Provide a comprehensive high-level overview of the facility's security status, highlighting the most significant findings, overall risk assessment, and critical security concerns that require immediate attention.
+
+        2. **Detailed Threat Analysis**: Conduct an in-depth analysis of threat patterns, including:
+           - Peak threat periods and time-based patterns
+           - Correlation between threat levels and environmental factors
+           - Threat escalation patterns and triggers
+           - Geographic or location-based threat concentrations
+           - Any concerning trends, anomalies, or unusual patterns
+           - Threat frequency and intensity analysis
+
+        3. **Attack/Event Type Analysis**: Provide detailed analysis of security events and attack patterns:
+           - Most common types of security events or attacks
+           - Severity levels by attack type
+           - Time-based patterns for different attack types
+           - Success/failure rates of different attack attempts
+           - Emerging or new attack patterns
+           - Correlation between attack types and environmental conditions
+
+        4. **Environmental Impact Assessment**: Evaluate how environmental factors affect security:
+           - Air quality impact on threat levels and detection accuracy
+           - Noise level correlations with security events
+           - People count patterns and crowd-related security risks
+           - Environmental conditions that facilitate or deter security threats
+           - Seasonal or time-based environmental patterns affecting security
+
+        5. **Comprehensive Risk Assessment**: Identify and analyze specific security risks:
+           - Immediate critical risks requiring urgent action
+           - Medium-term risks that need monitoring and mitigation
+           - Long-term strategic security concerns
+           - Probability and potential impact assessment for each risk
+           - Risk interdependencies and cascading effects
+           - Vulnerability assessment based on threat patterns
+
+        6. **Operational Security Insights**: Provide detailed observations about security operations:
+           - Peak security activity times and staffing implications
+           - Operational inefficiencies in security monitoring
+           - Equipment or system performance issues
+           - Response time analysis for security events
+           - Resource allocation effectiveness
+           - Training and procedural gaps identified through event analysis
+
+        7. **Positive Security Performance Metrics**: Highlight effective security measures:
+           - Successful threat prevention or mitigation
+           - Areas where security systems performed exceptionally well
+           - Improvements made during the reporting period
+           - Effective security protocols and procedures
+           - Staff performance highlights
+           - Technology and system successes
+
+        8. **Strategic Security Recommendations** (7-10 specific, actionable items): Provide detailed, prioritized recommendations for:
+           - Immediate security improvements and urgent actions
+           - Long-term security enhancements and infrastructure investments
+           - Operational procedure modifications and protocol updates
+           - Staff training requirements and skill development
+           - Technology upgrades and system improvements
+           - Monitoring system enhancements and coverage improvements
+           - Emergency response and incident response improvements
+           - Physical security enhancements
+           - Cybersecurity integration with physical security
+           - Community and stakeholder engagement strategies
+
+        Format the response exactly as follows:
+
+        # Environmental Security Weekly Summary - {date_range}
+
+        **Prepared By:** SCOPE  
+        **Date:** {current_date}
+
+        ## Executive Summary
+        [Provide comprehensive executive summary here]
+
+        ## Detailed Threat Analysis
+        [Provide exhaustive threat analysis with specific data points, trends, and patterns]
+
+        ## Attack/Event Type Analysis
+        [Provide detailed analysis of security events and attack patterns]
+
+        ## Environmental Impact Assessment
+        [Provide detailed assessment of environmental factors affecting security]
+
+        ## Comprehensive Risk Assessment
+        [Identify specific risks with probability, impact, and mitigation strategies]
+
+        ## Operational Security Insights
+        [Provide detailed insights about security operations and performance]
+
+        ## Positive Security Performance Metrics
+        [Highlight areas of excellent security performance and improvements]
+
+        ## Strategic Security Recommendations
+        [Provide 7-10 detailed, prioritized, actionable security recommendations]
+
+        Use highly professional, analytical language appropriate for school board, security leadership, and administrative review. Include specific data points, percentages, time-based trends, and actionable intelligence. Be extremely detailed and thorough in your analysis. Use markdown formatting with ## for section headers and ** for bold text.
+        """
+        
+        # Configure model for longer responses
+        generation_config = {
+            "temperature": 0.7,
+            "top_p": 0.9,
+            "top_k": 40,
+            "max_output_tokens": 8192,  # Increased token limit
+        }
+        
+        response = gemini_model.generate_content(prompt, generation_config=generation_config)
+        return response.text
+        
+    except Exception as e:
+        app.logger.error(f"Error generating AI summary: {e}")
+        return f"AI summary generation failed: {str(e)}"
+
+def generate_ai_recommendations(events_data, stats_data, time_period="weekly"):
+    """Generate AI-powered air quality analysis recommendations"""
+    if not gemini_model:
+        return "AI recommendations not available - Gemini API key not configured"
+    
+    try:
         # Prepare data for AI
         prompt = f"""
-        As an expert environmental safety analyst, analyze the following {time_period} environmental monitoring data from a school facility and provide a comprehensive professional summary for school administration.
+        As an expert environmental air quality analyst, analyze the following {time_period} environmental monitoring data from a school facility and provide specific, actionable recommendations for improving air quality and environmental health.
+
+        KEY ENVIRONMENTAL STATISTICS:
+        - Average Threat Score: {stats_data.get('avg_threat', 0):.1f}/100
+        - Average People Count: {stats_data.get('avg_people', 0):.1f}
+        - Average Noise Level: {stats_data.get('avg_noise', 0):.1f} dB
+        - Average Air Quality Index: {stats_data.get('avg_aqi', 0):.0f}
+        - Total Events: {stats_data.get('total_events', 0)}
+        - Critical Events: {stats_data.get('critical_count', 0)}
+        - High Threat Events: {stats_data.get('high_count', 0)}
+
+        THREAT LEVEL DISTRIBUTION:
+        - Critical: {stats_data.get('critical_count', 0)} events - Immediate action required
+        - High: {stats_data.get('high_count', 0)} events - Urgent attention needed
+        - Elevated: {stats_data.get('elevated_count', 0)} events - Monitor closely
+        - Moderate: {stats_data.get('moderate_count', 0)} events - Normal monitoring
+        - Low: {stats_data.get('low_count', 0)} events - All clear
+
+        Please provide 5-7 specific, actionable air quality recommendations that the school administration can implement immediately. Focus on:
+        1. Air quality monitoring improvements
+        2. Ventilation system enhancements
+        3. Air purification solutions
+        4. Environmental health protocols
+        5. Indoor air quality management
+        6. Outdoor air quality considerations
+        7. Student and staff health protection
+
+        Each recommendation should be:
+        - Specific and measurable
+        - Practical to implement
+        - Cost-effective where possible
+        - Focused on improving air quality and health outcomes
+        - Based on current AQI levels and environmental conditions
+
+        Format as a numbered list with brief explanations for each recommendation.
+        """
+        
+        response = gemini_model.generate_content(prompt)
+        return response.text
+        
+    except Exception as e:
+        app.logger.error(f"Error generating AI recommendations: {e}")
+        return f"AI recommendations generation failed: {str(e)}"
+
+def generate_preventative_recommendations(stats_data):
+    """Generate AI-powered preventative recommendations"""
+    if not gemini_model:
+        return "AI recommendations not available - Gemini API key not configured"
+    
+    try:
+        # Prepare data for AI
+        prompt = f"""
+        As an expert environmental safety and security consultant, analyze the following environmental monitoring data from a school facility and provide specific, actionable preventative recommendations.
 
         KEY STATISTICS:
         - Average Threat Score: {stats_data.get('avg_threat', 0):.1f}/100
@@ -653,22 +902,30 @@ def generate_ai_summary(events_data, stats_data, time_period="weekly"):
         - Moderate: {stats_data.get('moderate_count', 0)} events
         - Low: {stats_data.get('low_count', 0)} events
 
-        Please provide:
-        1. Executive Summary (3-4 sentences)
-        2. Key Findings and Trends
-        3. Areas of Concern
-        4. Positive Observations
-        5. Preventative Recommendations (3-5 specific, actionable items)
+        Please provide 5-7 specific, actionable preventative recommendations that the school administration can implement immediately. Focus on:
+        1. Security enhancements
+        2. Environmental improvements
+        3. Operational procedures
+        4. Staff training
+        5. Infrastructure upgrades
+        6. Monitoring improvements
+        7. Emergency preparedness
 
-        Format the response professionally for school board presentation. Use clear, concise language appropriate for educational administrators.
+        Each recommendation should be:
+        - Specific and measurable
+        - Practical to implement
+        - Cost-effective where possible
+        - Focused on prevention rather than reaction
+
+        Format as a numbered list with brief explanations for each recommendation.
         """
         
         response = gemini_model.generate_content(prompt)
         return response.text
         
     except Exception as e:
-        app.logger.error(f"Error generating AI summary: {e}")
-        return f"AI summary generation failed: {str(e)}"
+        app.logger.error(f"Error generating AI recommendations: {e}")
+        return f"AI recommendations generation failed: {str(e)}"
 
 def create_chart_image(data, chart_type, title):
     """Create a matplotlib chart and return as base64 image"""
@@ -2047,6 +2304,57 @@ def analytics():
                          current_environment=current_env,
                          highest_threat_environment=highest_threat_env)
 
+@app.route("/weekly-report")
+@login_required
+def weekly_report():
+    """Comprehensive weekly report page"""
+    # Get environment data for consistency
+    fake_mode = session.get('fake_mode', True)
+    all_environments = live_data.get_all_environments()
+    current_env = live_data.get_current_environment()
+    highest_threat_env = live_data.get_highest_threat_environment()
+    
+    # Get weekly statistics (7 days = 168 hours)
+    stats = get_threat_statistics(168)
+    
+    # Calculate report metadata
+    end_date = datetime.now()
+    start_date = end_date - timedelta(days=7)
+    uptime = str(end_date - START_TIME).split('.')[0]  # Remove microseconds
+    
+    # Get critical events for the week
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    week_ago = start_date.isoformat()
+    
+    try:
+        cursor.execute("""
+            SELECT timestamp, threat_score, people_count, sound_db, air_aqi, description
+            FROM events_log
+            WHERE timestamp >= ? AND threat_level = 'CRITICAL'
+            ORDER BY timestamp DESC
+            LIMIT 20
+        """, (week_ago,))
+        
+        critical_events = [dict(row) for row in cursor.fetchall()]
+    except Exception as e:
+        app.logger.error(f"Error fetching critical events: {e}")
+        critical_events = []
+    finally:
+        conn.close()
+    
+    return render_template('weekly_report.html',
+                         stats=stats,
+                         report_date=end_date.strftime('%B %d, %Y at %I:%M %p'),
+                         start_date=start_date.strftime('%Y-%m-%d'),
+                         end_date=end_date.strftime('%Y-%m-%d'),
+                         uptime=uptime,
+                         critical_events=critical_events,
+                         fake_mode=fake_mode,
+                         environments=all_environments,
+                         current_environment=current_env,
+                         highest_threat_environment=highest_threat_env)
+
 @app.route("/targets")
 @login_required
 def targets_view():
@@ -2752,6 +3060,250 @@ def export_data():
     except Exception as e:
         app.logger.error(f"Error exporting data: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route("/api/reports/summary")
+@login_required
+def get_weekly_summary():
+    """Get AI-powered executive summary for weekly report"""
+    try:
+        # Get weekly data
+        week_ago = (datetime.now() - timedelta(days=7)).isoformat()
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Get events data
+        cursor.execute("""
+            SELECT timestamp, threat_overall, quality_score, radar_target_count, 
+                   sound_db, air_aqi, threat_level
+            FROM events 
+            WHERE timestamp >= ?
+            ORDER BY timestamp ASC
+        """, (week_ago,))
+        
+        events_data = [dict(row) for row in cursor.fetchall()]
+        
+        # Get statistics
+        cursor.execute("""
+            SELECT 
+                COUNT(*) as total_events,
+                AVG(threat_overall) as avg_threat,
+                MAX(threat_overall) as max_threat,
+                AVG(quality_score) as avg_quality,
+                AVG(radar_target_count) as avg_people,
+                AVG(sound_db) as avg_noise,
+                AVG(air_aqi) as avg_aqi,
+                SUM(CASE WHEN threat_level = 'CRITICAL' THEN 1 ELSE 0 END) as critical_count,
+                SUM(CASE WHEN threat_level = 'HIGH' THEN 1 ELSE 0 END) as high_count,
+                SUM(CASE WHEN threat_level = 'ELEVATED' THEN 1 ELSE 0 END) as elevated_count,
+                SUM(CASE WHEN threat_level = 'MODERATE' THEN 1 ELSE 0 END) as moderate_count,
+                SUM(CASE WHEN threat_level = 'LOW' THEN 1 ELSE 0 END) as low_count
+            FROM events
+            WHERE timestamp >= ?
+        """, (week_ago,))
+        
+        stats_data = dict(cursor.fetchone())
+        conn.close()
+        
+        # Generate AI summary
+        summary = generate_ai_summary(events_data, stats_data, "weekly")
+        
+        return jsonify({'summary': summary})
+        
+    except Exception as e:
+        app.logger.error(f"Error generating weekly summary: {e}")
+        return jsonify({'summary': None}), 500
+
+@app.route("/api/reports/recommendations")
+@login_required
+def get_weekly_recommendations():
+    """Get AI-powered preventative recommendations for weekly report"""
+    try:
+        # Get weekly data for AI analysis
+        week_ago = (datetime.now() - timedelta(days=7)).isoformat()
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Get events data
+        cursor.execute("""
+            SELECT timestamp, threat_overall, quality_score, radar_target_count, 
+                   sound_db, air_aqi, threat_level
+            FROM events 
+            WHERE timestamp >= ?
+            ORDER BY timestamp ASC
+        """, (week_ago,))
+        
+        events_data = [dict(row) for row in cursor.fetchall()]
+        
+        # Get statistics
+        cursor.execute("""
+            SELECT 
+                COUNT(*) as total_events,
+                AVG(threat_overall) as avg_threat,
+                MAX(threat_overall) as max_threat,
+                AVG(quality_score) as avg_quality,
+                AVG(radar_target_count) as avg_people,
+                AVG(sound_db) as avg_noise,
+                AVG(air_aqi) as avg_aqi,
+                SUM(CASE WHEN threat_level = 'CRITICAL' THEN 1 ELSE 0 END) as critical_count,
+                SUM(CASE WHEN threat_level = 'HIGH' THEN 1 ELSE 0 END) as high_count,
+                SUM(CASE WHEN threat_level = 'ELEVATED' THEN 1 ELSE 0 END) as elevated_count,
+                SUM(CASE WHEN threat_level = 'MODERATE' THEN 1 ELSE 0 END) as moderate_count,
+                SUM(CASE WHEN threat_level = 'LOW' THEN 1 ELSE 0 END) as low_count
+            FROM events
+            WHERE timestamp >= ?
+        """, (week_ago,))
+        
+        stats_data = dict(cursor.fetchone())
+        conn.close()
+        
+        # Generate AI recommendations
+        recommendations = generate_ai_recommendations(events_data, stats_data, "weekly")
+        
+        return jsonify({'recommendations': recommendations})
+        
+    except Exception as e:
+        app.logger.error(f"Error generating AI recommendations: {e}")
+        return jsonify({'recommendations': None}), 500
+
+@app.route("/api/reports/detailed-stats")
+@login_required
+def get_detailed_statistics():
+    """Get detailed statistical analysis for weekly report"""
+    try:
+        # Get 7-day timeline data
+        timeline_data = get_threat_timeline(168)
+        
+        if not timeline_data:
+            return jsonify({'stats': []})
+        
+        # Calculate statistics for each metric
+        metrics = {
+            'Threat Score': {'values': [], 'unit': ''},
+            'Quality Score': {'values': [], 'unit': ''},
+            'People Count': {'values': [], 'unit': ''},
+            'Noise Level': {'values': [], 'unit': 'dB'},
+            'Air Quality': {'values': [], 'unit': 'AQI'}
+        }
+        
+        for data_point in timeline_data:
+            metrics['Threat Score']['values'].append(data_point.get('threat_score', 0))
+            metrics['Quality Score']['values'].append(data_point.get('quality_score', 0))
+            metrics['People Count']['values'].append(data_point.get('people_count', 0))
+            metrics['Noise Level']['values'].append(data_point.get('sound_db', 0))
+            metrics['Air Quality']['values'].append(data_point.get('air_aqi', 0))
+        
+        # Calculate statistics
+        detailed_stats = []
+        for metric_name, metric_data in metrics.items():
+            values = metric_data['values']
+            if not values:
+                continue
+                
+            min_val = min(values)
+            max_val = max(values)
+            avg_val = sum(values) / len(values)
+            
+            # Calculate standard deviation
+            variance = sum((x - avg_val) ** 2 for x in values) / len(values)
+            std_dev = math.sqrt(variance)
+            
+            # Determine trend
+            trend = "Stable"
+            if len(values) >= 10:
+                recent_avg = sum(values[-5:]) / 5
+                older_avg = sum(values[-10:-5]) / 5
+                if recent_avg > older_avg * 1.1:
+                    trend = "Increasing"
+                elif recent_avg < older_avg * 0.9:
+                    trend = "Decreasing"
+            
+            # Determine status
+            status = "Normal"
+            status_color = "success"
+            if metric_name == 'Threat Score' and avg_val > 60:
+                status = "Elevated"
+                status_color = "warning"
+            elif metric_name == 'Noise Level' and avg_val > 70:
+                status = "High"
+                status_color = "warning"
+            elif metric_name == 'Air Quality' and avg_val > 100:
+                status = "Poor"
+                status_color = "danger"
+            
+            detailed_stats.append({
+                'metric': metric_name,
+                'min': f"{min_val:.1f}{metric_data['unit']}",
+                'max': f"{max_val:.1f}{metric_data['unit']}",
+                'avg': f"{avg_val:.1f}{metric_data['unit']}",
+                'std_dev': f"{std_dev:.2f}",
+                'trend': trend,
+                'status': status,
+                'status_color': status_color
+            })
+        
+        return jsonify({'stats': detailed_stats})
+        
+    except Exception as e:
+        app.logger.error(f"Error generating detailed statistics: {e}")
+        return jsonify({'stats': []}), 500
+
+@app.route("/api/reports/event-timerange")
+@login_required
+def get_event_timerange():
+    """Get the time range of first to last event for accurate uptime calculation"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Get first and last event timestamps
+        cursor.execute("""
+            SELECT MIN(timestamp) as first_event, 
+                   MAX(timestamp) as last_event,
+                   COUNT(*) as total_events
+            FROM events
+        """)
+        
+        result = cursor.fetchone()
+        conn.close()
+        
+        if result and result['first_event'] and result['last_event']:
+            first_event = datetime.fromisoformat(result['first_event'])
+            last_event = datetime.fromisoformat(result['last_event'])
+            
+            # Calculate duration
+            duration = last_event - first_event
+            
+            return jsonify({
+                'first_event': result['first_event'],
+                'last_event': result['last_event'],
+                'duration_seconds': int(duration.total_seconds()),
+                'duration_formatted': str(duration).split('.')[0],  # Remove microseconds
+                'total_events': result['total_events']
+            })
+        else:
+            # No events found, return system uptime as fallback
+            uptime = datetime.now() - START_TIME
+            return jsonify({
+                'first_event': None,
+                'last_event': None,
+                'duration_seconds': int(uptime.total_seconds()),
+                'duration_formatted': str(uptime).split('.')[0],
+                'total_events': 0
+            })
+        
+    except Exception as e:
+        app.logger.error(f"Error getting event time range: {e}")
+        # Fallback to system uptime
+        uptime = datetime.now() - START_TIME
+        return jsonify({
+            'first_event': None,
+            'last_event': None,
+            'duration_seconds': int(uptime.total_seconds()),
+            'duration_formatted': str(uptime).split('.')[0],
+            'total_events': 0
+        })
 
 @app.route("/api/reports/weekly", methods=['GET'])
 @login_required

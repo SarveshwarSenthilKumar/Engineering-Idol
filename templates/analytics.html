@@ -14,9 +14,9 @@
             <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setTimeRange(168)">7d</button>
         </div>
         <div class="btn-group">
-            <button type="button" class="btn btn-sm btn-primary" onclick="generateWeeklyReport()" id="weekly-report-btn">
-                <i class="bi bi-file-earmark-pdf"></i> Weekly Report
-            </button>
+            <a href="/weekly-report" class="btn btn-sm btn-primary" id="weekly-report-btn">
+                <i class="bi bi-file-earmark-text"></i> Weekly Report
+            </a>
         </div>
     </div>
 </div>
@@ -530,46 +530,6 @@
         if (recentAvg > olderAvg * 1.1) return '⬆️ Increasing';
         if (recentAvg < olderAvg * 0.9) return '⬇️ Decreasing';
         return '➡️ Stable';
-    }
-
-    function generateWeeklyReport() {
-        const reportBtn = document.getElementById('weekly-report-btn');
-        const originalText = reportBtn.innerHTML;
-        
-        // Show loading state
-        reportBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Generating...';
-        reportBtn.disabled = true;
-        
-        fetch('/api/reports/weekly')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Failed to generate report');
-                }
-                return response.blob();
-            })
-            .then(blob => {
-                // Create download link
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `weekly_environmental_report_${new Date().toISOString().slice(0,10)}.pdf`;
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
-                document.body.removeChild(a);
-                
-                // Show success message
-                alert('Weekly report generated successfully!');
-            })
-            .catch(error => {
-                console.error('Error generating weekly report:', error);
-                alert('Error generating weekly report: ' + error.message);
-            })
-            .finally(() => {
-                // Restore button state
-                reportBtn.innerHTML = originalText;
-                reportBtn.disabled = false;
-            });
     }
 
     function setTimeRange(hours) {

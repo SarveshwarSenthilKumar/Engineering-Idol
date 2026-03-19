@@ -1,0 +1,1056 @@
+{% extends "base.html" %}
+
+{% block title %}Weekly Environmental Report - Environmental Monitoring{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Hide demo data toggle on weekly report page */
+    .d-flex.align-items-center.gap-3:has([id="fakeToggle"]) {
+        display: none !important;
+    }
+    
+    /* Alternative selector if above doesn't work */
+    .status-indicator ~ .toggle-switch,
+    .status-indicator:has(~ .toggle-switch) {
+        display: none !important;
+    }
+    
+    /* More specific selector */
+    .navbar-nav:has(#fakeToggle) {
+        display: none !important;
+    }
+    
+    .report-header {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 10px;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    
+    .report-header h1 {
+        margin: 0;
+        font-size: 2.5rem;
+        font-weight: 300;
+    }
+    
+    .report-header .subtitle {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin-top: 0.5rem;
+    }
+    
+    /* Markdown styling */
+    .markdown-content h1 {
+        color: #007bff;
+        border-bottom: 2px solid #007bff;
+        padding-bottom: 10px;
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+        font-size: 1.8rem;
+        font-weight: 600;
+    }
+    
+    .markdown-content h2 {
+        color: #495057;
+        border-bottom: 1px solid #dee2e6;
+        padding-bottom: 5px;
+        margin-top: 1.5rem;
+        margin-bottom: 0.8rem;
+        font-size: 1.4rem;
+        font-weight: 600;
+    }
+    
+    .markdown-content p {
+        margin-bottom: 1rem;
+        line-height: 1.6;
+    }
+    
+    .markdown-content strong {
+        color: #495057;
+        font-weight: 600;
+    }
+    
+    .markdown-content ul, .markdown-content ol {
+        margin-bottom: 1rem;
+        padding-left: 2rem;
+    }
+    
+    .markdown-content li {
+        margin-bottom: 0.5rem;
+        line-height: 1.5;
+    }
+    
+    .report-meta {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+    }
+    
+    .executive-summary {
+        background: #e7f3ff;
+        border-left: 4px solid #007bff;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        border-radius: 0 8px 8px 0;
+    }
+    
+    .executive-summary h3 {
+        color: #007bff;
+        margin-top: 0;
+    }
+    
+    .stat-card-enhanced {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        transition: transform 0.2s;
+        border-left: 4px solid #007bff;
+    }
+    
+    .stat-card-enhanced:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+    
+    .stat-card-enhanced .stat-value {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin: 0;
+    }
+    
+    .stat-card-enhanced .stat-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .stat-card-enhanced .stat-change {
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
+    }
+    
+    .stat-change.positive {
+        color: #28a745;
+    }
+    
+    .stat-change.negative {
+        color: #dc3545;
+    }
+    
+    .stat-change.neutral {
+        color: #6c757d;
+    }
+    
+    .chart-container {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+        min-height: 300px;
+        max-height: 400px;
+    }
+    
+    .chart-container canvas {
+        max-height: 250px !important;
+    }
+    
+    #component-radar-chart {
+        max-height: 250px !important;
+        width: 100% !important;
+    }
+    
+    .chart-container h5 {
+        color: #495057;
+        border-bottom: 2px solid #e9ecef;
+        padding-bottom: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .threat-level-indicator {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+    
+    .threat-critical {
+        background: #dc3545;
+        color: white;
+    }
+    
+    .threat-high {
+        background: #fd7e14;
+        color: white;
+    }
+    
+    .threat-elevated {
+        background: #ffc107;
+        color: #212529;
+    }
+    
+    .threat-moderate {
+        background: #20c997;
+        color: white;
+    }
+    
+    .threat-low {
+        background: #28a745;
+        color: white;
+    }
+    
+    .recommendations {
+        background: #fff3cd;
+        border-left: 4px solid #ffc107;
+        padding: 1.5rem;
+        border-radius: 0 8px 8px 0;
+    }
+    
+    .recommendations h3 {
+        color: #856404;
+        margin-top: 0;
+    }
+    
+    .recommendations ul {
+        margin-bottom: 0;
+    }
+    
+    .recommendations li {
+        margin-bottom: 0.5rem;
+    }
+    
+    .data-table {
+        background: white;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .data-table .table {
+        margin: 0;
+    }
+    
+    .data-table .table th {
+        background: #007bff;
+        color: white;
+        border: none;
+        font-weight: 500;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        letter-spacing: 1px;
+    }
+    
+    .print-section {
+        page-break-inside: avoid;
+    }
+    
+    @media print {
+        .no-print {
+            display: none !important;
+        }
+        
+        /* Hide sidebar and navigation */
+        .sidebar, .nav-menu, .navbar, .navbar-nav, .nav-link, .navbar-brand {
+            display: none !important;
+        }
+        
+        /* Hide any potential sidebar wrapper */
+        .sidebar-wrapper, .main-sidebar, .left-sidebar {
+            display: none !important;
+        }
+        
+        /* Make content full width */
+        .content-wrapper, .main-content, .container-fluid {
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+            max-width: 100% !important;
+            width: 100% !important;
+        }
+        
+        .report-header {
+            background: #007bff !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        .stat-card-enhanced {
+            box-shadow: none;
+            border: 1px solid #dee2e6;
+        }
+        
+        .chart-container {
+            page-break-inside: avoid;
+            box-shadow: none;
+            border: 1px solid #dee2e6;
+        }
+        
+        body {
+            font-size: 12px;
+        }
+        
+        .report-header h1 {
+            font-size: 2rem;
+        }
+    }
+    
+    .loading-spinner {
+        display: inline-block;
+        width: 1rem;
+        height: 1rem;
+        border: 2px solid #f3f3f3;
+        border-top: 2px solid #007bff;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Print Button -->
+    <div class="no-print text-end mb-3">
+        <button onclick="window.print()" class="btn btn-primary">
+            <i class="bi bi-printer"></i> Print Report
+        </button>
+    </div>
+
+    <!-- Report Header -->
+    <div class="report-header print-section">
+        <h1>Environmental Monitoring Weekly Report</h1>
+        <div class="subtitle">Comprehensive Analysis for School Administration</div>
+        <div class="mt-3">
+            <small>Generated on {{ report_date }}</small>
+        </div>
+    </div>
+
+    <!-- Report Metadata -->
+    <div class="report-meta print-section">
+        <div class="row">
+            <div class="col-md-3">
+                <strong>Report Period:</strong><br>
+                {{ start_date }} to {{ end_date }}
+            </div>
+            <div class="col-md-3">
+                <strong>Total Events:</strong><br>
+                <span class="stat-value">{{ stats.total_events or 0 }}</span>
+            </div>
+            <div class="col-md-3">
+                <strong>Avg Threat Score:</strong><br>
+                <span class="stat-value">{{ "%.1f"|format(stats.avg_threat or 0) }}/100</span>
+            </div>
+            <div class="col-md-3">
+                <strong>Monitoring Period:</strong><br>
+                <span class="stat-value" id="monitoring-period">Loading...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Executive Summary -->
+    <div class="executive-summary print-section">
+        <h3><i class="bi bi-lightbulb"></i> Executive Summary</h3>
+        <div id="executive-summary-content" class="markdown-content">
+            <div class="text-center">
+                <div class="loading-spinner"></div>
+                <p class="mt-2">Generating AI-powered summary...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Metrics Overview -->
+    <div class="row mb-4 print-section">
+        <div class="col-md-2">
+            <div class="stat-card-enhanced text-center">
+                <div class="stat-value text-danger">{{ "%.0f"|format(stats.max_threat or 0) }}</div>
+                <div class="stat-label">Max Threat</div>
+                <div class="stat-change neutral">Peak Level</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="stat-card-enhanced text-center">
+                <div class="stat-value text-primary">{{ "%.1f"|format(stats.avg_threat or 0) }}</div>
+                <div class="stat-label">Avg Threat</div>
+                <div class="stat-change {{ 'negative' if (stats.avg_threat or 0) > 50 else 'positive' }}">
+                    {{ 'Elevated' if (stats.avg_threat or 0) > 50 else 'Normal' }}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="stat-card-enhanced text-center">
+                <div class="stat-value text-warning">{{ "%.1f"|format(stats.avg_people or 0) }}</div>
+                <div class="stat-label">Avg People</div>
+                <div class="stat-change neutral">Per Reading</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="stat-card-enhanced text-center">
+                <div class="stat-value text-info">{{ "%.1f"|format(stats.avg_noise or 0) }}</div>
+                <div class="stat-label">Avg Noise</div>
+                <div class="stat-change {{ 'negative' if (stats.avg_noise or 0) > 70 else 'positive' }}">
+                    {{ 'High' if (stats.avg_noise or 0) > 70 else 'Normal' }} dB
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="stat-card-enhanced text-center">
+                <div class="stat-value text-success">{{ "%.0f"|format(stats.avg_aqi or 0) }}</div>
+                <div class="stat-label">Avg AQI</div>
+                <div class="stat-change {{ 'negative' if (stats.avg_aqi or 0) > 100 else 'positive' }}">
+                    {{ 'Poor' if (stats.avg_aqi or 0) > 100 else 'Good' }}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="stat-card-enhanced text-center">
+                <div class="stat-value text-warning">{{ "%.1f"|format(stats.avg_noise or 0) }}</div>
+                <div class="stat-label">Avg Noise (dB)</div>
+                <div class="stat-change {{ 'negative' if (stats.avg_noise or 0) > 70 else 'positive' }}">
+                    {{ 'High' if (stats.avg_noise or 0) > 70 else 'Normal' }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="row print-section">
+        <div class="col-md-8">
+            <div class="chart-container">
+                <h5><i class="bi bi-graph-up"></i> 7-Day Threat & People Timeline</h5>
+                <canvas id="timeline-chart" height="300"></canvas>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="chart-container">
+                <h5><i class="bi bi-pie-chart"></i> Threat Level Distribution</h5>
+                <canvas id="threat-distribution-chart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="row print-section">
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h5><i class="bi bi-people"></i> People Count Trends</h5>
+                <canvas id="people-chart" height="250"></canvas>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h5><i class="bi bi-moisture"></i> Environmental Metrics</h5>
+                <canvas id="environmental-chart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="row print-section">
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h5><i class="bi bi-wind"></i> Air Quality Analysis</h5>
+                <canvas id="air-quality-chart" height="250"></canvas>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h5><i class="bi bi-radar"></i> Threat Component Analysis</h5>
+                <canvas id="component-radar-chart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Statistics Table -->
+    <div class="print-section">
+        <div class="data-table">
+            <div class="p-3">
+                <h5><i class="bi bi-table"></i> Detailed Statistical Analysis</h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th>Minimum</th>
+                            <th>Maximum</th>
+                            <th>Average</th>
+                            <th>Std Dev</th>
+                            <th>Trend</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="detailed-stats-table">
+                        <tr>
+                            <td colspan="7" class="text-center">
+                                <div class="loading-spinner"></div>
+                                Loading statistics...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Threat Level Breakdown -->
+    <div class="row print-section">
+        <div class="col-md-6">
+            <div class="data-table">
+                <div class="p-3">
+                    <h5><i class="bi bi-exclamation-triangle"></i> Threat Level Breakdown</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Threat Level</th>
+                                <th>Count</th>
+                                <th>Percentage</th>
+                                <th>Impact</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="threat-level-indicator threat-critical">Critical</span></td>
+                                <td>{{ stats.critical_count or 0 }}</td>
+                                <td>{{ "%.1f"|format(((stats.critical_count or 0) / (stats.total_events or 1)) * 100) }}%</td>
+                                <td>Immediate action required</td>
+                            </tr>
+                            <tr>
+                                <td><span class="threat-level-indicator threat-high">High</span></td>
+                                <td>{{ stats.high_count or 0 }}</td>
+                                <td>{{ "%.1f"|format(((stats.high_count or 0) / (stats.total_events or 1)) * 100) }}%</td>
+                                <td>Urgent attention needed</td>
+                            </tr>
+                            <tr>
+                                <td><span class="threat-level-indicator threat-elevated">Elevated</span></td>
+                                <td>{{ stats.elevated_count or 0 }}</td>
+                                <td>{{ "%.1f"|format(((stats.elevated_count or 0) / (stats.total_events or 1)) * 100) }}%</td>
+                                <td>Monitor closely</td>
+                            </tr>
+                            <tr>
+                                <td><span class="threat-level-indicator threat-moderate">Moderate</span></td>
+                                <td>{{ stats.moderate_count or 0 }}</td>
+                                <td>{{ "%.1f"|format(((stats.moderate_count or 0) / (stats.total_events or 1)) * 100) }}%</td>
+                                <td>Normal monitoring</td>
+                            </tr>
+                            <tr>
+                                <td><span class="threat-level-indicator threat-low">Low</span></td>
+                                <td>{{ stats.low_count or 0 }}</td>
+                                <td>{{ "%.1f"|format(((stats.low_count or 0) / (stats.total_events or 1)) * 100) }}%</td>
+                                <td>All clear</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="recommendations">
+                <h3><i class="bi bi-wind"></i> Air Quality Analysis</h3>
+                <div id="recommendations-content">
+                    <div class="text-center">
+                        <div class="loading-spinner"></div>
+                        <p class="mt-2">Generating recommendations...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Critical Events -->
+    {% if critical_events %}
+    <div class="print-section">
+        <div class="data-table">
+            <div class="p-3">
+                <h5><i class="bi bi-exclamation-octagon"></i> Recent Critical Events (Last 7 Days)</h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Threat Score</th>
+                            <th>People Count</th>
+                            <th>Noise Level</th>
+                            <th>AQI</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for event in critical_events[:10] %}
+                        <tr>
+                            <td>{{ event.timestamp[:16] if event.timestamp else 'N/A' }}</td>
+                            <td><span class="badge bg-danger">{{ "%.1f"|format(event.threat_score or 0) }}</span></td>
+                            <td>{{ event.people_count or 0 }}</td>
+                            <td>{{ "%.1f"|format(event.sound_db or 0) }} dB</td>
+                            <td>{{ "%.0f"|format(event.air_aqi or 0) }}</td>
+                            <td>{{ event.description or 'Critical threat detected' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Footer -->
+    <div class="text-center mt-5 mb-3 print-section">
+        <small class="text-muted">
+            <strong>Environmental Monitoring System</strong><br>
+            Automated Report Generated on {{ report_date }}<br>
+            Report Period: {{ start_date }} to {{ end_date }}<br>
+            Total Monitoring Events: {{ stats.total_events or 0 }}
+        </small>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let charts = {};
+
+// Simple markdown parser for basic formatting
+function parseMarkdown(text) {
+    if (!text) return '';
+    
+    return text
+        // Headers
+        .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+        .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+        .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+        // Bold text
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        // Line breaks
+        .replace(/\n\n/g, '</p><p>')
+        .replace(/\n/g, '<br>')
+        // Lists
+        .replace(/^\* (.*$)/gim, '<li>$1</li>')
+        .replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>')
+        // Wrap paragraphs
+        .replace(/^(?!<[h|u|l])/gim, '<p>')
+        .replace(/(?<![>])$/gim, '</p>');
+}
+
+// Initialize all charts and data
+document.addEventListener('DOMContentLoaded', function() {
+    initializeCharts();
+    loadWeeklyData();
+    loadExecutiveSummary();
+    loadRecommendations();
+    loadDetailedStatistics();
+    loadMonitoringPeriod();
+});
+
+function initializeCharts() {
+    // Timeline Chart - Security Focused
+    const timelineCtx = document.getElementById('timeline-chart').getContext('2d');
+    charts.timeline = new Chart(timelineCtx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [
+                {
+                    label: 'Threat Score',
+                    data: [],
+                    borderColor: '#dc3545',
+                    backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                    tension: 0.1,
+                    fill: true
+                },
+                {
+                    label: 'People Count',
+                    data: [],
+                    borderColor: '#007bff',
+                    backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                    tension: 0.1,
+                    fill: false,
+                    yAxisID: 'y1'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    position: 'left',
+                    title: {
+                        display: true,
+                        text: 'Threat Score'
+                    }
+                },
+                y1: {
+                    beginAtZero: true,
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: 'People Count'
+                    },
+                    grid: {
+                        drawOnChartArea: false
+                    }
+                }
+            }
+        }
+    });
+
+    // Threat Distribution Chart
+    const threatCtx = document.getElementById('threat-distribution-chart').getContext('2d');
+    charts.threatDistribution = new Chart(threatCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Critical', 'High', 'Elevated', 'Moderate', 'Low'],
+            datasets: [{
+                data: [0, 0, 0, 0, 0],
+                backgroundColor: ['#dc3545', '#fd7e14', '#ffc107', '#20c997', '#28a745']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+
+    // People Chart
+    const peopleCtx = document.getElementById('people-chart').getContext('2d');
+    charts.people = new Chart(peopleCtx, {
+        type: 'bar',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'People Count',
+                data: [],
+                backgroundColor: '#007bff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Environmental Chart
+    const envCtx = document.getElementById('environmental-chart').getContext('2d');
+    charts.environmental = new Chart(envCtx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [
+                {
+                    label: 'Noise (dB)',
+                    data: [],
+                    borderColor: '#ffc107',
+                    backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                    tension: 0.1,
+                    fill: true
+                },
+                {
+                    label: 'AQI',
+                    data: [],
+                    borderColor: '#17a2b8',
+                    backgroundColor: 'rgba(23, 162, 184, 0.1)',
+                    tension: 0.1,
+                    fill: true
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Air Quality Chart
+    const airCtx = document.getElementById('air-quality-chart').getContext('2d');
+    charts.airQuality = new Chart(airCtx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [
+                {
+                    label: 'VOC (ppm)',
+                    data: [],
+                    borderColor: '#dc3545',
+                    tension: 0.1
+                },
+                {
+                    label: 'PM2.5 (µg/m³)',
+                    data: [],
+                    borderColor: '#fd7e14',
+                    tension: 0.1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Component Radar Chart
+    const radarCtx = document.getElementById('component-radar-chart').getContext('2d');
+    charts.radar = new Chart(radarCtx, {
+        type: 'radar',
+        data: {
+            labels: ['Proximity', 'Count', 'Behavior', 'Vital Signs', 'Attack Events', 'Noise'],
+            datasets: [{
+                label: 'Average Threat Components',
+                data: [0, 0, 0, 0, 0, 0],
+                backgroundColor: 'rgba(220, 53, 69, 0.2)',
+                borderColor: '#dc3545',
+                pointBackgroundColor: '#dc3545'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            aspectRatio: 1,
+            scales: {
+                r: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        stepSize: 20
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+}
+
+function loadWeeklyData() {
+    // Load 7-day timeline data
+    fetch('/api/timeline?hours=168')
+        .then(response => response.json())
+        .then(data => {
+            if (!data.length) return;
+
+            // Format timestamps
+            const labels = data.map(d => {
+                const date = new Date(d.timestamp);
+                return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            });
+
+            // Update timeline chart
+            charts.timeline.data.labels = labels;
+            charts.timeline.data.datasets[0].data = data.map(d => d.threat_score || 0);
+            charts.timeline.data.datasets[1].data = data.map(d => d.people_count || 0);
+            charts.timeline.update();
+
+            // Update people chart
+            charts.people.data.labels = labels;
+            charts.people.data.datasets[0].data = data.map(d => d.people_count || 0);
+            charts.people.update();
+
+            // Update environmental chart
+            charts.environmental.data.labels = labels;
+            charts.environmental.data.datasets[0].data = data.map(d => d.sound_db || 0);
+            charts.environmental.data.datasets[1].data = data.map(d => d.air_aqi || 0);
+            charts.environmental.update();
+
+            // Update air quality chart
+            charts.airQuality.data.labels = labels;
+            charts.airQuality.data.datasets[0].data = data.map(d => d.air_voc_ppm || 0);
+            charts.airQuality.data.datasets[1].data = data.map(d => d.air_pm25 || 0);
+            charts.airQuality.update();
+
+            // Count threat levels for distribution
+            const levels = {CRITICAL: 0, HIGH: 0, ELEVATED: 0, MODERATE: 0, LOW: 0};
+            data.forEach(d => {
+                if (d.threat_score >= 80) levels.CRITICAL++;
+                else if (d.threat_score >= 60) levels.HIGH++;
+                else if (d.threat_score >= 40) levels.ELEVATED++;
+                else if (d.threat_score >= 20) levels.MODERATE++;
+                else levels.LOW++;
+            });
+            
+            charts.threatDistribution.data.datasets[0].data = [
+                levels.CRITICAL, levels.HIGH, levels.ELEVATED, 
+                levels.MODERATE, levels.LOW
+            ];
+            charts.threatDistribution.update();
+        })
+        .catch(error => console.error('Error loading timeline data:', error));
+
+    // Load component data for radar chart
+    fetch('/api/components?hours=168')
+        .then(response => response.json())
+        .then(data => {
+            charts.radar.data.datasets[0].data = [
+                data.avg_proximity || 0,
+                data.avg_count || 0,
+                data.avg_behavior || 0,
+                data.avg_vital_signs || 0,
+                data.avg_attack_events || 0,
+                data.avg_noise || 0
+            ];
+            charts.radar.update();
+        })
+        .catch(error => console.error('Error loading component data:', error));
+}
+
+function loadExecutiveSummary() {
+    fetch('/api/reports/summary')
+        .then(response => response.json())
+        .then(data => {
+            const summaryDiv = document.getElementById('executive-summary-content');
+            if (data.summary) {
+                // Use markdown parser to properly format the AI response
+                summaryDiv.innerHTML = parseMarkdown(data.summary);
+            } else {
+                summaryDiv.innerHTML = `
+                    <p>Executive summary generation is currently unavailable. Please ensure the AI service is properly configured.</p>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Error loading executive summary:', error);
+            document.getElementById('executive-summary-content').innerHTML = `
+                <p>Unable to load executive summary at this time.</p>
+            `;
+        });
+}
+
+function loadMonitoringPeriod() {
+    fetch('/api/reports/event-timerange')
+        .then(response => response.json())
+        .then(data => {
+            const periodElement = document.getElementById('monitoring-period');
+            if (data.duration_formatted) {
+                periodElement.textContent = data.duration_formatted;
+            } else {
+                periodElement.textContent = 'N/A';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading monitoring period:', error);
+            document.getElementById('monitoring-period').textContent = 'Error';
+        });
+}
+
+function loadRecommendations() {
+    fetch('/api/reports/recommendations')
+        .then(response => response.json())
+        .then(data => {
+            const recDiv = document.getElementById('recommendations-content');
+            if (data.recommendations) {
+                const recommendations = data.recommendations.split('\n').filter(r => r.trim());
+                const recList = recommendations.map(rec => `<li>${rec.replace('•', '').trim()}</li>`).join('');
+                recDiv.innerHTML = `<ul>${recList}</ul>`;
+            } else {
+                recDiv.innerHTML = `
+                    <p>Recommendations generation is currently unavailable.</p>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Error loading recommendations:', error);
+            document.getElementById('recommendations-content').innerHTML = `
+                <p>Unable to load recommendations at this time.</p>
+            `;
+        });
+}
+
+function loadDetailedStatistics() {
+    fetch('/api/reports/detailed-stats')
+        .then(response => response.json())
+        .then(data => {
+            const tbody = document.getElementById('detailed-stats-table');
+            tbody.innerHTML = data.stats.map(stat => `
+                <tr>
+                    <td><strong>${stat.metric}</strong></td>
+                    <td>${stat.min}</td>
+                    <td>${stat.max}</td>
+                    <td>${stat.avg}</td>
+                    <td>${stat.std_dev}</td>
+                    <td>${stat.trend}</td>
+                    <td><span class="badge bg-${stat.status_color}">${stat.status}</span></td>
+                </tr>
+            `).join('');
+        })
+        .catch(error => {
+            console.error('Error loading detailed statistics:', error);
+            document.getElementById('detailed-stats-table').innerHTML = `
+                <tr><td colspan="7" class="text-center">Unable to load statistics</td></tr>
+            `;
+        });
+}
+
+function downloadPDF() {
+    // Show loading state
+    const btn = event.target;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<span class="loading-spinner"></span> Generating PDF...';
+    btn.disabled = true;
+
+    fetch('/api/reports/weekly')
+        .then(response => {
+            if (!response.ok) throw new Error('Failed to generate PDF');
+            return response.blob();
+        })
+        .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `weekly_environmental_report_${new Date().toISOString().slice(0,10)}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        })
+        .catch(error => {
+            console.error('Error downloading PDF:', error);
+            alert('Error generating PDF: ' + error.message);
+        })
+        .finally(() => {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        });
+}
+</script>
+{% endblock %}
