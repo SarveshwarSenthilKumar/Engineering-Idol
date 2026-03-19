@@ -28,11 +28,17 @@
     box-sizing: border-box;
 }
 
+html, body {
+    overflow-x: hidden;
+    max-width: 100%;
+}
+
 body {
     font-family: var(--font-family-base);
     line-height: 1.6;
     color: var(--dark-color);
     background-color: #ffffff;
+    overflow-x: hidden;
 }
 
 /* Typography */
@@ -40,6 +46,8 @@ h1, h2, h3, h4, h5, h6 {
     font-weight: 600;
     line-height: 1.2;
     margin-bottom: 1rem;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 h1 { font-size: 2.5rem; }
@@ -59,29 +67,77 @@ h6 { font-size: 1rem; }
     font-weight: 300;
 }
 
+/* Container and Layout */
+.container, .container-fluid {
+    max-width: 100%;
+    overflow-x: hidden;
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+.row {
+    margin-left: -0.75rem;
+    margin-right: -0.75rem;
+}
+
+.col, .col-1, .col-2, .col-3, .col-4, .col-5, .col-6, .col-7, .col-8, .col-9, .col-10, .col-11, .col-12 {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
 /* Navigation */
 .navbar {
     height: var(--navbar-height);
     box-shadow: var(--box-shadow-lg);
     backdrop-filter: blur(10px);
     background: rgba(0, 123, 255, 0.95) !important;
+    overflow-x: hidden;
+    max-width: 100%;
 }
 
 .navbar-brand {
     font-size: 1.5rem;
     font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.navbar-nav {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    max-width: 100%;
 }
 
 .navbar-nav .nav-link {
     font-weight: 500;
-    padding: 0.5rem 1rem;
+    padding: 0.5rem 0.75rem;
     border-radius: var(--border-radius);
     transition: all 0.3s ease;
+    white-space: nowrap;
+    font-size: 0.875rem;
 }
 
 .navbar-nav .nav-link:hover {
     background-color: rgba(255, 255, 255, 0.1);
     transform: translateY(-1px);
+}
+
+/* Quick Actions in Navbar */
+.navbar .d-flex {
+    flex-wrap: nowrap;
+    gap: 0.5rem;
+}
+
+.navbar .input-group {
+    min-width: 200px;
+    max-width: 300px;
+}
+
+.navbar .form-control {
+    font-size: 0.875rem;
 }
 
 /* Hero Section */
@@ -241,9 +297,11 @@ h6 { font-size: 1rem; }
     background-color: #2d3748;
     border-radius: var(--border-radius);
     padding: 1.5rem;
-    margin: 1.5rem 0;
-    position: relative;
+    margin: 1rem 0;
     overflow-x: auto;
+    max-width: 100%;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .code-block pre {
@@ -251,6 +309,10 @@ h6 { font-size: 1rem; }
     color: #e2e8f0;
     font-family: var(--font-family-mono);
     font-size: 0.875rem;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    max-width: 100%;
     line-height: 1.5;
 }
 
@@ -258,8 +320,41 @@ h6 { font-size: 1rem; }
     color: white;
     margin-bottom: 1rem;
     font-size: 0.9rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    word-wrap: break-word;
+}
+
+/* Tables */
+.table {
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    max-width: 100%;
+    width: 100%;
+    table-layout: auto;
+    word-wrap: break-word;
+}
+
+.table th {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+}
+
+.table td {
+    border-color: #e9ecef;
+    word-wrap: break-word;
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.table-responsive {
+    overflow-x: auto;
+    max-width: 100%;
 }
 
 /* API Endpoints */
@@ -326,6 +421,21 @@ h6 { font-size: 1rem; }
     background: white;
     border: 2px solid var(--primary-color);
     border-radius: var(--border-radius);
+    padding: 1rem;
+    overflow-x: auto;
+    max-width: 100%;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.architecture-diagram pre {
+    font-size: 0.75rem;
+    line-height: 1.2;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    max-width: 100%;
+    margin: 0;
 }
 
 /* Search */
@@ -388,6 +498,33 @@ h6 { font-size: 1rem; }
 @media (max-width: 767.98px) {
     .navbar {
         height: auto;
+        overflow-x: hidden;
+    }
+    
+    .navbar-brand {
+        font-size: 1.25rem;
+    }
+    
+    .navbar-nav {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        scrollbar-width: thin;
+    }
+    
+    .navbar-nav .nav-link {
+        font-size: 0.8rem;
+        padding: 0.4rem 0.6rem;
+    }
+    
+    .navbar .d-flex {
+        flex-direction: column;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+    }
+    
+    .navbar .input-group {
+        min-width: auto;
+        max-width: 100%;
     }
     
     .hero-section {
