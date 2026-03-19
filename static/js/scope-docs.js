@@ -20,7 +20,6 @@ function initializeDocumentation() {
     initializeSearch();
     initializeTableOfContents();
     initializeSmoothScrolling();
-    initializeBackToTop();
     initializeCodeHighlighting();
     initializeProgressIndicator();
     initializeKeyboardShortcuts();
@@ -446,34 +445,6 @@ function initializeSmoothScrolling() {
 }
 
 /**
- * Back to top button
- */
-function initializeBackToTop() {
-    const backToTopButton = document.createElement('button');
-    backToTopButton.className = 'back-to-top';
-    backToTopButton.innerHTML = '<i class="bi bi-arrow-up"></i>';
-    backToTopButton.setAttribute('aria-label', 'Back to top');
-    document.body.appendChild(backToTopButton);
-    
-    // Show/hide based on scroll position
-    window.addEventListener('scroll', () => {
-        if (window.pageYOffset > 300) {
-            backToTopButton.classList.add('visible');
-        } else {
-            backToTopButton.classList.remove('visible');
-        }
-    });
-    
-    // Scroll to top on click
-    backToTopButton.addEventListener('click', () => {
-        window.scrollTo({
-            top: 0,
-            behavior: 'smooth'
-        });
-    });
-}
-
-/**
  * Code highlighting
  */
 function initializeCodeHighlighting() {
@@ -891,7 +862,6 @@ window.ScopeDocs = {
     showQuickGuide,
     closeQuickGuide,
     toggleFabMenu,
-    scrollToTop,
     toggleFullscreen,
     downloadPDF,
     shareDocumentation,
@@ -1025,24 +995,6 @@ function toggleFabMenu() {
     
     fabMain.classList.toggle('active');
     fabOptions.classList.toggle('show');
-}
-
-/**
- * Scroll to Top
- */
-function scrollToTop() {
-    window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-    });
-    
-    // Close FAB menu
-    const fabOptions = document.querySelector('.fab-options');
-    const fabMain = document.querySelector('.fab-main');
-    fabOptions.classList.remove('show');
-    fabMain.classList.remove('active');
-    
-    showNotification('Scrolled to top', 'info', 1500);
 }
 
 /**
