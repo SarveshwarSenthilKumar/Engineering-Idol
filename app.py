@@ -3693,8 +3693,20 @@ def scenario_status():
     })
 
 @app.route("/documentation")
+@login_required
 def documentation():
-    return render_template("scope-docs.html")
+    """SCOPE System Documentation page"""
+    # Get environment data for consistency
+    fake_mode = session.get('fake_mode', True)
+    all_environments = live_data.get_all_environments()
+    current_env = live_data.get_current_environment()
+    highest_threat_env = live_data.get_highest_threat_environment()
+    
+    return render_template("scope-docs.html",
+                         fake_mode=fake_mode,
+                         environments=all_environments,
+                         current_environment=current_env,
+                         highest_threat_environment=highest_threat_env)
 
 # ==================== ERROR HANDLERS ====================
 # ==================== MAIN ====================
