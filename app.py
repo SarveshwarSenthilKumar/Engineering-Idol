@@ -3692,6 +3692,10 @@ def scenario_status():
         'scenario_active': active_scenario is not None
     })
 
+@app.route("/documentation")
+def documentation():
+    return render_template("scope-docs.html")
+
 # ==================== ERROR HANDLERS ====================
 # ==================== MAIN ====================
 
