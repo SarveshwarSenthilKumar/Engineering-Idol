@@ -1,7 +1,7 @@
-# 📋 COMPLETE HARDWARE SETUP GUIDE
-## Environmental Monitoring System with mmWave Radar
+# COMPLETE HARDWARE SETUP GUIDE
+## SCOPE System with mmWave Radar
 
-## 🎯 SYSTEM OVERVIEW
+## SYSTEM OVERVIEW
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -27,7 +27,7 @@
 
 ---
 
-## 🔧 PART 1: RASPBERRY PI ZERO W SETUP
+## PART 1: RASPBERRY PI ZERO W SETUP
 
 ### 1.1 Initial Setup
 
@@ -105,7 +105,7 @@ ls -la /dev/ttyUSB*  # For USB radar modules
 
 ---
 
-## 🔌 PART 2: WIRING DIAGRAMS
+## PART 2: WIRING DIAGRAMS
 
 ### 2.1 GPIO Pinout Reference (Raspberry Pi Zero W)
 
@@ -232,7 +232,7 @@ RD-03D / LD2410 Radar Module
 
 ---
 
-## ⚡ PART 3: POWER REQUIREMENTS
+## PART 3: POWER REQUIREMENTS
 
 ### 3.1 Power Budget Calculation
 
@@ -249,19 +249,19 @@ RD-03D / LD2410 Radar Module
 ### 3.2 Power Supply Recommendations
 
 ```
-✅ GOOD: 5V 3A USB power supply (Raspberry Pi official)
+GOOD: 5V 3A USB power supply (Raspberry Pi official)
    └── Powers Pi + all sensors through Pi's 5V rail
 
-✅ BETTER: 5V 5A supply with separate regulator
+BETTER: 5V 5A supply with separate regulator
    ├── Pi Zero W (5V 2A)
    └── Sensors (5V 3A) - isolates sensor noise
 
-✅ BEST: Powered USB Hub + Pi
+BEST: Powered USB Hub + Pi
    ├── Pi Zero W (micro USB)
    └── Sensors through hub's 5V
 ```
 
-**⚠ CRITICAL WARNINGS:**
+**CRITICAL WARNINGS:**
 - MQ135 has a heater that draws ~150mA continuously - it gets HOT!
 - PMS5003 has a fan that can cause voltage spikes
 - Use decoupling capacitors (100µF + 0.1µF) near each sensor
@@ -269,7 +269,7 @@ RD-03D / LD2410 Radar Module
 
 ---
 
-## 🛠️ PART 4: HARDWARE ASSEMBLY STEPS
+## PART 4: HARDWARE ASSEMBLY STEPS
 
 ### Step 1: Prepare the Breadboard/PCB
 
@@ -324,7 +324,7 @@ Physical Placement Recommendations:
 
 ---
 
-## 🔧 PART 5: CONNECTION VERIFICATION
+## PART 5: CONNECTION VERIFICATION
 
 ### 5.1 Test I2C Connection
 
@@ -370,7 +370,7 @@ print(f"Read {len(data)} bytes")
 if len(data) == 32:
     print(f"Header: {hex(data[0])} {hex(data[1])}")
     if data[0] == 0x42 and data[1] == 0x4d:
-        print("✅ PMS5003 detected!")
+        print("PMS5003 detected!")
 ser.close()
 EOF
 ```
@@ -418,7 +418,7 @@ EOF
 
 ---
 
-## 🐍 PART 6: SOFTWARE ENVIRONMENT SETUP
+## PART 6: SOFTWARE ENVIRONMENT SETUP
 
 ### 6.1 Python Virtual Environment
 
@@ -459,15 +459,15 @@ pip install cython
 pip install pandas  # For data logging
 
 # Verify installations
-python -c "import numpy; import scipy; import sklearn; import serial; import board; print('✅ All libraries installed')"
+python -c "import numpy; import scipy; import sklearn; import serial; import board; print('All libraries installed')"
 ```
 
 ### 6.3 Create Project Structure
 
 ```bash
 # Create project directory
-mkdir ~/environmental_monitor
-cd ~/environmental_monitor
+mkdir ~/scope_monitor
+cd ~/scope_monitor
 
 # Create subdirectories
 mkdir -p {logs,config,data,models,utils}
@@ -485,7 +485,7 @@ touch logs/system.log
 # Create startup script
 cat > start.sh << 'EOF'
 #!/bin/bash
-cd ~/environmental_monitor
+cd ~/scope_monitor
 source ~/env/bin/activate
 python main.py >> logs/system.log 2>&1
 EOF
@@ -495,7 +495,7 @@ chmod +x start.sh
 
 ---
 
-## ⚙️ PART 7: CONFIGURATION FILES
+## PART 7: CONFIGURATION FILES
 
 ### 7.1 Create config/settings.json
 
@@ -548,21 +548,21 @@ chmod +x start.sh
 ### 7.2 Create Systemd Service (Auto-start on boot)
 
 ```bash
-sudo nano /etc/systemd/system/environmental-monitor.service
+sudo nano /etc/systemd/system/scope-monitor.service
 ```
 
 ```ini
 [Unit]
-Description=Environmental Monitoring System
+Description=SCOPE System
 After=multi-user.target
 
 [Service]
 Type=simple
-ExecStart=/home/pi/environmental_monitor/start.sh
+ExecStart=/home/pi/scope_monitor/start.sh
 Restart=always
 RestartSec=10
 User=pi
-WorkingDirectory=/home/pi/environmental_monitor
+WorkingDirectory=/home/pi/scope_monitor
 StandardOutput=inherit
 StandardError=inherit
 
@@ -573,19 +573,19 @@ WantedBy=multi-user.target
 ```bash
 # Enable service
 sudo systemctl daemon-reload
-sudo systemctl enable environmental-monitor.service
-sudo systemctl start environmental-monitor.service
+sudo systemctl enable scope-monitor.service
+sudo systemctl start scope-monitor.service
 
 # Check status
-sudo systemctl status environmental-monitor.service
+sudo systemctl status scope-monitor.service
 
 # View logs
-sudo journalctl -u environmental-monitor -f
+sudo journalctl -u scope-monitor -f
 ```
 
 ---
 
-## 📊 PART 8: CALIBRATION PROCEDURES
+## PART 8: CALIBRATION PROCEDURES
 
 ### 8.1 MQ135 Gas Sensor Calibration
 
@@ -598,7 +598,7 @@ import adafruit_ads1x15.ads1115 as ADS
 from adafruit_ads1x15.analog_in import AnalogIn
 import numpy as np
 
-print("🔬 MQ135 CALIBRATION")
+print("MQ135 CALIBRATION")
 print("="*50)
 print("Place sensor in clean air for 10 minutes")
 print("Make sure no VOC sources nearby")
@@ -642,7 +642,7 @@ import adafruit_ads1x15.ads1115 as ADS
 from adafruit_ads1x15.analog_in import AnalogIn
 import numpy as np
 
-print("🔊 SOUND SENSOR CALIBRATION")
+print("SOUND SENSOR CALIBRATION")
 print("="*50)
 print("This will measure ambient noise floor")
 print("Ensure environment is quiet")
@@ -689,7 +689,7 @@ import time
 import serial
 import json
 
-print("📡 RADAR POSITION CALIBRATION")
+print("RADAR POSITION CALIBRATION")
 print("="*50)
 print("Stand at various positions and note readings")
 
@@ -708,7 +708,7 @@ try:
                 if data.startswith('{'):
                     try:
                         parsed = json.loads(data)
-                        print(f"\n✅ Parsed: {parsed}")
+                        print(f"\nParsed: {parsed}")
                     except:
                         pass
 except KeyboardInterrupt:
@@ -718,13 +718,13 @@ except KeyboardInterrupt:
 
 ---
 
-## 🚀 PART 9: RUNNING THE SYSTEM
+## PART 9: RUNNING THE SYSTEM
 
 ### 9.1 First Run
 
 ```bash
 # Activate environment
-cd ~/environmental_monitor
+cd ~/scope_monitor
 source ~/env/bin/activate
 
 # Run main program
@@ -735,11 +735,11 @@ python main.py
 
 ```
 ============================================================
-ENHANCED ENVIRONMENTAL MONITORING SYSTEM
+ENHANCED SCOPE SYSTEM
 ============================================================
-✅ ADS1115 detected at 0x48
-✅ PMS5003 detected on /dev/serial0
-✅ RD-03D radar detected on /dev/ttyUSB0
+ADS1115 detected at 0x48
+PMS5003 detected on /dev/serial0
+RD-03D radar detected on /dev/ttyUSB0
 
 Features:
   • Sound Analysis with ML Classification
@@ -886,7 +886,7 @@ sudo systemctl disable avahi-daemon.service
 ### If System Freezes:
 ```bash
 # SSH in and restart service
-sudo systemctl restart environmental-monitor
+sudo systemctl restart scope-monitor
 
 # If SSH unavailable, use hardware watchdog
 sudo raspi-config → Performance Options → Watchdog → Enable
@@ -932,6 +932,6 @@ Before first power-on, verify:
 
 ---
 
-**🎉 Congratulations! Your Environmental Monitoring System is now fully set up and ready to run!**
+**🎉 Congratulations! Your SCOPE System is now fully set up and ready to run!**
 
 Remember: The system will auto-start on boot and can be monitored via SSH. Check logs regularly and recalibrate sensors monthly for best accuracy.

@@ -100,7 +100,7 @@ Behavior Score ≤ 70:
 
 ---
 
-### **Component 5: AIR QUALITY THREAT** (from ENVIRONMENTAL SENSORS)
+### **Component 5: AIR QUALITY THREAT** (from FACILITY SENSORS)
 
 **How it works**: Poor air quality = health risk + auto-alarm + smoking/vaping detection
 

@@ -49,7 +49,7 @@ warnings.filterwarnings('ignore')
 # ==================== CONFIGURATION PARAMETERS ====================
 
 # System Configuration
-SYSTEM_NAME = "Advanced Environmental Monitor"
+SYSTEM_NAME = "Advanced SCOPE Monitor"
 VERSION = "2.0.0"
 LOG_LEVEL = logging.INFO
 
@@ -167,7 +167,7 @@ logging.basicConfig(
     level=LOG_LEVEL,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler('environmental_monitor.log'),
+        logging.FileHandler('scope_monitor.log'),
         logging.StreamHandler()
     ]
 )
@@ -304,7 +304,7 @@ class DatabaseManager:
                 "radar_targets TEXT",
                 "physical_risk REAL",
                 "health_risk REAL",
-                "environmental_risk REAL",
+                "facility_risk REAL",
                 "danger_index REAL",
                 "comfort_index REAL",
                 "urgency_score REAL",
@@ -392,7 +392,7 @@ class DatabaseManager:
     def insert_event(self, threat_data, quality_data, sound_analysis, odor_analysis, 
                     radar_data, motion_patterns, activity_events, targets_list, sensor_status):
         """
-        Insert a complete environmental snapshot into the database
+        Insert a complete facility snapshot into the database
         Returns event_id if successful, None otherwise
         """
         conn = None
@@ -448,7 +448,7 @@ class DatabaseManager:
                     radar_target_count, radar_format,
                     motion_pattern, motion_activity_level, motion_total_targets, motion_active_targets,
                     activity_events, radar_targets,
-                    physical_risk, health_risk, environmental_risk, danger_index, comfort_index, urgency_score,
+                    physical_risk, health_risk, facility_risk, danger_index, comfort_index, urgency_score,
                     sensor_radar_connected, sensor_pms_connected, sensor_mq135_connected, sensor_sound_connected,
                     alert_critical_threat, alert_high_threat, alert_rapid_escalation, alert_abnormal_vitals, alert_air_quality
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -540,7 +540,7 @@ class DatabaseManager:
                 radar_targets_json,
                 physical_risk,
                 health_risk,
-                environmental_risk,
+                facility_risk,
                 danger_index,
                 comfort_index,
                 urgency_score,
@@ -739,7 +739,7 @@ class DatabaseManager:
             return
         
         print("\n" + "="*80)
-        print(f"📊 ENVIRONMENTAL MONITORING REPORT")
+        print(f"📊 SCOPE MONITORING REPORT")
         print("="*80)
         print(f"Generated: {report['generated_at']}")
         if report['period']['start']:
@@ -2286,7 +2286,7 @@ def signal_handler(sig, frame):
         
         if quality_scorer.quality_history:
             qualities = list(quality_scorer.quality_history)
-            print(f"\n🌿 ENVIRONMENTAL QUALITY:")
+            print(f"\n🌿 FACILITY QUALITY:")
             print(f"   Average: {np.mean(qualities):.1f}")
             print(f"   Best: {max(qualities):.1f}")
             print(f"   Worst: {min(qualities):.1f}")
@@ -2306,7 +2306,7 @@ signal.signal(signal.SIGQUIT, signal_handler)  # Ctrl+\
 # Initialize processors
 radar_processor = RadarProcessor(use_software_uart=True)  # Use software UART for mmWave sensor
 threat_scorer = EnhancedThreatScorer()
-quality_scorer = EnvironmentalQualityScorer()
+quality_scorer = FacilityQualityScorer()
 
 # ==================== NOTIFICATION MANAGER ====================
 class NotificationManager:
@@ -2386,7 +2386,7 @@ class NotificationManager:
             {message}
             
             ---
-            This is an automated message from the Environmental Monitoring System.
+            This is an automated message from the SCOPE system.
             """
             msg.attach(MimeText(body, 'plain'))
             
@@ -2625,7 +2625,7 @@ def main():
     print("    - Persistence multiplier: up to 2x")
     print("    - Trend acceleration detection")
     print("    - 5/15/30 minute predictions")
-    print("  • Environmental Quality Assessment")
+    print("  • Facility Quality Assessment")
     print("  • DATABASE INTEGRATION:")
     print("    - Automatic event logging")
     print("    - Comprehensive reporting")

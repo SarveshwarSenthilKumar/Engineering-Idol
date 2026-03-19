@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "Installing Environmental Monitoring System..."
+echo "Installing SCOPE System..."
 
 # Update system
 sudo apt update && sudo apt upgrade -y
@@ -18,29 +18,29 @@ pip install numpy scipy scikit-learn
 pip install pyserial adafruit-blinka adafruit-circuitpython-ads1x15
 
 # Create project directory
-mkdir -p ~/environmental_monitor/templates
-mkdir -p ~/environmental_monitor/static
+mkdir -p ~/scope_monitor/templates
+mkdir -p ~/scope_monitor/static
 
 # Copy files (assumes you've uploaded them)
-cp app.py ~/environmental_monitor/
-cp main.py ~/environmental_monitor/
-cp templates/* ~/environmental_monitor/templates/
+cp app.py ~/scope_monitor/
+cp main.py ~/scope_monitor/
+cp templates/* ~/scope_monitor/templates/
 
 # Set up systemd services
-sudo cp environmental-monitor.service /etc/systemd/system/
-sudo cp environmental-web.service /etc/systemd/system/
+sudo cp scope-monitor.service /etc/systemd/system/
+sudo cp scope-web.service /etc/systemd/system/
 
 # Set up nginx
-sudo cp environmental /etc/nginx/sites-available/
-sudo ln -s /etc/nginx/sites-available/environmental /etc/nginx/sites-enabled/
+sudo cp scope /etc/nginx/sites-available/
+sudo ln -s /etc/nginx/sites-available/scope /etc/nginx/sites-enabled/
 sudo rm /etc/nginx/sites-enabled/default
 
 # Enable and start services
 sudo systemctl daemon-reload
-sudo systemctl enable environmental-monitor
-sudo systemctl enable environmental-web
-sudo systemctl start environmental-monitor
-sudo systemctl start environmental-web
+sudo systemctl enable scope-monitor
+sudo systemctl enable scope-web
+sudo systemctl start scope-monitor
+sudo systemctl start scope-web
 sudo systemctl restart nginx
 
 echo "Installation complete!"

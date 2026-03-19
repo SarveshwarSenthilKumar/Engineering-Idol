@@ -5,7 +5,7 @@
 1. **Enable 2-Factor Authentication** on your Gmail account
 2. **Generate an App Password**:
    - Go to Google Account settings → Security → 2-Step Verification → App passwords
-   - Generate a new app password for "Environmental Monitor"
+   - Generate a new app password for "SCOPE Monitor"
    - Use this password in the configuration (NOT your regular password)
 
 3. **Update Configuration** in `rasppi.py`:

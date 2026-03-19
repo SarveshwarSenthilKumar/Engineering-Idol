@@ -1,6 +1,6 @@
 # 📊 COMPLETE VARIABLES & METRICS REFERENCE
 
-Based on your comprehensive environmental monitoring system, here's every variable, metric, and data point you have access to:
+Based on your comprehensive SCOPE system, here's every variable, metric, and data point you have access to:
 
 ## 🔴 **THREAT ASSESSMENT METRICS**
 
@@ -82,11 +82,11 @@ Based on your comprehensive environmental monitoring system, here's every variab
 
 ---
 
-## 🟢 **ENVIRONMENTAL QUALITY METRICS**
+## 🟢 **FACILITY QUALITY METRICS"
 
 | Variable | Type | Range | Description |
 |----------|------|-------|-------------|
-| `quality_data['quality_score']` | float | 0-100 | Overall environmental quality |
+| `quality_data['quality_score']` | float | 0-100 | Overall facility quality |
 | `quality_data['base_quality']` | float | 0-100 | Raw quality before smoothing |
 | `quality_data['category']` | string | EXCELLENT/GOOD/FAIR/POOR/CRITICAL | Quality classification |
 | `quality_data['icon']` | string | 🌟/✅/⚠️/🔴/🚨 | Visual indicator |
@@ -216,7 +216,7 @@ threat_history = deque(maxlen=1000)  # Each entry contains full threat_data
 
 ### Score History (last 100 entries)
 ```python
-score_history = deque(maxlen=100)  # Environmental scores
+score_history = deque(maxlen=100)  # Facility scores
 ```
 
 ### Radar History (last 30 entries)
@@ -257,7 +257,7 @@ odor_momentum = odor_analysis['odor_trend']
 # Composite risk by category
 physical_risk = (proximity_score + count_score + behavior_score) / 3
 health_risk = (vital_signs_score + air_quality_score) / 2
-environmental_risk = (noise_score + air_quality_score) / 2
+facility_risk = (noise_score + air_quality_score) / 2
 ```
 
 ### 3. **Occupancy Metrics**

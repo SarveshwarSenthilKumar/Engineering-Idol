@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Environmental Monitoring System - Web Interface
+SCOPE - Web Interface
 Provides live visual readings, threat scores, and event history
 """
 
@@ -481,8 +481,8 @@ def get_threat_timeline(hours=24):
         
         cursor.execute("""
             SELECT timestamp, threat_overall, quality_score, radar_target_count,
-                   sound_db, air_aqi, air_voc_ppm, air_pm25
-            FROM events
+                   sound_db, air_aqi, threat_level
+            FROM events 
             WHERE timestamp >= ?
             ORDER BY timestamp ASC
         """, (cutoff,))
@@ -627,7 +627,7 @@ else:
     gemini_model = None
 
 def generate_ai_summary(events_data, stats_data, time_period="weekly"):
-    """Generate AI-powered summary of environmental data"""
+    """Generate AI-powered summary of SCOPE data"""
     if not gemini_model:
         return "AI summary not available - Gemini API key not configured"
     
@@ -685,7 +685,7 @@ def generate_ai_summary(events_data, stats_data, time_period="weekly"):
         
         # Prepare data for AI with enhanced prompt and no token limits
         prompt = f"""
-        As an expert environmental safety and security analyst, conduct an extremely comprehensive and detailed analysis of the following {time_period} environmental monitoring data from a school facility. Provide an exhaustive, data-driven professional summary for school administration that demonstrates deep understanding of all security metrics, attack patterns, and operational insights.
+        As an expert safety and security analyst, conduct an extremely comprehensive and detailed analysis of the following {time_period} SCOPE monitoring data from a school facility. Provide an exhaustive, data-driven professional summary for school administration that demonstrates deep understanding of all security metrics, attack patterns, and operational insights.
 
         COMPREHENSIVE SECURITY STATISTICS:
         - Total Monitoring Events: {stats_data.get('total_events', 0)}
@@ -711,13 +711,13 @@ def generate_ai_summary(events_data, stats_data, time_period="weekly"):
         {attack_type_analysis}
 
         COMPREHENSIVE ANALYTICAL REQUIREMENTS:
-        Provide an extremely detailed analysis covering all aspects of the facility's security and environmental monitoring:
+        Provide an extremely detailed analysis covering all aspects of the facility's security and SCOPE monitoring:
 
         1. **Executive Summary** (5-6 sentences): Provide a comprehensive high-level overview of the facility's security status, highlighting the most significant findings, overall risk assessment, and critical security concerns that require immediate attention.
 
         2. **Detailed Threat Analysis**: Conduct an in-depth analysis of threat patterns, including:
            - Peak threat periods and time-based patterns
-           - Correlation between threat levels and environmental factors
+           - Correlation between threat levels and facility factors
            - Threat escalation patterns and triggers
            - Geographic or location-based threat concentrations
            - Any concerning trends, anomalies, or unusual patterns
@@ -729,9 +729,9 @@ def generate_ai_summary(events_data, stats_data, time_period="weekly"):
            - Time-based patterns for different attack types
            - Success/failure rates of different attack attempts
            - Emerging or new attack patterns
-           - Correlation between attack types and environmental conditions
+           - Correlation between attack types and facility conditions
 
-        4. **Environmental Impact Assessment**: Evaluate how environmental factors affect security:
+        4. **Facility Impact Assessment**: Evaluate how facility factors affect security:
            - Air quality impact on threat levels and detection accuracy
            - Noise level correlations with security events
            - People count patterns and crowd-related security risks
@@ -776,7 +776,7 @@ def generate_ai_summary(events_data, stats_data, time_period="weekly"):
 
         Format the response exactly as follows:
 
-        # Environmental Security Weekly Summary - {date_range}
+        # SCOPE Security Weekly Summary - {date_range}
 
         **Prepared By:** SCOPE  
         **Date:** {current_date}
@@ -790,8 +790,8 @@ def generate_ai_summary(events_data, stats_data, time_period="weekly"):
         ## Attack/Event Type Analysis
         [Provide detailed analysis of security events and attack patterns]
 
-        ## Environmental Impact Assessment
-        [Provide detailed assessment of environmental factors affecting security]
+        ## Facility Impact Assessment
+        [Provide detailed assessment of facility factors affecting security]
 
         ## Comprehensive Risk Assessment
         [Identify specific risks with probability, impact, and mitigation strategies]
@@ -831,9 +831,9 @@ def generate_ai_recommendations(events_data, stats_data, time_period="weekly"):
     try:
         # Prepare data for AI
         prompt = f"""
-        As an expert environmental air quality analyst, analyze the following {time_period} environmental monitoring data from a school facility and provide concise, actionable recommendations for improving air quality.
+        As an expert air quality analyst, analyze the following {time_period} SCOPE monitoring data from a school facility and provide concise, actionable recommendations for improving air quality.
 
-        KEY ENVIRONMENTAL STATISTICS:
+        KEY SCOPE STATISTICS:
         - Average Threat Score: {stats_data.get('avg_threat', 0):.1f}/100
         - Average People Count: {stats_data.get('avg_people', 0):.1f}
         - Average Noise Level: {stats_data.get('avg_noise', 0):.1f} dB
@@ -875,7 +875,7 @@ def generate_preventative_recommendations(stats_data):
     try:
         # Prepare data for AI
         prompt = f"""
-        As an expert environmental safety and security consultant, analyze the following environmental monitoring data from a school facility and provide specific, actionable preventative recommendations.
+        As an expert safety and security consultant, analyze the following SCOPE monitoring data from a school facility and provide specific, actionable preventative recommendations.
 
         KEY STATISTICS:
         - Average Threat Score: {stats_data.get('avg_threat', 0):.1f}/100
@@ -896,7 +896,7 @@ def generate_preventative_recommendations(stats_data):
 
         Please provide 5-7 specific, actionable preventative recommendations that the school administration can implement immediately. Focus on:
         1. Security enhancements
-        2. Environmental improvements
+        2. Facility improvements
         3. Operational procedures
         4. Staff training
         5. Infrastructure upgrades
@@ -954,7 +954,7 @@ def create_chart_image(data, chart_type, title):
             ax.pie(counts, labels=levels, colors=colors, autopct='%1.1f%%', startangle=90)
             ax.set_title(title)
             
-        elif chart_type == 'environmental_metrics':
+        elif chart_type == 'facility_metrics':
             timestamps = [datetime.fromisoformat(d['timestamp']) for d in data]
             noise_levels = [d.get('sound_db', 0) for d in data]
             aqi_levels = [d.get('air_aqi', 0) for d in data]
@@ -1039,7 +1039,7 @@ def generate_weekly_html_report():
         # Create charts
         timeline_img = create_chart_image(events_data, 'timeline', '7-Day Threat and Quality Timeline')
         threat_img = create_chart_image(events_data, 'threat_distribution', 'Threat Level Distribution')
-        env_img = create_chart_image(events_data, 'environmental_metrics', 'Noise and Air Quality Trends')
+        facility_img = create_chart_image(events_data, 'facility_metrics', 'Noise and Air Quality Trends')
         
         # Generate preventative recommendations
         preventative_text = generate_preventative_recommendations(stats_data)
@@ -1050,7 +1050,7 @@ def generate_weekly_html_report():
         <html>
         <head>
             <meta charset="utf-8">
-            <title>Environmental Monitoring Weekly Report</title>
+            <title>SCOPE Weekly Report</title>
             <style>
                 body {{
                     font-family: Arial, sans-serif;
@@ -1154,7 +1154,7 @@ def generate_weekly_html_report():
         </head>
         <body>
             <div class="header">
-                <h1>Environmental Monitoring Weekly Report</h1>
+                <h1>SCOPE Weekly Report</h1>
                 <p>Professional Analysis for School Administration</p>
             </div>
             
@@ -1170,7 +1170,7 @@ def generate_weekly_html_report():
                     </tr>
                     <tr>
                         <td>Facility:</td>
-                        <td>Environmental Monitoring System</td>
+                        <td>SCOPE</td>
                     </tr>
                     <tr>
                         <td>Total Monitoring Hours:</td>
@@ -1247,9 +1247,9 @@ def generate_weekly_html_report():
             {f'''<div class="section">
                 <h2>Environmental Conditions</h2>
                 <div class="chart">
-                    <img src="data:image/png;base64,{env_img}" alt="Environmental Metrics">
+                    <img src="data:image/png;base64,{facility_img}" alt="Environmental Metrics">
                 </div>
-            </div>''' if env_img else ''}
+            </div>''' if facility_img else ''}
             
             <div class="section">
                 <h2>Preventative Recommendations</h2>
@@ -1259,7 +1259,7 @@ def generate_weekly_html_report():
             </div>
             
             <div class="footer">
-                <p>This report was automatically generated by the Environmental Monitoring System.</p>
+                <p>This report was automatically generated by the SCOPE system.</p>
                 <p>Generated on {datetime.now().strftime("%B %d, %Y at %I:%M %p")}</p>
             </div>
         </body>
@@ -2743,7 +2743,7 @@ def api_test_notification():
     try:
         data = request.get_json()
         channel = data.get('channel', 'all')
-        message = data.get('message', 'Test notification from Environmental Monitoring System')
+        message = data.get('message', 'Test notification from SCOPE')
         
         # Import fake data generator
         from fake_data_generator import FakeDataGenerator

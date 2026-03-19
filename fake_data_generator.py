@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Fake Data Generator for Environmental Monitoring System
+Fake Data Generator for SCOPE System
 Generates realistic sensor data and events for testing/demo purposes
 """
 
@@ -53,7 +53,7 @@ EVENT_TYPES = {
 ACTIVITIES = ['stationary', 'sitting', 'walking', 'running', 'transition']
 
 class FakeDataGenerator:
-    """Generates realistic fake environmental data"""
+    """Generates realistic fake SCOPE data"""
     
     def __init__(self, db_path=DB_PATH):
         self.db_path = db_path
@@ -541,7 +541,7 @@ class FakeDataGenerator:
             # Calculate derived metrics
             physical_risk = (components['proximity']['score'] + components['count']['score'] + components['behavior']['score']) / 3
             health_risk = (components['vital_signs']['score'] + components['air_quality']['score']) / 2
-            environmental_risk = (components['noise']['score'] + components['air_quality']['score']) / 2
+            facility_risk = (components['noise']['score'] + components['air_quality']['score']) / 2
             danger_index = threat_score * temporal['persistence_factor']
             comfort_index = 100 - (threat_score * 0.5)
             urgency_score = threat_score * (1 + abs(temporal['slope']) / 10)
@@ -597,7 +597,7 @@ class FakeDataGenerator:
                     radar_target_count, radar_format,
                     motion_pattern, motion_activity_level, motion_total_targets, motion_active_targets,
                     activity_events, radar_targets,
-                    physical_risk, health_risk, environmental_risk, danger_index, comfort_index, urgency_score,
+                    physical_risk, health_risk, facility_risk, danger_index, comfort_index, urgency_score,
                     sensor_radar_connected, sensor_pms_connected, sensor_mq135_connected, sensor_sound_connected,
                     alert_critical_threat, alert_high_threat, alert_rapid_escalation, alert_abnormal_vitals, alert_air_quality
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -722,7 +722,7 @@ class FakeDataGenerator:
 {message}
 
 ---
-This is a test message from the Environmental Monitoring System Fake Data Generator.
+This is a test message from the SCOPE System Fake Data Generator.
             """
             msg.attach(MimeText(body, 'plain'))
             
@@ -845,7 +845,7 @@ This is a test message from the Environmental Monitoring System Fake Data Genera
         """Main execution"""
         try:
             print("="*60)
-            print("🚀 FAKE DATA GENERATOR FOR ENVIRONMENTAL MONITORING")
+            print("🚀 FAKE DATA GENERATOR FOR SCOPE")
             print("="*60)
             
             self.connect()

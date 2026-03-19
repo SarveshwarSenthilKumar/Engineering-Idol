@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Advanced Monitoring Dashboard - Environmental System{% endblock %}
+{% block title %}Advanced Monitoring Dashboard - SCOPE{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -561,7 +561,7 @@
                 <i class="bi bi-activity me-2"></i>
                 Advanced Monitoring Dashboard
             </h1>
-            <p class="mb-0 opacity-90">Real-time environmental threat assessment and analysis</p>
+            <p class="mb-0 opacity-90">Real-time SCOPE threat assessment and analysis</p>
         </div>
         <div class="col-md-6 text-md-end">
             <div class="d-flex align-items-center justify-content-md-end gap-3">
@@ -639,12 +639,12 @@
         </div>
     </div>
     
-    <!-- Environmental Quality Card -->
+    <!-- Facility Quality Card -->
     <div class="col-lg-4">
         <div class="metric-card">
             <div class="alert-indicator" id="quality-alert"></div>
             <div class="text-center">
-                <h5 class="mb-3">Environmental Quality</h5>
+                <h5 class="mb-3">Facility Quality</h5>
                 <div class="threat-gauge-container">
                     <canvas id="quality-gauge"></canvas>
                 </div>
@@ -1230,7 +1230,7 @@
             }
         }
         
-        // Update environmental quality
+        // Update facility quality
         if (data.quality) {
             const quality = data.quality;
             const score = quality.quality_score || 0;

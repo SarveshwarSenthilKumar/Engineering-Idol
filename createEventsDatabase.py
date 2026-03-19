@@ -62,7 +62,7 @@ users_fields = [
 users_create = "CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, " + ", ".join(users_fields) + ")"
 crsr.execute(users_create)
 
-# ==================== EVENTS TABLE (Complete Environmental Data) ====================
+# ==================== EVENTS TABLE (Complete SCOPE Data) ====================
 events_fields = [
     # ===== Timestamp =====
     "timestamp TEXT NOT NULL",  # ISO format timestamp
@@ -123,7 +123,7 @@ events_fields = [
     "noise_confidence REAL",  # 0-1 Confidence
     "noise_weight REAL",  # 0-1 Dynamic weight
     
-    # ===== ENVIRONMENTAL QUALITY METRICS =====
+    # ===== FACILITY QUALITY METRICS =====
     "quality_score REAL",  # 0-100 Overall quality
     "quality_base REAL",  # 0-100 Raw quality
     "quality_category TEXT",  # EXCELLENT/GOOD/FAIR/POOR/CRITICAL
@@ -188,7 +188,7 @@ events_fields = [
     # ===== DERIVED METRICS =====
     "physical_risk REAL",  # (proximity + count + behavior)/3
     "health_risk REAL",  # (vital_signs + air_quality)/2
-    "environmental_risk REAL",  # (noise + air_quality)/2
+    "facility_risk REAL",  # (noise + air_quality)/2
     "danger_index REAL",  # threat_overall * persistence_factor
     "comfort_index REAL",  # 100 - (threat_overall * 0.5)
     "urgency_score REAL",  # threat_overall * (1 + |slope|/10)
@@ -275,6 +275,6 @@ print("✅ Database created successfully!")
 print(f"📁 Location: {os.path.abspath(database_path)}")
 print("\n📊 Tables created:")
 print("  • users - User accounts and profiles")
-print("  • events - Complete environmental data snapshots")
+print("  • events - Complete SCOPE data snapshots")
 print("  • targets - Per-person radar tracking data")
 print("  • events_log - Simplified event log for quick lookup")

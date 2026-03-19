@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Settings - Environmental Monitoring{% endblock %}
+{% block title %}Settings - SCOPE{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -137,7 +137,7 @@
                 <div class="col-md-8">
                     <div class="mb-3">
                         <label class="form-label">Test Message</label>
-                        <textarea class="form-control" id="test-message" rows="3" placeholder="Enter custom test message...">Test notification from Environmental Monitoring System</textarea>
+                        <textarea class="form-control" id="test-message" rows="3" placeholder="Enter custom test message...">Test notification from SCOPE</textarea>
                     </div>
                 </div>
                 <div class="col-md-4">
@@ -287,7 +287,7 @@
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `environmental_data_${new Date().toISOString().slice(0,10)}.json`;
+                a.download = `scope_data_${new Date().toISOString().slice(0,10)}.json`;
                 a.click();
                 URL.revokeObjectURL(url);
             })
@@ -402,7 +402,7 @@
     }
 
     function sendTestNotification(channel) {
-        const message = document.getElementById('test-message').value || 'Test notification from Environmental Monitoring System';
+        const message = document.getElementById('test-message').value || 'Test notification from SCOPE';
         const resultsDiv = document.getElementById('notification-results');
         const resultsContent = document.getElementById('results-content');
         

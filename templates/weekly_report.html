@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Weekly Environmental Report - Environmental Monitoring{% endblock %}
+{% block title %}Weekly Environmental Report - SCOPE{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -330,7 +330,7 @@
 
     <!-- Report Header -->
     <div class="report-header print-section">
-        <h1>Environmental Monitoring Weekly Report</h1>
+        <h1>SCOPE Weekly Report</h1>
         <div class="subtitle">Comprehensive Analysis for School Administration</div>
         <div class="mt-3">
             <small>Generated on {{ report_date }}</small>
@@ -449,8 +449,8 @@
         </div>
         <div class="col-md-6">
             <div class="chart-container">
-                <h5><i class="bi bi-moisture"></i> Environmental Metrics</h5>
-                <canvas id="environmental-chart" height="250"></canvas>
+                <h5><i class="bi bi-moisture"></i> Facility Metrics</h5>
+                <canvas id="facility-chart" height="250"></canvas>
             </div>
         </div>
     </div>
@@ -608,7 +608,7 @@
     <!-- Footer -->
     <div class="text-center mt-5 mb-3 print-section">
         <small class="text-muted">
-            <strong>Environmental Monitoring System</strong><br>
+            <strong>SCOPE</strong><br>
             Automated Report Generated on {{ report_date }}<br>
             Report Period: {{ start_date }} to {{ end_date }}<br>
             Total Monitoring Events: {{ stats.total_events or 0 }}
@@ -759,9 +759,9 @@ function initializeCharts() {
         }
     });
 
-    // Environmental Chart
-    const envCtx = document.getElementById('environmental-chart').getContext('2d');
-    charts.environmental = new Chart(envCtx, {
+    // Facility Chart
+    const facilityCtx = document.getElementById('facility-chart').getContext('2d');
+    charts.facility = new Chart(facilityCtx, {
         type: 'line',
         data: {
             labels: [],
@@ -887,11 +887,11 @@ function loadWeeklyData() {
             charts.people.data.datasets[0].data = data.map(d => d.people_count || 0);
             charts.people.update();
 
-            // Update environmental chart
-            charts.environmental.data.labels = labels;
-            charts.environmental.data.datasets[0].data = data.map(d => d.sound_db || 0);
-            charts.environmental.data.datasets[1].data = data.map(d => d.air_aqi || 0);
-            charts.environmental.update();
+            // Update facility chart
+            charts.facility.data.labels = labels;
+            charts.facility.data.datasets[0].data = data.map(d => d.sound_db || 0);
+            charts.facility.data.datasets[1].data = data.map(d => d.air_aqi || 0);
+            charts.facility.update();
 
             // Update air quality chart
             charts.airQuality.data.labels = labels;
@@ -1036,7 +1036,7 @@ function downloadPDF() {
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `weekly_environmental_report_${new Date().toISOString().slice(0,10)}.pdf`;
+            a.download = `weekly_scope_report_${new Date().toISOString().slice(0,10)}.pdf`;
             document.body.appendChild(a);
             a.click();
             window.URL.revokeObjectURL(url);
