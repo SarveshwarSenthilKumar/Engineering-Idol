@@ -2732,7 +2732,7 @@ def api_components():
     components = get_average_threat_components(hours)
     return jsonify(components)
 
-@app.route("/api/test-notification", methods=['POST'])
+@app.route("/api/test-notification", methods=["POST"])
 def api_test_notification():
     """Test notification channels (fake data mode only)"""
     # Only allow in fake data mode
@@ -2744,27 +2744,147 @@ def api_test_notification():
         data = request.get_json()
         channel = data.get('channel', 'all')
         message = data.get('message', 'Test notification from SCOPE')
+        use_ai_summary = data.get('use_ai_summary', False)
         
         # Import fake data generator
         from fake_data_generator import FakeDataGenerator
         generator = FakeDataGenerator()
         
+        # Generate AI summary if requested
+        ai_summary = None
+        if use_ai_summary:
+            ai_summary = generate_test_ai_summary()
+        
         if channel == 'all':
-            results = generator.send_test_notifications(message)
+            results = generator.send_test_notifications(message, ai_summary)
         elif channel == 'email':
-            results = {'email': generator.send_test_email(message)}
+            results = {'email': generator.send_test_email(message, ai_summary)}
         elif channel == 'teams':
-            results = {'teams': generator.send_test_teams(message)}
+            results = {'teams': generator.send_test_teams(message, ai_summary)}
         elif channel == 'sms':
-            results = {'sms': generator.send_test_sms(message)}
+            results = {'sms': generator.send_test_sms(message, ai_summary)}
         else:
             return jsonify({'success': False, 'error': f'Unknown channel: {channel}'})
         
-        return jsonify({'success': True, 'results': results})
+        return jsonify({'success': True, 'results': results, 'ai_summary': ai_summary})
         
     except Exception as e:
         app.logger.error(f"Error testing notifications: {e}")
         return jsonify({'success': False, 'error': str(e)})
+
+def generate_test_ai_summary():
+    """Generate AI-powered summary for test notifications based on current fake data"""
+    try:
+        # Get current fake data for real-time analysis
+        current_data = get_cached_fake_data()
+
+        # Get recent statistics for AI summary
+        stats = get_threat_statistics(hours=1)  # Last hour of fake data
+        events = get_recent_events(limit=10)  # Last 10 events
+
+        if not stats or not events:
+            return "No recent data available for analysis."
+
+        # Extract current threat score from fake data with safe defaults
+        current_threat = current_data.get('threat', {}).get('overall_threat', 0) or 0
+        people_count = current_data.get('people_count', 0) or 0
+        sound_level = current_data.get('sound', {}).get('db', 0) or 0
+        air_quality = current_data.get('odor', {}).get('air_quality_index', 0) or 0
+
+        # Generate AI summary similar to the main report but shorter
+        avg_threat = stats.get('avg_threat', 0) or 0
+        max_threat = stats.get('max_threat', 0) or 0
+        total_events = stats.get('total_events', 0) or 0
+        critical_count = stats.get('critical_count', 0) or 0
+        high_count = stats.get('high_count', 0) or 0
+
+        # Determine threat level and recommendations based on CURRENT threat score
+        if current_threat >= 85:
+            threat_level = "CRITICAL"
+            urgency = "🚨 IMMEDIATE ACTION REQUIRED"
+            threat_emoji = "🔴"
+            recommendations = "• Evacuate area immediately if safe\n• Contact emergency services now\n• Implement full lockdown procedures\n• Alert all personnel via all channels"
+            analysis = "Extreme threat detected with multiple risk factors active"
+        elif current_threat >= 65:
+            threat_level = "HIGH"
+            urgency = "⚡ URGENT ATTENTION NEEDED"
+            threat_emoji = "🟠"
+            recommendations = "• Increase security patrols immediately\n• Review live surveillance footage\n• Prepare contingency plans\n• Alert management and security team"
+            analysis = "High threat situation requiring immediate intervention"
+        elif current_threat >= 45:
+            threat_level = "ELEVATED"
+            urgency = "⚠️ ENHANCED MONITORING"
+            threat_emoji = "🟡"
+            recommendations = "• Increase monitoring frequency\n• Verify all access points are secured\n• Alert security personnel to stand by\n• Document all activities"
+            analysis = "Elevated risk factors detected - close monitoring required"
+        elif current_threat >= 25:
+            threat_level = "MODERATE"
+            urgency = "📊 INCREASED AWARENESS"
+            threat_emoji = "🔵"
+            recommendations = "• Continue routine monitoring with increased attention\n• Verify sensor calibration\n• Prepare response protocols\n• Maintain standard security posture"
+            analysis = "Moderate threat levels - normal monitoring with increased awareness"
+        else:
+            threat_level = "LOW"
+            urgency = "✅ NORMAL OPERATIONS"
+            threat_emoji = "🟢"
+            recommendations = "• Continue standard monitoring procedures\n• Maintain regular patrols\n• Document any anomalies\n• System operating within normal parameters"
+            analysis = "All systems operating within safe parameters"
+
+        # Add environmental context
+        environmental_status = []
+        if sound_level > 80:
+            environmental_status.append(f"🔊 Sound spike: {sound_level}dB")
+        if air_quality > 150:
+            environmental_status.append(f"💨 Poor air quality: AQI {air_quality}")
+        if people_count > 4:
+            environmental_status.append(f"👥 High occupancy: {people_count} people")
+        
+        env_context = "\nEnvironmental Factors:\n" + "\n".join(f"• {status}" for status in environmental_status) if environmental_status else ""
+        
+        # Get recent event patterns
+        recent_events_text = ""
+        if events:
+            recent_events_text = "\n📋 Recent Activity:\n"
+            for i, event in enumerate(events[:3], 1):
+                timestamp = event.get('timestamp', 'Unknown')
+                threat_score = event.get('threat_score', 0) or 0
+                description = event.get('description', 'No description')
+                recent_events_text += f"  {i}. {timestamp[-8:]} - Threat: {threat_score}/100 - {description}\n"
+        
+        summary = f"""
+{threat_emoji} SCOPE THREAT ANALYSIS PING {threat_emoji}
+
+🕐 Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+📡 Current Status: LIVE FAKE DATA MODE
+🎯 Analysis: Real-time threat assessment ping
+
+📊 CURRENT THREAT ASSESSMENT:
+• Threat Level: {threat_level} ({current_threat:.1f}/100)
+• People Detected: {people_count}
+• Sound Level: {sound_level} dB
+• Air Quality: AQI {air_quality}
+• 1-Hour Average: {avg_threat:.1f}/100
+• Peak Threat: {max_threat:.1f}/100
+
+⚡ URGENCY: {urgency}
+
+🧠 Analysis: {analysis}
+
+🎯 IMMEDIATE ACTIONS:
+{recommendations}
+{env_context}
+{recent_events_text}
+
+---
+🤖 This analysis was generated by SCOPE system based on current threat assessment.
+📱 For detailed reports and live monitoring, check the SCOPE dashboard.
+                """.strip()
+
+        return summary
+
+    except Exception as e:
+        app.logger.error(f"Error generating AI summary: {e}")
+        return f"Analysis Error: {str(e)}"
 
 @app.route("/api/events/stream")
 def events_stream():

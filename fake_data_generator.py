@@ -697,7 +697,7 @@ class FakeDataGenerator:
         self.conn.commit()
         print(f"✅ Generated {count} events successfully!")
         
-    def send_test_email(self, message="Test notification from fake data generator"):
+    def send_test_email(self, message="Test notification from fake data generator", ai_summary=None):
         """Send test email notification"""
         try:
             smtp_server = os.getenv('GMAIL_SMTP_SERVER', 'smtp.gmail.com')
@@ -713,16 +713,21 @@ class FakeDataGenerator:
             msg = MimeMultipart()
             msg['From'] = sender_email
             msg['To'] = recipient_email
-            msg['Subject'] = '🧪 TEST: Fake Data Generator Notification'
+            msg['Subject'] = '🧪 TEST: SCOPE AI Notification' if ai_summary else '🧪 TEST: Fake Data Generator Notification'
             
+            # Build message body
             body = f"""
 🕐 Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-📊 System: Fake Data Generator
+📊 System: SCOPE AI Test Notification
 
 {message}
 
+{'---' if ai_summary else ''}
+
+{ai_summary if ai_summary else ''}
+
 ---
-This is a test message from the SCOPE System Fake Data Generator.
+This is a test message from the SCOPE System.
             """
             msg.attach(MimeText(body, 'plain'))
             
@@ -739,37 +744,45 @@ This is a test message from the SCOPE System Fake Data Generator.
             print(f"❌ Failed to send test email: {e}")
             return False
     
-    def send_test_teams(self, message="Test notification from fake data generator"):
+    def send_test_teams(self, message="Test notification from fake data generator", ai_summary=None):
         """Send test Teams notification"""
         try:
             webhook_url = os.getenv('TEAMS_WEBHOOK_URL')
-            if not webhook_url or webhook_url == 'https://your-tenant.webhook.office.com/webhookb3/...':
-                print("⚠️ Teams webhook not configured")
+            
+            if not webhook_url:
+                print("⚠️ Teams webhook URL not configured")
                 return False
             
-            payload = {
+            # Prepare Teams message with adaptive card format
+            teams_message = {
                 "@type": "MessageCard",
                 "@context": "http://schema.org/extensions",
-                "themeColor": "0078D4",
-                "summary": "🧪 TEST: Fake Data Generator",
+                "themeColor": "FF0000" if ai_summary else "0078D4",
+                "summary": "🧪 AI SCOPE TEST" if ai_summary else "🧪 SCOPE Test",
                 "sections": [{
-                    "activityTitle": "🧪 TEST NOTIFICATION",
+                    "activityTitle": "🧪 AI SCOPE TEST" if ai_summary else "🧪 SCOPE Test Notification",
                     "activitySubtitle": f"🕐 {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
                     "facts": [{
-                        "name": "System",
-                        "value": "Fake Data Generator"
-                    }, {
-                        "name": "Purpose",
-                        "value": "Test Notification"
+                        "name": "Message",
+                        "value": message
                     }],
-                    "text": message
+                    "markdown": True
                 }]
             }
             
-            response = requests.post(webhook_url, 
-                                    json=payload, 
-                                    headers={'Content-Type': 'application/json'},
-                                    timeout=10)
+            # Add AI summary if provided
+            if ai_summary:
+                # Format AI summary for Teams (truncate if too long)
+                formatted_summary = ai_summary[:800] + "..." if len(ai_summary) > 800 else ai_summary
+                formatted_summary = formatted_summary.replace('\n', '  \n')  # Markdown line breaks
+                
+                teams_message["sections"][0]["facts"].append({
+                    "name": "🤖 AI Analysis",
+                    "value": formatted_summary
+                })
+            
+            # Send to Teams
+            response = requests.post(webhook_url, json=teams_message, timeout=10)
             
             if response.status_code == 200:
                 print("✅ Test Teams message sent successfully")
@@ -782,7 +795,7 @@ This is a test message from the SCOPE System Fake Data Generator.
             print(f"❌ Failed to send test Teams message: {e}")
             return False
     
-    def send_test_sms(self, message="Test notification from fake data generator"):
+    def send_test_sms(self, message="Test notification from fake data generator", ai_summary=None):
         """Send test SMS notification"""
         try:
             account_sid = os.getenv('TWILIO_ACCOUNT_SID')
@@ -799,12 +812,15 @@ This is a test message from the SCOPE System Fake Data Generator.
                 client = Client(account_sid, auth_token)
                 
                 # Add test prefix and truncate if needed
-                message = "🧪 TEST: " + message
-                if len(message) > 160:
-                    message = message[:157] + "..."
+                full_message = "🧪 AI SCOPE TEST: " + message if ai_summary else "🧪 TEST: " + message
+                if ai_summary:
+                    full_message += f" AI: {ai_summary[:100]}{'...' if len(ai_summary) > 100 else ''}"
+                
+                if len(full_message) > 160:
+                    full_message = full_message[:157] + "..."
                 
                 message_obj = client.messages.create(
-                    body=message,
+                    body=full_message,
                     from_=from_number,
                     to=to_number
                 )
@@ -820,7 +836,7 @@ This is a test message from the SCOPE System Fake Data Generator.
             print(f"❌ Failed to send test SMS: {e}")
             return False
     
-    def send_test_notifications(self, message="Test notification from fake data generator"):
+    def send_test_notifications(self, message="Test notification from fake data generator", ai_summary=None):
         """Send test notifications to all configured channels"""
         print("🧪 Sending test notifications...")
         

@@ -130,14 +130,89 @@
 <div class="row mt-4">
     <div class="col-12">
         <div class="settings-card">
+            <h5>🚨 SCOPE Threat Ping System (Fake Data Mode)</h5>
+            <p class="text-muted">Send comprehensive threat analysis ping to all notification channels. The summary will automatically adapt based on current threat levels.</p>
+            
+            <!-- Current Threat Status Display -->
+            <div class="alert alert-info mb-3">
+                <h6>📊 Current System Status:</h6>
+                <div id="current-threat-status" class="small">
+                    <div class="spinner-border spinner-border-sm me-2"></div>
+                    Loading current threat data...
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="mb-3">
+                        <label class="form-label">Custom Message (Optional)</label>
+                        <textarea class="form-control" id="ping-message" rows="2" placeholder="Enter custom message or leave blank for default...">SCOPE Threat Analysis Ping</textarea>
+                        <small class="text-muted">Summary will be automatically generated based on current threat levels</small>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="ping-use-ai" checked>
+                            <label class="form-check-label" for="ping-use-ai">
+                                <strong>🤖 Include Summary</strong>
+                                <small class="text-muted d-block">Generate comprehensive threat analysis that adapts to current threat score</small>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Send Threat Ping</label>
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-danger btn-lg" onclick="sendAIPing('all')" id="ai-ping-btn">
+                            <i class="bi bi-broadcast"></i> 🚨 Send Threat Ping
+                        </button>
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-outline-primary" onclick="sendAIPing('email')">
+                                <i class="bi bi-envelope"></i>
+                            </button>
+                            <button class="btn btn-outline-info" onclick="sendAIPing('teams')">
+                                <i class="bi bi-people"></i>
+                            </button>
+                            <button class="btn btn-outline-success" onclick="sendAIPing('sms')">
+                                <i class="bi bi-phone"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="ping-results" class="mt-3" style="display: none;">
+                <div class="alert">
+                    <h6>🚨 Threat Ping Results:</h6>
+                    <div id="ping-results-content"></div>
+                </div>
+            </div>
+            
+            <div id="ping-ai-preview" class="mt-3" style="display: none;">
+                <div class="alert alert-warning">
+                    <h6>🤖 Summary Preview:</h6>
+                    <div id="ping-ai-summary-content" class="small" style="max-height: 300px; overflow-y: auto;"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="settings-card">
             <h5>Notification Testing (Fake Data Mode)</h5>
-            <p class="text-muted">Test notification channels when in fake data mode. Configure credentials in .env file.</p>
+            <p class="text-muted">Test individual notification channels without AI analysis.</p>
             
             <div class="row">
                 <div class="col-md-8">
                     <div class="mb-3">
                         <label class="form-label">Test Message</label>
                         <textarea class="form-control" id="test-message" rows="3" placeholder="Enter custom test message...">Test notification from SCOPE</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="use-ai-summary">
+                            <label class="form-check-label" for="use-ai-summary">
+                                <strong>🤖 Generate AI Summary</strong>
+                                <small class="text-muted d-block">Include AI-powered threat analysis with recommendations</small>
+                            </label>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-4">
@@ -163,6 +238,13 @@
                 <div class="alert alert-info">
                     <h6>Test Results:</h6>
                     <div id="results-content"></div>
+                </div>
+            </div>
+            
+            <div id="ai-summary-preview" class="mt-3" style="display: none;">
+                <div class="alert alert-warning">
+                    <h6>🤖 AI Summary Preview:</h6>
+                    <div id="ai-summary-content" class="small"></div>
                 </div>
             </div>
         </div>
@@ -196,8 +278,159 @@
     document.addEventListener('DOMContentLoaded', function() {
         loadSystemStatus();
         loadCurrentSettings();
+        loadCurrentThreatStatus();
         setInterval(loadSystemStatus, 30000);
+        setInterval(loadCurrentThreatStatus, 5000); // Update threat status every 5 seconds
     });
+
+    function loadCurrentThreatStatus() {
+        // Get current live data to show threat status
+        fetch('/api/live')
+            .then(response => response.json())
+            .then(data => {
+                const threatDiv = document.getElementById('current-threat-status');
+                if (data && data.threat) {
+                    const threat = data.threat.overall_threat || 0;
+                    const people = data.people_count || 0;
+                    const sound = data.sound ? data.sound.db : 0;
+                    const aqi = data.odor ? data.odor.air_quality_index : 0;
+                    
+                    let threatLevel = 'LOW';
+                    let threatEmoji = '🟢';
+                    let threatColor = 'text-success';
+                    
+                    if (threat >= 85) {
+                        threatLevel = 'CRITICAL';
+                        threatEmoji = '🔴';
+                        threatColor = 'text-danger';
+                    } else if (threat >= 65) {
+                        threatLevel = 'HIGH';
+                        threatEmoji = '🟠';
+                        threatColor = 'text-warning';
+                    } else if (threat >= 45) {
+                        threatLevel = 'ELEVATED';
+                        threatEmoji = '🟡';
+                        threatColor = 'text-warning';
+                    } else if (threat >= 25) {
+                        threatLevel = 'MODERATE';
+                        threatEmoji = '🔵';
+                        threatColor = 'text-info';
+                    }
+                    
+                    threatDiv.innerHTML = `
+                        <div class="row">
+                            <div class="col-md-3">
+                                <strong>Threat Level:</strong> 
+                                <span class="${threatColor}">${threatEmoji} ${threatLevel} (${threat.toFixed(1)}/100)</span>
+                            </div>
+                            <div class="col-md-3">
+                                <strong>People:</strong> ${people}
+                            </div>
+                            <div class="col-md-3">
+                                <strong>Sound:</strong> ${sound} dB
+                            </div>
+                            <div class="col-md-3">
+                                <strong>Air Quality:</strong> AQI ${aqi}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    threatDiv.innerHTML = '<div class="text-muted">No current threat data available</div>';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading threat status:', error);
+                document.getElementById('current-threat-status').innerHTML = '<div class="text-muted">Error loading threat data</div>';
+            });
+    }
+
+    function sendAIPing(channel) {
+        const message = document.getElementById('ping-message').value || 'SCOPE Threat Analysis Ping';
+        const useAISummary = document.getElementById('ping-use-ai').checked;
+        const resultsDiv = document.getElementById('ping-results');
+        const resultsContent = document.getElementById('ping-results-content');
+        const aiPreviewDiv = document.getElementById('ping-ai-preview');
+        const aiSummaryContent = document.getElementById('ping-ai-summary-content');
+        const pingBtn = document.getElementById('ai-ping-btn');
+        
+        // Show/hide preview section
+        if (useAISummary) {
+            aiPreviewDiv.style.display = 'block';
+        } else {
+            aiPreviewDiv.style.display = 'none';
+        }
+        
+        // Show loading state with message preview
+        resultsDiv.style.display = 'block';
+        resultsContent.innerHTML = `
+            <div class="spinner-border spinner-border-sm me-2"></div> Sending Threat Ping...
+            <div class="mt-2 small text-muted">
+                <strong>Message:</strong> "${message}"
+                ${useAISummary ? '<br><strong>Summary:</strong> Will be generated based on current threat data' : ''}
+            </div>
+        `;
+        
+        // Disable button and show loading
+        if (pingBtn) {
+            pingBtn.disabled = true;
+            pingBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Sending...';
+        }
+        
+        // Prepare request data
+        const requestData = {
+            channel: channel,
+            message: message,
+            use_ai_summary: useAISummary
+        };
+        
+        // Send request to test notification endpoint
+        fetch('/api/test-notification', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+            },
+            body: JSON.stringify(requestData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                let resultsHtml = '<div class="alert alert-success"><h6>🚨 Threat Ping Results:</h6>';
+                
+                // Show full message that was sent
+                resultsHtml += `<div class="mb-2"><strong>Message Sent:</strong> "${message}"</div>`;
+                
+                // Show results for each channel
+                for (const [channelName, result] of Object.entries(data.results)) {
+                    const status = result ? '✅ Sent' : '❌ Failed';
+                    const statusClass = result ? 'text-success' : 'text-danger';
+                    resultsHtml += `<div class="mb-2"><strong>${channelName.toUpperCase()}:</strong> <span class="${statusClass}">${status}</span></div>`;
+                }
+                
+                resultsHtml += '</div>';
+                resultsContent.innerHTML = resultsHtml;
+                
+                // Show full summary if generated
+                if (data.ai_summary) {
+                    aiSummaryContent.innerHTML = `<pre style="white-space: pre-wrap; font-size: 0.9em;">${data.ai_summary}</pre>`;
+                }
+            } else {
+                resultsContent.innerHTML = `<div class="alert alert-danger"><h6>❌ Threat Ping Failed:</h6><p>${data.error}</p></div>`;
+            }
+        })
+        .catch(error => {
+            console.error('Error sending threat ping:', error);
+            resultsContent.innerHTML = `<div class="alert alert-danger"><h6>❌ Threat Ping Failed:</h6><p>Error: ${error.message || 'Unknown error'}</p></div>`;
+        })
+        .finally(() => {
+            // Restore button state
+            if (pingBtn) {
+                pingBtn.disabled = false;
+                pingBtn.innerHTML = '<i class="bi bi-broadcast"></i> 🚨 Send Threat Ping';
+            }
+            resultsDiv.style.display = 'block';
+        });
+    }
 
     function loadCurrentSettings() {
         // Load current refresh rate from session or API
@@ -403,48 +636,69 @@
 
     function sendTestNotification(channel) {
         const message = document.getElementById('test-message').value || 'Test notification from SCOPE';
+        const useAISummary = document.getElementById('use-ai-summary').checked;
         const resultsDiv = document.getElementById('notification-results');
         const resultsContent = document.getElementById('results-content');
+        const aiPreviewDiv = document.getElementById('ai-summary-preview');
+        const aiSummaryContent = document.getElementById('ai-summary-content');
+        
+        // Show/hide AI preview section
+        if (useAISummary) {
+            aiPreviewDiv.style.display = 'block';
+        } else {
+            aiPreviewDiv.style.display = 'none';
+        }
         
         // Show loading state
         resultsDiv.style.display = 'block';
         resultsContent.innerHTML = '<div class="spinner-border spinner-border-sm me-2"></div> Sending test notification...';
+        
+        // Prepare request data
+        const requestData = {
+            channel: channel,
+            message: message,
+            use_ai_summary: useAISummary
+        };
         
         // Send request to test notification endpoint
         fetch('/api/test-notification', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
             },
-            body: JSON.stringify({
-                channel: channel,
-                message: message
-            })
+            body: JSON.stringify(requestData)
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                let resultsHtml = '';
-                if (data.results) {
-                    for (const [channelName, result] of Object.entries(data.results)) {
-                        const status = result ? '✅' : '❌';
-                        const statusText = result ? 'Sent' : 'Failed';
-                        resultsHtml += `<div>${status} ${channelName.charAt(0).toUpperCase() + channelName.slice(1)}: ${statusText}</div>`;
-                    }
-                }
-                resultsContent.innerHTML = resultsHtml || '✅ Test notification sent successfully!';
+                let resultsHtml = '<div class="alert alert-success"><h6>✅ Test Results:</h6>';
                 
-                // Update alert type based on results
-                resultsDiv.querySelector('.alert').className = 'alert alert-success';
+                // Show results for each channel
+                for (const [channelName, result] of Object.entries(data.results)) {
+                    const status = result ? '✅ Sent' : '❌ Failed';
+                    const statusClass = result ? 'text-success' : 'text-danger';
+                    resultsHtml += `<div class="mb-2"><strong>${channelName.toUpperCase()}:</strong> <span class="${statusClass}">${status}</span></div>`;
+                }
+                
+                resultsHtml += '</div>';
+                resultsContent.innerHTML = resultsHtml;
+                
+                // Show AI summary if generated
+                if (data.ai_summary) {
+                    aiSummaryContent.innerHTML = `<pre style="white-space: pre-wrap; font-size: 0.9em;">${data.ai_summary}</pre>`;
+                }
             } else {
-                resultsContent.innerHTML = `❌ Error: ${data.error}`;
-                resultsDiv.querySelector('.alert').className = 'alert alert-danger';
+                resultsContent.innerHTML = `<div class="alert alert-danger"><h6>❌ Test Failed:</h6><p>${data.error}</p></div>`;
             }
         })
         .catch(error => {
-            console.error('Error:', error);
-            resultsContent.innerHTML = '❌ Failed to send test notification';
-            resultsDiv.querySelector('.alert').className = 'alert alert-danger';
+            console.error('Error testing notifications:', error);
+            resultsContent.innerHTML = `<div class="alert alert-danger"><h6>❌ Test Failed:</h6><p>Error: ${error.message || 'Unknown error'}</p></div>`;
+        })
+        .finally(() => {
+            // Hide loading state
+            resultsDiv.style.display = 'block';
         });
     }
 </script>

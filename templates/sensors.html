@@ -480,6 +480,76 @@
         transform: translateX(26px);
     }
     
+    /* AI Ping Card Styling */
+    .ai-ping-card-container {
+        min-width: 280px;
+    }
+    
+    .ai-ping-card {
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%) !important;
+        border: 1px solid #34495e !important;
+        box-shadow: 0 4px 20px rgba(52, 73, 94, 0.3) !important;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .ai-ping-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #e74c3c, #f39c12, #e74c3c);
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+    
+    .ai-ping-card .btn-light {
+        background: rgba(255, 255, 255, 0.95) !important;
+        color: #2c3e50 !important;
+        border: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .ai-ping-card .btn-light:hover {
+        background: #ffffff !important;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .ai-ping-card .btn-outline-light {
+        border-color: rgba(255, 255, 255, 0.6) !important;
+        color: rgba(255, 255, 255, 0.9) !important;
+        transition: all 0.3s ease;
+    }
+    
+    .ai-ping-card .btn-outline-light:hover {
+        background: rgba(255, 255, 255, 0.1) !important;
+        border-color: rgba(255, 255, 255, 0.9) !important;
+        color: #ffffff !important;
+    }
+    
+    .ai-ping-card .alert-light {
+        background: rgba(255, 255, 255, 0.95) !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        color: #2c3e50 !important;
+    }
+    
+    /* Demo toggle styling */
+    .form-check-input:checked {
+        background-color: #27ae60;
+        border-color: #27ae60;
+    }
+    
+    .form-check-input:disabled {
+        opacity: 0.7;
+    }
     
     /* Data log */
     .data-log {
@@ -499,12 +569,56 @@
 
     <!-- Header -->
     <div class="professional-header">
-        <h1 class="display-5">
-            <i class="bi bi-cpu"></i> Facility Sensors
-        </h1>
-        <p class="text-muted">
-            Real-time SCOPE Monitoring System
-        </p>
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <h1 class="display-5">
+                    <i class="bi bi-cpu"></i> Facility Sensors
+                </h1>
+                <p class="text-muted">
+                    Real-time SCOPE Monitoring System
+                </p>
+            </div>
+            {% if fake_mode %}
+            <div class="text-end ai-ping-card-container">
+                <!-- AI Ping Button -->
+                <div class="sensor-card p-3 ai-ping-card">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="mb-0 text-white">
+                            <i class="bi bi-broadcast"></i> Threat Ping
+                        </h6>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="demoDataToggle" checked disabled>
+                            <label class="form-check-label text-white-50 small" for="demoDataToggle">DEMO DATA: ON</label>
+                        </div>
+                    </div>
+                    <p class="small mb-3" style="color: rgba(255,255,255,0.9);">
+                        Send comprehensive AI analysis to all notification channels
+                    </p>
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-light btn-lg" onclick="sendSensorAIPing('all')" id="sensor-ping-btn">
+                            <i class="bi bi-send"></i> 🚨 Send Threat Ping
+                        </button>
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-outline-light" onclick="sendSensorAIPing('email')" title="Email">
+                                <i class="bi bi-envelope"></i>
+                            </button>
+                            <button class="btn btn-outline-light" onclick="sendSensorAIPing('teams')" title="Teams">
+                                <i class="bi bi-people"></i>
+                            </button>
+                            <button class="btn btn-outline-light" onclick="sendSensorAIPing('sms')" title="SMS">
+                                <i class="bi bi-phone"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="sensor-ping-results" class="mt-2" style="display: none;">
+                        <div class="alert alert-light py-2 mb-0">
+                            <div id="sensor-ping-results-content" class="small"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
     </div>
 
     <!-- Quick Stats Row -->
@@ -1381,6 +1495,85 @@
         const statusIndicators = document.querySelectorAll('.status-indicator');
         statusIndicators.forEach(el => {
             el.className = 'status-indicator gray';
+        });
+    }
+
+    // AI Ping functionality for sensors page
+    function sendSensorAIPing(channel) {
+        const message = 'SCOPE Threat Analysis Ping from Sensor Dashboard';
+        const resultsDiv = document.getElementById('sensor-ping-results');
+        const resultsContent = document.getElementById('sensor-ping-results-content');
+        const pingBtn = document.getElementById('sensor-ping-btn');
+        
+        // Show loading state with message preview
+        resultsDiv.style.display = 'block';
+        resultsContent.innerHTML = `
+            <div class="spinner-border spinner-border-sm me-2"></div> Sending Threat Ping...
+            <div class="mt-1 small text-muted">
+                <strong>Message:</strong> "${message}"
+                <br><strong>Summary:</strong> Will be generated based on current threat data
+            </div>
+        `;
+        
+        // Disable button and show loading
+        if (pingBtn) {
+            pingBtn.disabled = true;
+            pingBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Sending...';
+        }
+        
+        // Prepare request data
+        const requestData = {
+            channel: channel,
+            message: message,
+            use_ai_summary: true  // Always use summary on sensor page
+        };
+        
+        // Send request to test notification endpoint
+        fetch('/api/test-notification', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+            },
+            body: JSON.stringify(requestData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                let resultsHtml = '<div class="text-success"><h6>🚨 Threat Ping Results:</h6>';
+                
+                // Show full message that was sent
+                resultsHtml += `<div class="mb-1"><strong>Message Sent:</strong> "${message}"</div>`;
+                
+                // Show results for each channel
+                for (const [channelName, result] of Object.entries(data.results)) {
+                    const status = result ? '✅ Sent' : '❌ Failed';
+                    const statusClass = result ? 'text-success' : 'text-danger';
+                    resultsHtml += `<div class="mb-1"><strong>${channelName.toUpperCase()}:</strong> <span class="${statusClass}">${status}</span></div>`;
+                }
+                
+                resultsHtml += '</div>';
+                resultsContent.innerHTML = resultsHtml;
+                
+                // Show full summary preview
+                if (data.ai_summary) {
+                    resultsContent.innerHTML += `<div class="mt-2 small text-muted"><strong>Full Analysis:</strong><br><pre style="white-space: pre-wrap; font-size: 0.8em;">${data.ai_summary}</pre></div>`;
+                }
+            } else {
+                resultsContent.innerHTML = `<div class="text-danger"><h6>❌ Threat Ping Failed:</h6><p>${data.error}</p></div>`;
+            }
+        })
+        .catch(error => {
+            console.error('Error sending threat ping:', error);
+            resultsContent.innerHTML = `<div class="text-danger"><h6>❌ Threat Ping Failed:</h6><p>Error: ${error.message || 'Unknown error'}</p></div>`;
+        })
+        .finally(() => {
+            // Restore button state
+            if (pingBtn) {
+                pingBtn.disabled = false;
+                pingBtn.innerHTML = '<i class="bi bi-send"></i> 🚨 Send Threat Ping';
+            }
+            resultsDiv.style.display = 'block';
         });
     }
 </script>
