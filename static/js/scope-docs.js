@@ -942,8 +942,17 @@ window.ScopeDocs = {
     toggleFullscreen,
     downloadPDF,
     shareDocumentation,
-    openWebApp
+    openWebApp,
+    openGitHub
 };
+
+/**
+ * Open GitHub Repository
+ */
+function openGitHub() {
+    window.open('https://github.com/SarveshwarSenthilKumar/Engineering-Idol', '_blank');
+    showNotification('Opening GitHub repository...', 'info', 2000);
+}
 
 /**
  * Print Documentation
