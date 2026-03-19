@@ -2,4 +2,3 @@ flask_session
 __pycache__
 .venv
 .env
-events.db
