@@ -1,0 +1,2052 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SCOPE System - Comprehensive Documentation</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+    <link href="scope-docs.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation Header -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top shadow-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="#overview">
+                <i class="bi bi-shield-check me-2"></i>SCOPE System
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item"><a class="nav-link" href="#overview">Overview</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#architecture">Architecture</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#hardware">Hardware</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#software">Software</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#features">Features</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#api">API</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#security">Security</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#deployment">Deployment</a></li>
+                </ul>
+                <!-- Quick Actions -->
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-light btn-sm" onclick="toggleTheme()" title="Toggle Dark Mode">
+                        <i class="bi bi-moon"></i>
+                    </button>
+                    <button class="btn btn-outline-light btn-sm" onclick="printDocumentation()" title="Print Documentation">
+                        <i class="bi bi-printer"></i>
+                    </button>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="searchInput" placeholder="Search documentation...">
+                        <button class="btn btn-outline-light" type="button">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section bg-gradient text-white py-5">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <h1 class="display-4 fw-bold mb-3">SCOPE System</h1>
+                    <p class="lead mb-4">System for Comprehensive Observation and Protection of Environments</p>
+                    <p class="fs-6 mb-4">Advanced environmental monitoring and threat detection system designed for educational facilities and similar environments. Integrates multiple sensors with AI-powered analytics to provide real-time monitoring, threat assessment, and automated reporting capabilities.</p>
+                    <div class="d-flex gap-3 flex-wrap">
+                        <a href="#overview" class="btn btn-light btn-lg">Get Started</a>
+                        <a href="#features" class="btn btn-outline-light btn-lg">View Features</a>
+                        <button class="btn btn-outline-light btn-lg" onclick="showQuickGuide()">
+                            <i class="bi bi-question-circle me-2"></i>Quick Guide
+                        </button>
+                        <a href="http://localhost:5000" target="_blank" class="btn btn-success btn-lg" onclick="openWebApp()">
+                            <i class="bi bi-box-arrow-up-right me-2"></i>Launch SCOPE App
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="text-center">
+                        <i class="bi bi-shield-check display-1"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Quick Stats -->
+    <section class="py-4 bg-light">
+        <div class="container">
+            <div class="row text-center">
+                <div class="col-md-3 col-6 mb-3">
+                    <div class="stat-card">
+                        <h3 class="text-primary">3,699+</h3>
+                        <p class="mb-0">Lines of Production Code</p>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6 mb-3">
+                    <div class="stat-card">
+                        <h3 class="text-success">70+</h3>
+                        <p class="mb-0">Database Fields</p>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6 mb-3">
+                    <div class="stat-card">
+                        <h3 class="text-warning">4</h3>
+                        <p class="mb-0">Environment Support</p>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6 mb-3">
+                    <div class="stat-card">
+                        <h3 class="text-danger">Real-time</h3>
+                        <p class="mb-0">Monitoring & Alerts</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Web App CTA -->
+            <div class="row mt-4">
+                <div class="col-12 text-center">
+                    <div class="alert alert-success d-inline-block">
+                        <h5 class="alert-heading"> Ready to Experience SCOPE?</h5>
+                        <p class="mb-3">Launch the live SCOPE web application to see the system in action with real-time monitoring, interactive dashboards, and AI-powered analytics.</p>
+                        <a href="http://localhost:5000" target="_blank" class="btn btn-success btn-lg" onclick="openWebApp()">
+                            <i class="bi bi-box-arrow-up-right me-2"></i>Launch SCOPE Application
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <main class="container-fluid">
+        <div class="row">
+            <!-- Sidebar Navigation -->
+            <nav class="col-lg-2 col-md-3 sidebar">
+                <div class="sidebar-sticky">
+                    <h6 class="sidebar-heading">Quick Navigation</h6>
+                    <ul class="nav flex-column">
+                        <li class="nav-item"><a class="nav-link" href="#overview">System Overview</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#architecture">Core Architecture</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#hardware">Hardware Components</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#software">Software Components</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#web-app">Web Application</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#database">Database Schema</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#api">API Endpoints</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#security">Security & Auth</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#monitoring">Real-time Monitoring</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#analytics">Analytics & Reporting</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#notifications">Notifications</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#environments">Multi-Environment</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#scenarios">Scenario Simulation</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#users">User Management</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#data">Data Management</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#config">Configuration</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#deployment">Deployment</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#integration">Integration</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#performance">Performance</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#advanced">Advanced Features</a></li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Content Area -->
+            <div class="col-lg-10 col-md-9 main-content">
+                <!-- System Overview -->
+                <section id="overview" class="content-section">
+                    <h2 class="section-title">System Overview</h2>
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h3 class="h4">Project Name: SCOPE (System for Comprehensive Observation and Protection of Environments)</h3>
+                            <p>SCOPE is an advanced environmental monitoring and threat detection system designed for educational facilities and similar environments. It integrates multiple sensors with AI-powered analytics to provide real-time monitoring, threat assessment, and automated reporting capabilities.</p>
+                            
+                            <h4 class="h5 mt-4">Key System Characteristics</h4>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <ul class="feature-list">
+                                        <li><strong>Real-time Monitoring:</strong> Continuous surveillance using multiple sensor types</li>
+                                        <li><strong>AI-Powered Analysis:</strong> Machine learning algorithms for threat detection and pattern recognition</li>
+                                        <li><strong>Multi-Environment Support:</strong> Simultaneous monitoring of multiple areas/zones</li>
+                                        <li><strong>Web-Based Interface:</strong> Modern responsive dashboard accessible from any device</li>
+                                        <li><strong>Automated Reporting:</strong> AI-generated comprehensive reports with recommendations</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <ul class="feature-list">
+                                        <li><strong>Alert System:</strong> Multi-channel notifications for critical events</li>
+                                        <li><strong>Data Persistence:</strong> SQLite database with advanced querying capabilities</li>
+                                        <li><strong>Scenario Simulation:</strong> Training and testing capabilities through simulated scenarios</li>
+                                        <li><strong>User Management:</strong> Role-based access control with administrative features</li>
+                                        <li><strong>Integration Ready:</strong> Extensive API support for third-party system integration</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Core Architecture -->
+                <section id="architecture" class="content-section">
+                    <h2 class="section-title">Core Architecture</h2>
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h3 class="h4">System Architecture Overview</h3>
+                            <div class="architecture-diagram bg-light p-4 rounded">
+                                <pre class="text-center mb-0">┌─────────────────────────────────────────────────────────────┐
+│                    WEB APPLICATION                          │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
+│  │   Flask App  │  │   Templates  │  │   Static     │      │
+│  │   (app.py)   │  │   (HTML/JS)  │  │   (CSS/IMG)  │      │
+│  └──────────────┘  └──────────────┘  └──────────────┘      │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                    ┌─────────┴─────────┐
+                    │    API Layer     │
+                    │ (REST/SSE/JSON)   │
+                    └─────────┬─────────┘
+                              │
+┌─────────────────────────────┼─────────────────────────────┐
+│                             │                             │
+│    ┌─────────────────┐      │      ┌─────────────────┐   │
+│    │   Data Store    │◄─────┼─────►│   Live Data     │   │
+│    │  (SQLite DB)    │      │      │   (LiveDataStore)│   │
+│    └─────────────────┘      │      └─────────────────┘   │
+│                             │                             │
+│    ┌─────────────────┐      │      ┌─────────────────┐   │
+│    │   AI Engine     │◄─────┼─────►│   Sensor Hub    │   │
+│    │ (Gemini/ML)     │      │      │  (rasppi.py)    │   │
+│    └─────────────────┘      │      └─────────────────┘   │
+│                             │                             │
+│    ┌─────────────────┐      │      ┌─────────────────┐   │
+│    │   Fake Data     │◄─────┼─────►│   Hardware      │   │
+│    │  Generator      │      │      │   Interface     │   │
+│    └─────────────────┘      │      └─────────────────┘   │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                    ┌─────────┴─────────┐
+                    │  Hardware Layer  │
+                    │  (Sensors/IoT)    │
+                    └───────────────────┘</pre>
+                            </div>
+                            
+                            <h4 class="h5 mt-4">Technology Stack</h4>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <ul class="tech-list">
+                                        <li><strong>Backend:</strong> Python 3.11+, Flask 2.3.3</li>
+                                        <li><strong>Frontend:</strong> HTML5, CSS3, JavaScript, Bootstrap 5.1.3, Chart.js 3.9.1</li>
+                                        <li><strong>Database:</strong> SQLite3 with optimized indexing</li>
+                                        <li><strong>AI/ML:</strong> Google Gemini AI, scikit-learn, numpy</li>
+                                        <li><strong>Real-time:</strong> Server-Sent Events (SSE), WebSockets-ready</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <ul class="tech-list">
+                                        <li><strong>Hardware:</strong> Raspberry Pi, I2C/UART sensors, mmWave radar</li>
+                                        <li><strong>Notifications:</strong> SMTP (Gmail), Microsoft Teams Webhooks</li>
+                                        <li><strong>PDF Generation:</strong> WeasyPrint, Matplotlib</li>
+                                        <li><strong>Authentication:</strong> Flask-Session, Werkzeug security</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Hardware Components -->
+                <section id="hardware" class="content-section">
+                    <h2 class="section-title">Hardware Components</h2>
+                    
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="h5 mb-0">Primary Sensors</h3>
+                        </div>
+                        <div class="card-body">
+                            <!-- mmWave Radar -->
+                            <div class="sensor-item mb-4">
+                                <h4 class="h6 text-primary">1. mmWave Radar (Person Detection & Tracking)</h4>
+                                <p><strong>Models Supported:</strong> RD-03D, LD2410, IWR6843</p>
+                                <p><strong>Connection:</strong> USB or UART (auto-detection)</p>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h5>Capabilities:</h5>
+                                        <ul>
+                                            <li>Multi-target tracking (up to 20 simultaneous targets)</li>
+                                            <li>Distance measurement (0.5m - 8m range)</li>
+                                            <li>Velocity detection (stationary to running)</li>
+                                            <li>Activity recognition (sitting, walking, running, stationary)</li>
+                                            <li>Breathing rate monitoring (10-40 bpm)</li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h5>Advanced Features:</h5>
+                                        <ul>
+                                            <li>Abnormal breathing detection</li>
+                                            <li>Direction/orientation tracking</li>
+                                            <li>Position tracking (X/Y coordinates)</li>
+                                            <li>Confidence scoring for all measurements</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- PMS5003 Particle Sensor -->
+                            <div class="sensor-item mb-4">
+                                <h4 class="h6 text-success">2. PMS5003 Particle Sensor (Air Quality)</h4>
+                                <p><strong>Parameters Measured:</strong></p>
+                                <ul>
+                                    <li>PM1.0 concentration (0-1000 μg/m³)</li>
+                                    <li>PM2.5 concentration (0-1000 μg/m³)</li>
+                                    <li>PM10 concentration (0-1000 μg/m³)</li>
+                                </ul>
+                                <p><strong>Connection:</strong> UART (9600 baud)</p>
+                                <p><strong>Features:</strong> Built-in fan for air sampling, automatic calibration</p>
+                            </div>
+
+                            <!-- MQ135 Gas Sensor -->
+                            <div class="sensor-item mb-4">
+                                <h4 class="h6 text-warning">3. MQ135 Gas Sensor (VOC Detection)</h4>
+                                <p><strong>Target Compounds:</strong> Volatile Organic Compounds</p>
+                                <p><strong>Measurement Range:</strong> 10-1000 ppm</p>
+                                <p><strong>Connection:</strong> Analog via ADS1115 ADC</p>
+                                <p><strong>Calibration:</strong> R0 resistance calculation for clean air baseline</p>
+                            </div>
+
+                            <!-- Sound Sensor -->
+                            <div class="sensor-item mb-4">
+                                <h4 class="h6 text-info">4. Sound Sensor (Audio Analysis)</h4>
+                                <p><strong>Hardware:</strong> MAX4466 or similar electret microphone</p>
+                                <p><strong>Connection:</strong> Analog via ADS1115 ADC</p>
+                                <p><strong>Sampling Rate:</strong> 200 Hz (configurable)</p>
+                                <h5>Analysis Features:</h5>
+                                <ul>
+                                    <li>Sound pressure level (dB) measurement</li>
+                                    <li>FFT-based frequency analysis</li>
+                                    <li>Spectral energy distribution</li>
+                                    <li>Event classification (quiet, conversation, crowd, impact)</li>
+                                    <li>Spike detection for sudden noises</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Signal Processing Hardware -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="h5 mb-0">Signal Processing Hardware</h3>
+                        </div>
+                        <div class="card-body">
+                            <h4 class="h6">ADS1115 16-bit ADC</h4>
+                            <ul>
+                                <li><strong>Channels:</strong> 4 single-ended or 2 differential</li>
+                                <li><strong>Resolution:</strong> 16-bit (65,536 steps)</li>
+                                <li><strong>Connection:</strong> I2C (address 0x48)</li>
+                                <li><strong>Features:</strong> Programmable gain, high precision</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Communication Interfaces -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="h5 mb-0">Communication Interfaces</h3>
+                        </div>
+                        <div class="card-body">
+                            <ul>
+                                <li><strong>I2C Bus:</strong> For ADC and digital sensors</li>
+                                <li><strong>UART:</strong> For particle sensor and radar modules</li>
+                                <li><strong>USB:</strong> For USB radar modules and communication</li>
+                                <li><strong>GPIO:</strong> For digital I/O and sensor control</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Software Components -->
+                <section id="software" class="content-section">
+                    <h2 class="section-title">Software Components</h2>
+                    
+                    <!-- Main Application -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="h5 mb-0">1. Main Application (app.py) - 3,699 lines</h3>
+                        </div>
+                        <div class="card-body">
+                            <h4 class="h6">Core Classes and Functions</h4>
+                            
+                            <div class="code-block mb-3">
+                                <h5>LiveDataStore Class (Lines 119-376)</h5>
+                                <pre><code class="language-python">class LiveDataStore:
+    """Thread-safe storage for latest sensor readings with multi-environment support"""
+    
+    Key Features:
+    - Thread-safe data storage with locking mechanism
+    - Multi-environment data management (primary, secondary, warehouse, outdoor)
+    - Historical data tracking with configurable buffer sizes
+    - Pause/resume functionality for individual environments
+    - Event queue for significant events
+    - Automatic highest-threat environment detection
+    - Cached data management for performance</code></pre>
+                            </div>
+
+                            <h5>Key Methods:</h5>
+                            <ul>
+                                <li><code>update(data, environment_id)</code>: Updates sensor data for specific environment</li>
+                                <li><code>get_environment_data(environment_id)</code>: Retrieves data for specific environment</li>
+                                <li><code>pause_environment(environment_id)</code>: Pauses data updates for environment</li>
+                                <li><code>get_all_environments(fake_mode)</code>: Returns all environment data</li>
+                                <li><code>_update_highest_threat_environment()</code>: Auto-detects highest threat level</li>
+                            </ul>
+
+                            <h4 class="h6 mt-4">Authentication System (Lines 1672-1857)</h4>
+                            <h5>User Management Functions:</h5>
+                            <ul>
+                                <li><code>create_user()</code>: Creates new user accounts with role-based access</li>
+                                <li><code>authenticate_user()</code>: Validates credentials and returns user data</li>
+                                <li><code>login_required()</code>: Decorator for protected routes</li>
+                                <li><code>admin_required()</code>: Decorator for admin-only routes</li>
+                            </ul>
+
+                            <h5>User Roles:</h5>
+                            <ul>
+                                <li><strong>User:</strong> Basic access to dashboard and monitoring</li>
+                                <li><strong>Admin:</strong> Full system access including user management</li>
+                            </ul>
+
+                            <h4 class="h6 mt-4">AI Integration (Lines 619-921)</h4>
+                            <div class="code-block mb-3">
+                                <h5>Gemini AI Integration:</h5>
+                                <pre><code class="language-python"># AI-powered analysis capabilities
+def generate_ai_summary(events_data, stats_data, time_period="weekly"):
+    """Generates comprehensive security analysis using Google Gemini AI"""
+    
+    Features:
+    - Executive summary generation
+    - Detailed threat pattern analysis
+    - Attack/event type analysis
+    - Facility impact assessment
+    - Risk assessment with probability analysis
+    - Operational security insights
+    - Strategic recommendations (7-10 actionable items)</code></pre>
+                            </div>
+
+                            <h5>AI Functions:</h5>
+                            <ul>
+                                <li><code>generate_ai_summary()</code>: Comprehensive weekly analysis</li>
+                                <li><code>generate_ai_recommendations()</code>: Air quality-specific recommendations</li>
+                                <li><code>generate_preventative_recommendations()</code>: Security improvement suggestions</li>
+                                <li><code>generate_test_ai_summary()</code>: Real-time threat assessment for notifications</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Hardware Interface -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="h5 mb-0">2. Hardware Interface (rasppi.py) - 2,894 lines</h3>
+                        </div>
+                        <div class="card-body">
+                            <h4 class="h6">Sensor Classes and Processing</h4>
+                            
+                            <div class="code-block mb-3">
+                                <h5>Sound Analysis Engine:</h5>
+                                <pre><code class="language-python">class SoundAnalyzer:
+    """Advanced sound processing with ML classification"""
+    
+    Features:
+    - 200 Hz sampling rate with FFT analysis
+    - Spectral feature extraction (centroid, spread, skewness, kurtosis)
+    - ML-based event classification (Random Forest)
+    - Spike detection and rate-of-change analysis
+    - Baseline noise floor tracking</code></pre>
+                            </div>
+
+                            <div class="code-block mb-3">
+                                <h5>Air Quality Processing:</h5>
+                                <pre><code class="language-python">class AirQualityAnalyzer:
+    """Multi-parameter air quality assessment"""
+    
+    Features:
+    - VOC level calculation with MQ135 resistance ratio
+    - PM2.5/PM10 particle concentration analysis
+    - Air Quality Index (AQI) calculation
+    - Odor type classification (clean_air, human_activity, chemical, smoke)
+    - Trend analysis and anomaly detection</code></pre>
+                            </div>
+
+                            <div class="code-block mb-3">
+                                <h5>Radar Data Processing:</h5>
+                                <pre><code class="language-python">class RadarProcessor:
+    """mmWave radar data interpretation and tracking"""
+    
+    Features:
+    - Multi-target tracking with unique IDs
+    - Position and velocity calculation
+    - Activity classification (stationary, walking, running)
+    - Breathing rate analysis for vital signs
+    - Abnormal behavior detection
+    - Entry/exit event generation</code></pre>
+                            </div>
+
+                            <h4 class="h6 mt-4">Threat Assessment Algorithm</h4>
+                            <h5>Component-Based Threat Calculation:</h5>
+                            <div class="code-block">
+                                <pre><code class="language-python">threat_components = {
+    'proximity': {'score': 0-100, 'weight': 0.25, 'confidence': 0-1},
+    'count': {'score': 0-100, 'weight': 0.15, 'confidence': 0-1},
+    'behavior': {'score': 0-100, 'weight': 0.30, 'confidence': 0-1},
+    'vital_signs': {'score': 0-100, 'weight': 0.15, 'confidence': 0-1},
+    'air_quality': {'score': 0-100, 'weight': 0.15, 'confidence': 0-1},
+    'noise': {'score': 0-100, 'weight': 0.10, 'confidence': 0-1}
+}
+
+overall_threat = sum(component['score'] * component['weight'] for component in threat_components.values())</code></pre>
+                            </div>
+
+                            <h5>Temporal Dynamics:</h5>
+                            <ul>
+                                <li>Trend analysis (stable, worsening, rapidly_worsening, improving)</li>
+                                <li>Slope calculation (rate of change)</li>
+                                <li>Persistence factor (1.0-2.0 multiplier)</li>
+                                <li>Trajectory prediction (5min, 15min, 30min forecasts)</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Fake Data Generator -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="h5 mb-0">3. Fake Data Generator (fake_data_generator.py) - 901 lines</h3>
+                        </div>
+                        <div class="card-body">
+                            <h4 class="h6">Realistic Data Simulation</h4>
+                            <div class="code-block mb-3">
+                                <h5>FakeDataGenerator Class:</h5>
+                                <pre><code class="language-python">class FakeDataGenerator:
+    """Generates realistic sensor data for testing and demonstration"""
+    
+    Features:
+    - Time-based realistic patterns (circadian rhythms)
+    - Environment-specific variations
+    - Correlated sensor readings
+    - Threat level distribution matching real scenarios
+    - Historical data generation for testing</code></pre>
+                            </div>
+
+                            <h5>Data Generation Capabilities:</h5>
+                            <ul>
+                                <li><strong>Threat Scores:</strong> Weighted distribution (45% low, 25% moderate, 15% elevated, 10% high, 5% critical)</li>
+                                <li><strong>Sound Patterns:</strong> Time-based variations (night: 30-45dB, day: 50-70dB)</li>
+                                <li><strong>Air Quality:</strong> VOC levels correlated with people count</li>
+                                <li><strong>Radar Targets:</strong> Realistic movement patterns and activities</li>
+                                <li><strong>Temporal Consistency:</strong> Natural variations and trends</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Database Management -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="h5 mb-0">4. Database Management (createEventsDatabase.py) - 280 lines</h3>
+                        </div>
+                        <div class="card-body">
+                            <h4 class="h6">Database Schema Design</h4>
+                            <h5>Tables Created:</h5>
+                            <ol>
+                                <li><strong>users</strong> (Lines 44-63) - User authentication and profile management</li>
+                                <li><strong>environment_settings</strong> (Lines 14-42) - Multi-environment configuration</li>
+                                <li><strong>events</strong> (Lines 65-214) - Main data table with 70+ fields</li>
+                                <li><strong>targets</strong> (Lines 216-242) - Per-person radar tracking data</li>
+                                <li><strong>events_log</strong> (Lines 244-259) - Simplified event log for quick queries</li>
+                            </ol>
+
+                            <h5>Database Features:</h5>
+                            <ul>
+                                <li>Optimized indexing for timestamp-based queries</li>
+                                <li>Foreign key relationships for data integrity</li>
+                                <li>Archive tables for data retention policies</li>
+                                <li>JSON fields for complex sensor data storage</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Web Application Features -->
+                <section id="web-app" class="content-section">
+                    <h2 class="section-title">Web Application Features</h2>
+                    
+                    <!-- Dashboard Interface -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="h5 mb-0">1. Dashboard Interface (templates/dashboard.html) - 1,772 lines</h3>
+                        </div>
+                        <div class="card-body">
+                            <h4 class="h6">Real-time Monitoring Dashboard</h4>
+                            
+                            <div class="code-block mb-3">
+                                <h5>Environment Scores Section:</h5>
+                                <pre><code class="language-html">&lt;div class="environment-scores"&gt;
+    &lt;div class="environment-scores-grid"&gt;
+        &lt;!-- Dynamic environment cards with threat levels --&gt;
+        &lt;!-- Real-time updates via Server-Sent Events --&gt;
+        &lt;!-- Visual indicators for highest threat environment --&gt;
+    &lt;/div&gt;
+&lt;/div&gt;</code></pre>
+                            </div>
+
+                            <h5>Key Dashboard Features:</h5>
+                            <ul>
+                                <li><strong>Multi-Environment Display:</strong> Simultaneous monitoring of 4 environments</li>
+                                <li><strong>Live Threat Gauges:</strong> Visual threat level indicators with color coding</li>
+                                <li><strong>Real-time Data Updates:</strong> SSE-based live data streaming</li>
+                                <li><strong>Interactive Environment Switching:</strong> Click to focus on specific areas</li>
+                                <li><strong>Pause/Resume Controls:</strong> Individual environment pause capability</li>
+                                <li><strong>Highest Threat Alert:</strong> Automatic highlighting of critical areas</li>
+                            </ul>
+
+                            <h5>Visual Elements:</h5>
+                            <ul>
+                                <li><strong>Threat Level Colors:</strong> Green (Low) → Yellow (Moderate) → Orange (Elevated) → Red (High) → Black (Critical)</li>
+                                <li><strong>Pulsing Animations:</strong> Visual alerts for critical threat levels</li>
+                                <li><strong>Responsive Design:</strong> Mobile-friendly layout with adaptive sizing</li>
+                                <li><strong>Progress Indicators:</strong> Data quality and sensor status indicators</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Other Web Features -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="h5 mb-0">Additional Web Features</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h4 class="h6">Sensors Page</h4>
+                                    <ul>
+                                        <li>Person Tracking Display with real-time position mapping</li>
+                                        <li>Activity Classification for each detected person</li>
+                                        <li>Vital Signs Monitoring with breathing rate indicators</li>
+                                        <li>Environmental Sensors with live waveform display</li>
+                                        <li>Historical Trends and Alert Thresholds</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h4 class="h6">Analytics Dashboard</h4>
+                                    <ul>
+                                        <li>Flexible Time Range Selection (6h to 7d)</li>
+                                        <li>Multiple Chart Types (Timeline, Distribution, Radar)</li>
+                                        <li>Statistical Summaries with trend analysis</li>
+                                        <li>Performance Optimization for large datasets</li>
+                                        <li>Interactive data visualization</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <h4 class="h6">Weekly Report</h4>
+                                    <ul>
+                                        <li>AI-Generated Comprehensive Reports</li>
+                                        <li>Executive Summary with detailed statistics</li>
+                                        <li>Threat Analysis and pattern identification</li>
+                                        <li>PDF Generation with professional formatting</li>
+                                        <li>Automated scheduling and delivery</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h4 class="h6">User Management</h4>
+                                    <ul>
+                                        <li>Administrative Interface for user accounts</li>
+                                        <li>Role-based access control</li>
+                                        <li>Account status management</li>
+                                        <li>Login tracking and activity monitoring</li>
+                                        <li>Secure password management</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Database Schema -->
+                <section id="database" class="content-section">
+                    <h2 class="section-title">Database Schema</h2>
+                    
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="h5 mb-0">Database Tables Structure</h3>
+                        </div>
+                        <div class="card-body">
+                            <!-- Users Table -->
+                            <h4 class="h6">1. Users Table Structure</h4>
+                            <div class="code-block mb-4">
+                                <pre><code class="language-sql">CREATE TABLE users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT NOT NULL,
+    password TEXT NOT NULL,                    -- Hashed passwords
+    dateJoined TEXT,
+    salt TEXT,
+    accountStatus TEXT,                        -- active/inactive/suspended
+    role TEXT,                                -- user/admin
+    twoFactorAuth INTEGER,                    -- 0/1 boolean
+    lastLogin TEXT,
+    emailAddress TEXT,
+    phoneNumber TEXT,
+    name TEXT,                                -- Full name
+    dateOfBirth TEXT,
+    gender TEXT
+);</code></pre>
+                            </div>
+
+                            <!-- Environment Settings -->
+                            <h4 class="h6">2. Environment Settings Table</h4>
+                            <div class="code-block mb-4">
+                                <pre><code class="language-sql">CREATE TABLE environment_settings (
+    environment_id TEXT PRIMARY KEY,           -- primary, secondary, warehouse, outdoor
+    name TEXT NOT NULL,                        -- Custom environment names
+    description TEXT,                          -- Environment descriptions
+    color TEXT DEFAULT '#007bff',             -- UI color codes
+    icon TEXT DEFAULT 'bi-house',             -- Bootstrap icons
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);</code></pre>
+                            </div>
+
+                            <!-- Events Table -->
+                            <h4 class="h6">3. Events Table (Primary Data Storage)</h4>
+                            <p class="text-muted">Complete sensor data snapshots with 70+ fields covering all sensor types, threat assessment, temporal dynamics, and derived metrics.</p>
+                            
+                            <!-- Targets Table -->
+                            <h4 class="h6">4. Targets Table (Per-Person Data)</h4>
+                            <p class="text-muted">Per-person radar tracking data including position, velocity, vital signs, activity classification, and confidence metrics.</p>
+
+                            <!-- Events Log Table -->
+                            <h4 class="h6">5. Events Log Table (Quick Lookup)</h4>
+                            <div class="code-block mb-4">
+                                <pre><code class="language-sql">CREATE TABLE events_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    timestamp TEXT NOT NULL,
+    threat_level TEXT,
+    threat_score REAL,
+    quality_score REAL,
+    people_count INTEGER,
+    sound_db REAL,
+    air_aqi REAL,
+    event_type TEXT,                          -- Type of significant event
+    description TEXT,
+    temperature REAL                          -- Additional environmental data
+);</code></pre>
+                            </div>
+
+                            <h4 class="h6">Database Features</h4>
+                            <h5>Indexing Strategy:</h5>
+                            <div class="code-block">
+                                <pre><code class="language-sql">-- Performance-optimized indexes
+CREATE INDEX idx_events_timestamp ON events(timestamp);
+CREATE INDEX idx_events_threat_level ON events(threat_level);
+CREATE INDEX idx_events_quality_score ON events(quality_score);
+CREATE INDEX idx_targets_event_id ON targets(event_id);
+CREATE INDEX idx_targets_target_id ON targets(target_id);
+CREATE INDEX idx_events_log_timestamp ON events_log(timestamp);</code></pre>
+                            </div>
+
+                            <h5>Archive Tables:</h5>
+                            <ul>
+                                <li><code>events_archive</code>: Long-term data storage</li>
+                                <li><code>events_log_archive</code>: Archived log entries</li>
+                                <li><code>targets_archive</code>: Historical target data</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- API Endpoints -->
+                <section id="api" class="content-section">
+                    <h2 class="section-title">API Endpoints</h2>
+                    
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="h5 mb-0">RESTful API Documentation</h3>
+                        </div>
+                        <div class="card-body">
+                            <!-- Authentication APIs -->
+                            <h4 class="h6">1. Authentication APIs</h4>
+                            <div class="api-endpoint mb-3">
+                                <h5>POST /login</h5>
+                                <pre><code class="language-python">"""User authentication endpoint"""
+Request: {username, password}
+Response: {success: boolean, user_data: object}
+Features: Session creation, last login update</code></pre>
+                            </div>
+
+                            <div class="api-endpoint mb-3">
+                                <h5>POST /logout</h5>
+                                <pre><code class="language-python">"""Session termination"""
+Response: {success: boolean, message: string}
+Features: Session cleanup, redirect handling</code></pre>
+                            </div>
+
+                            <div class="api-endpoint mb-4">
+                                <h5>POST /register</h5>
+                                <pre><code class="language-python">"""New user registration"""
+Request: {username, email, password, confirm_password}
+Response: {success: boolean, message: string}
+Features: Input validation, duplicate checking, password hashing</code></pre>
+                            </div>
+
+                            <!-- Real-time Data APIs -->
+                            <h4 class="h6">2. Real-time Data APIs</h4>
+                            <div class="api-endpoint mb-3">
+                                <h5>GET /api/live</h5>
+                                <pre><code class="language-python">"""Current sensor data endpoint"""
+Response: {
+    people_count: integer,
+    threat: {overall_threat: float, level: string, components: object},
+    radar: {target_count: integer, targets: array},
+    sound: {db: float, event: string, spike: boolean},
+    odor: {air_quality_index: float, voc_ppm: float, pm25: float},
+    targets: array,
+    last_update: string,
+    sensor_status: object
+}
+Features: Environment-specific data, fake/real mode handling</code></pre>
+                            </div>
+
+                            <div class="api-endpoint mb-3">
+                                <h5>GET /api/events/stream</h5>
+                                <pre><code class="language-python">"""Server-Sent Events for live updates"""
+Response: Text/event-stream format
+Features: 
+- Real-time data streaming
+- Heartbeat every 30 seconds
+- Automatic reconnection with exponential backoff
+- Event queue for significant changes
+- Configurable refresh rates</code></pre>
+                            </div>
+
+                            <div class="api-endpoint mb-4">
+                                <h5>GET /api/environments</h5>
+                                <pre><code class="language-python">"""All environments data endpoint"""
+Response: {
+    environment_id: {
+        name: string,
+        description: string,
+        color: string,
+        icon: string,
+        threat_score: float,
+        data: object,
+        last_update: string,
+        online: boolean
+    }
+}
+Features: Multi-environment support, online status tracking</code></pre>
+                            </div>
+
+                            <!-- Data Management APIs -->
+                            <h4 class="h6">3. Data Management APIs</h4>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="api-endpoint mb-3">
+                                        <h5>GET /api/targets</h5>
+                                        <p>Recent target data with time-based filtering</p>
+                                    </div>
+                                    <div class="api-endpoint mb-3">
+                                        <h5>GET /api/events/recent</h5>
+                                        <p>Recent events with threat level tracking</p>
+                                    </div>
+                                    <div class="api-endpoint mb-3">
+                                        <h5>GET /api/timeline</h5>
+                                        <p>Threat timeline data for charts</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="api-endpoint mb-3">
+                                        <h5>GET /api/components</h5>
+                                        <p>Average threat components for radar chart</p>
+                                    </div>
+                                    <div class="api-endpoint mb-3">
+                                        <h5>POST /api/toggle_fake_mode</h5>
+                                        <p>Toggle between fake and real data</p>
+                                    </div>
+                                    <div class="api-endpoint mb-3">
+                                        <h5>POST /api/pause & /api/resume</h5>
+                                        <p>Global data pause controls</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Reporting APIs -->
+                            <h4 class="h6">4. Reporting APIs</h4>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="api-endpoint mb-3">
+                                        <h5>GET /api/reports/summary</h5>
+                                        <p>AI-powered weekly summary</p>
+                                    </div>
+                                    <div class="api-endpoint mb-3">
+                                        <h5>GET /api/reports/recommendations</h5>
+                                        <p>AI-generated recommendations</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="api-endpoint mb-3">
+                                        <h5>GET /api/reports/detailed-stats</h5>
+                                        <p>Detailed statistical analysis</p>
+                                    </div>
+                                    <div class="api-endpoint mb-3">
+                                        <h5>GET /api/reports/weekly</h5>
+                                        <p>PDF report generation</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Security & Authentication -->
+                <section id="security" class="content-section">
+                    <h2 class="section-title">Security & Authentication</h2>
+                    
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="h5 mb-0">1. Authentication System</h3>
+                        </div>
+                        <div class="card-body">
+                            <h4 class="h6">Password Security</h4>
+                            <div class="code-block mb-3">
+                                <pre><code class="language-python"># Password hashing with Werkzeug
+from werkzeug.security import generate_password_hash, check_password_hash
+
+def create_user(username, password, email, role='user'):
+    password_hash = generate_password_hash(password)
+    # Store in database with salt and hash</code></pre>
+                            </div>
+
+                            <h5>Security Features:</h5>
+                            <ul>
+                                <li><strong>BCrypt Hashing:</strong> Strong password encryption</li>
+                                <li><strong>Session Management:</strong> Secure session tokens</li>
+                                <li><strong>Login Attempt Tracking:</strong> Failed login monitoring</li>
+                                <li><strong>Account Status:</strong> Active/inactive/suspended states</li>
+                                <li><strong>Role-Based Access:</strong> User vs admin permissions</li>
+                            </ul>
+
+                            <h4 class="h6 mt-4">Session Security</h4>
+                            <div class="code-block">
+                                <pre><code class="language-python"># Flask-Session configuration
+app.config["SESSION_PERMANENT"] = True
+app.config["SESSION_TYPE"] = "filesystem"
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', os.urandom(24).hex())</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="h5 mb-0">2. Authorization System</h3>
+                        </div>
+                        <div class="card-body">
+                            <h4 class="h6">Decorator-Based Access Control</h4>
+                            <div class="code-block mb-3">
+                                <pre><code class="language-python">@login_required
+def dashboard():
+    """Requires authenticated user"""
+    pass
+
+@admin_required  
+def users():
+    """Requires admin privileges"""
+    pass</code></pre>
+                            </div>
+
+                            <h5>Route Protection:</h5>
+                            <ul>
+                                <li>Authentication check for protected routes</li>
+                                <li>Admin-only route protection</li>
+                                <li>Automatic redirect to login for unauthorized access</li>
+                                <li>Flash messages for access denied feedback</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="h5 mb-0">3. Data Security</h3>
+                        </div>
+                        <div class="card-body">
+                            <h4 class="h6">Input Validation & Protection</h4>
+                            <ul>
+                                <li><strong>Input Validation:</strong> Comprehensive input sanitization and format checking</li>
+                                <li><strong>SQL Injection Protection:</strong> Parameterized database queries</li>
+                                <li><strong>XSS Prevention:</strong> Template auto-escaping and content security policies</li>
+                                <li><strong>Environment Variables:</strong> Secure configuration management</li>
+                                <li><strong>API Key Security:</strong> No hardcoded credentials, access logging</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Real-time Monitoring -->
+                <section id="monitoring" class="content-section">
+                    <h2 class="section-title">Real-time Monitoring</h2>
+                    
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="h5 mb-0">1. Server-Sent Events (SSE)</h3>
+                        </div>
+                        <div class="card-body">
+                            <h4 class="h6">Event Stream Implementation</h4>
+                            <div class="code-block mb-3">
+                                <pre><code class="language-python">@app.route("/api/events/stream")
+def events_stream():
+    """Real-time data streaming endpoint"""
+    
+    def generate():
+        while True:
+            # Send heartbeat every 30 seconds
+            if current_time - last_event_time > 30:
+                yield f"event: heartbeat\ndata: {json.dumps({'time': datetime.now().isoformat()})}\n\n"
+            
+            # Send data updates at configured intervals
+            if current_time - last_data_time >= dashboard_refresh_rate:
+                data = get_current_sensor_data()
+                yield f"event: update\ndata: {json.dumps(data)}\n\n"
+    
+    return Response(generate(), mimetype="text/event-stream")</code></pre>
+                            </div>
+
+                            <h5>SSE Features:</h5>
+                            <ul>
+                                <li>Automatic reconnection with exponential backoff</li>
+                                <li>Heartbeat monitoring for connection health</li>
+                                <li>Different event categories (update, heartbeat, alert)</li>
+                                <li>Configurable refresh rates</li>
+                                <li>Multi-environment support</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="h5 mb-0">2. Live Data Store</h3>
+                        </div>
+                        <div class="card-body">
+                            <h4 class="h6">Thread-Safe Data Management</h4>
+                            <div class="code-block mb-3">
+                                <pre><code class="language-python">class LiveDataStore:
+    def __init__(self, max_history=100):
+        self.lock = threading.Lock()
+        self.latest = {}
+        self.history = {
+            'threat': deque(maxlen=max_history),
+            'quality': deque(maxlen=max_history),
+            'people': deque(maxlen=max_history),
+            # ... other metrics
+        }
+        self.event_queue = queue.Queue(maxsize=50)</code></pre>
+                            </div>
+
+                            <h5>Data Store Features:</h5>
+                            <ul>
+                                <li>Thread safety with lock-based concurrent access protection</li>
+                                <li>Historical data with configurable buffer sizes</li>
+                                <li>Event queue for significant event tracking</li>
+                                <li>Multi-environment support</li>
+                                <li>Pause/resume functionality</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="h5 mb-0">3. Environment Monitoring</h3>
+                        </div>
+                        <div class="card-body">
+                            <h5>Environment Features:</h5>
+                            <ul>
+                                <li>Independent monitoring with separate data streams</li>
+                                <li>Threat comparison with automatic highest-threat detection</li>
+                                <li>Selective updates with individual environment pause/resume</li>
+                                <li>Visual indicators with color-coded status</li>
+                                <li>Quick switching with one-click environment focus</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Analytics & Reporting -->
+                <section id="analytics" class="content-section">
+                    <h2 class="section-title">Analytics & Reporting</h2>
+                    
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="h5 mb-0">1. Statistical Analysis Engine</h3>
+                        </div>
+                        <div class="card-body">
+                            <h4 class="h6">Threat Statistics Calculation</h4>
+                            <div class="code-block mb-3">
+                                <pre><code class="language-python">def get_threat_statistics(hours=24):
+    """Comprehensive threat analysis for time period"""
+    
+    cursor.execute("""
+        SELECT 
+            COUNT(*) as total_events,
+            AVG(threat_score) as avg_threat,
+            MAX(threat_score) as max_threat,
+            AVG(quality_score) as avg_quality,
+            AVG(people_count) as avg_people,
+            AVG(sound_db) as avg_noise,
+            AVG(air_aqi) as avg_aqi,
+            SUM(CASE WHEN threat_level = 'CRITICAL' THEN 1 ELSE 0 END) as critical_count
+        FROM events_log
+        WHERE timestamp >= ?
+    """, (cutoff,))</code></pre>
+                            </div>
+
+                            <h5>Statistical Features:</h5>
+                            <ul>
+                                <li>Time-based analysis with flexible time windows (6h to 7d)</li>
+                                <li>Threat distribution with categorical breakdown</li>
+                                <li>Environmental metrics (air quality, noise, occupancy)</li>
+                                <li>Event classification and tracking</li>
+                                <li>Trend analysis with directional indicators</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="h5 mb-0">2. AI-Powered Analysis</h3>
+                        </div>
+                        <div class="card-body">
+                            <h4 class="h6">Gemini AI Integration</h4>
+                            <div class="code-block mb-3">
+                                <pre><code class="language-python">def generate_ai_summary(events_data, stats_data, time_period="weekly"):
+    """Generate comprehensive security analysis using AI"""
+    
+    prompt = f"""
+    As an expert safety and security analyst, conduct an extremely comprehensive analysis:
+    
+    COMPREHENSIVE SECURITY STATISTICS:
+    - Total Monitoring Events: {stats_data.get('total_events', 0)}
+    - Average Threat Score: {stats_data.get('avg_threat', 0):.1f}/100
+    - Maximum Threat Score: {stats_data.get('max_threat', 0):.1f}/100
+    - Critical Events: {stats_data.get('critical_count', 0)}
+    
+    Provide detailed analysis covering:
+    1. Executive Summary
+    2. Detailed Threat Analysis  
+    3. Attack/Event Type Analysis
+    4. Facility Impact Assessment
+    5. Comprehensive Risk Assessment
+    6. Operational Security Insights
+    7. Positive Security Performance Metrics
+    8. Strategic Security Recommendations
+    """</code></pre>
+                            </div>
+
+                            <h5>AI Analysis Features:</h5>
+                            <ul>
+                                <li>Executive summary for administrators</li>
+                                <li>Threat pattern analysis with time-based context</li>
+                                <li>Attack type classification and frequency analysis</li>
+                                <li>Risk assessment with probability evaluation</li>
+                                <li>Operational insights and system performance</li>
+                                <li>7-10 specific improvement recommendations</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="h5 mb-0">3. Chart Generation & PDF Reports</h3>
+                        </div>
+                        <div class="card-body">
+                            <h5>Chart Features:</h5>
+                            <ul>
+                                <li>Timeline charts with dual-axis time series data</li>
+                                <li>Distribution charts for categorical data</li>
+                                <li>Facility metrics with multi-axis environmental charts</li>
+                                <li>Base64 encoding for direct HTML/PDF embedding</li>
+                                <li>Professional styling with Seaborn themes</li>
+                            </ul>
+
+                            <h5>PDF Features:</h5>
+                            <ul>
+                                <li>Professional layout with corporate-quality formatting</li>
+                                <li>Chart integration with embedded visualizations</li>
+                                <li>AI content with generated analysis and recommendations</li>
+                                <li>Automatic generation with scheduled creation</li>
+                                <li>Direct file download capability</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Notification System -->
+                <section id="notifications" class="content-section">
+                    <h2 class="section-title">Notification System</h2>
+                    
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="h5 mb-0">1. Multi-Channel Notification Architecture</h3>
+                        </div>
+                        <div class="card-body">
+                            <h4 class="h6">Notification Channels</h4>
+                            <div class="code-block mb-3">
+                                <pre><code class="language-python">class NotificationManager:
+    """Manages multi-channel notifications"""
+    
+    def __init__(self):
+        self.gmail_sender = GmailNotifier()
+        self.teams_sender = TeamsNotifier()
+        self.cooldown_tracker = {}
+        
+    def send_alarm_notification(self, threat_data):
+        """Send critical threat notifications"""
+        if self._check_cooldown('alarm', threat_data['threat_score']):
+            # Send via both channels for redundancy
+            gmail_result = self.gmail_sender.send_alarm(threat_data)
+            teams_result = self.teams_sender.send_alarm(threat_data)
+            return {'gmail': gmail_result, 'teams': teams_result}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="h5 mb-0">2. Gmail & Teams Integration</h3>
+                        </div>
+                        <div class="card-body">
+                            <h5>Email Features:</h5>
+                            <ul>
+                                <li>HTML formatting with rich text and styling</li>
+                                <li>Security headers for professional email delivery</li>
+                                <li>App passwords for secure Gmail authentication</li>
+                                <li>Error handling with graceful failure management</li>
+                                <li>Configuration validation</li>
+                            </ul>
+
+                            <h5>Teams Features:</h5>
+                            <ul>
+                                <li>Adaptive Cards with rich Teams message formatting</li>
+                                <li>Color coding for visual threat level indication</li>
+                                <li>Structured data with fact-based information display</li>
+                                <li>Markdown support for rich text formatting</li>
+                                <li>Error handling for failed delivery tracking</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="h5 mb-0">3. Smart Notification Logic</h3>
+                        </div>
+                        <div class="card-body">
+                            <h4 class="h6">Threshold-Based Triggers</h4>
+                            <div class="code-block mb-3">
+                                <pre><code class="language-python"># Notification thresholds
+ALARM_NOTIFICATION_THRESHOLD = 80      # Critical threat level
+MISBEHAVIOR_NOTIFICATION_THRESHOLD = 60 # Start tracking misbehavior
+MISBEHAVIOR_EXIT_THRESHOLD = 40        # Send "all clear" notification
+NOTIFICATION_COOLDOWN = 300             # 5 minutes between same notifications</code></pre>
+                            </div>
+
+                            <h5>Smart Features:</h5>
+                            <ul>
+                                <li>Cooldown management to prevent notification spam</li>
+                                <li>Threshold logic with intelligent trigger points</li>
+                                <li>State tracking for threat level changes</li>
+                                <li>Priority classification (urgent/high/normal)</li>
+                                <li>AI-enhanced notifications with real-time analysis</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Multi-Environment Support -->
+                <section id="environments" class="content-section">
+                    <h2 class="section-title">Multi-Environment Support</h2>
+                    
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="h5 mb-0">Environment Architecture</h3>
+                        </div>
+                        <div class="card-body">
+                            <h4 class="h6">Default Environment Configuration</h4>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <ul>
+                                        <li><strong>Primary Environment:</strong> Main monitoring area (Blue)</li>
+                                        <li><strong>Secondary Environment:</strong> Secondary monitoring area (Green)</li>
+                                        <li><strong>Warehouse Environment:</strong> Storage area (Yellow)</li>
+                                        <li><strong>Outdoor Environment:</strong> Perimeter monitoring (Cyan)</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h5>Environment Features:</h5>
+                                    <ul>
+                                        <li>Customizable names and descriptions</li>
+                                        <li>Visual identity with unique colors and icons</li>
+                                        <li>Independent data streams</li>
+                                        <li>Dynamic configuration</li>
+                                        <li>Database persistence</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="h5 mb-0">Environment Management Features</h3>
+                        </div>
+                        <div class="card-body">
+                            <h5>Management Capabilities:</h5>
+                            <ul>
+                                <li>Environment switching with current active selection</li>
+                                <li>Individual environment pause/resume controls</li>
+                                <li>Environment-specific settings management</li>
+                                <li>Per-environment statistics and analytics</li>
+                                <li>Visual environment cards with threat level display</li>
+                                <li>Highest threat alert with automatic highlighting</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Scenario Simulation -->
+                <section id="scenarios" class="content-section">
+                    <h2 class="section-title">Scenario Simulation</h2>
+                    
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="h5 mb-0">Scenario Architecture</h3>
+                        </div>
+                        <div class="card-body">
+                            <h4 class="h6">Predefined Scenarios</h4>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <ul>
+                                        <li><strong>Fighting/Altercation:</strong> Physical altercation simulation</li>
+                                        <li><strong>Medical Emergency:</strong> Vital sign abnormalities</li>
+                                        <li><strong>Vaping Detection:</strong> Elevated VOC and particulate levels</li>
+                                        <li><strong>Unauthorized Intrusion:</strong> Security breach simulation</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <ul>
+                                        <li><strong>Bullying Incident:</strong> Behavioral threat patterns</li>
+                                        <li><strong>Chemical Spill:</strong> Environmental hazard simulation</li>
+                                        <li><strong>Fire/Smoke Detection:</strong> Emergency scenario</li>
+                                        <li><strong>Crowd Control:</strong> High occupancy testing</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <h5>Scenario Features:</h5>
+                            <ul>
+                                <li>Realistic parameters with environment-specific value ranges</li>
+                                <li>Component weighting for scenario-appropriate threat emphasis</li>
+                                <li>Dynamic variation with natural data fluctuations</li>
+                                <li>Contextual events and target generation</li>
+                                <li>Training applications for security staff</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="h5 mb-0">Scenario Management</h3>
+                        </div>
+                        <div class="card-body">
+                            <h5>Management Features:</h5>
+                            <ul>
+                                <li>Scenario activation with API endpoints</li>
+                                <li>Real-time data generation based on scenario configuration</li>
+                                <li>Scenario termination with data restoration</li>
+                                <li>Scenario status tracking and monitoring</li>
+                                <li>Training use cases for system testing and validation</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- User Management -->
+                <section id="users" class="content-section">
+                    <h2 class="section-title">User Management</h2>
+                    
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="h5 mb-0">User Authentication System</h3>
+                        </div>
+                        <div class="card-body">
+                            <h4 class="h6">User Account Structure</h4>
+                            <div class="code-block mb-3">
+                                <pre><code class="language-python">def create_user(username, password, email, role='user', name=None, phone=None, dob=None, gender=None):
+    """Create comprehensive user account"""
+    
+    # Validation checks
+    cursor.execute("SELECT id FROM users WHERE username = ?", (username,))
+    if cursor.fetchone():
+        return False, "Username already exists"
+    
+    # Create user with hashed password
+    password_hash = generate_password_hash(password)
+    cursor.execute("""
+        INSERT INTO users (username, password, emailAddress, role, name, phoneNumber, 
+                          dateOfBirth, gender, dateJoined, accountStatus)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (username, password_hash, email, role, name, phone, dob, gender, 
+          datetime.now().isoformat(), 'active'))</code></pre>
+                            </div>
+
+                            <h5>User Features:</h5>
+                            <ul>
+                                <li>Comprehensive profiles with contact information</li>
+                                <li>Role-based access control (User/Admin)</li>
+                                <li>Account status management (active/inactive/suspended)</li>
+                                <li>Login tracking with timestamp recording</li>
+                                <li>Data validation and format checking</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="h5 mb-0">User Management Features</h3>
+                        </div>
+                        <div class="card-body">
+                            <h5>Management Capabilities:</h5>
+                            <ul>
+                                <li>User creation with role assignment</li>
+                                <li>Status management (activate/deactivate/suspend)</li>
+                                <li>Account deletion with confirmation</li>
+                                <li>Login history and activity tracking</li>
+                                <li>Profile management with password changes</li>
+                                <li>Session management and security features</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Data Management -->
+                <section id="data" class="content-section">
+                    <h2 class="section-title">Data Management</h2>
+                    
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="h5 mb-0">Database Architecture</h3>
+                        </div>
+                        <div class="card-body">
+                            <h4 class="h6">Multi-Table Design</h4>
+                            <ul>
+                                <li><strong>events:</strong> Complete sensor data snapshots</li>
+                                <li><strong>targets:</strong> Per-person radar tracking</li>
+                                <li><strong>events_log:</strong> Simplified quick lookup</li>
+                                <li><strong>users:</strong> User accounts and authentication</li>
+                                <li><strong>environment_settings:</strong> Multi-environment config</li>
+                            </ul>
+
+                            <h5>Database Features:</h5>
+                            <ul>
+                                <li>Normalized structure with efficient relationships</li>
+                                <li>Optimized indexing for fast query performance</li>
+                                <li>Archive tables for long-term data retention</li>
+                                <li>JSON storage for complex sensor data</li>
+                                <li>Foreign keys for data integrity</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="h5 mb-0">Data Retention & Export</h3>
+                        </div>
+                        <div class="card-body">
+                            <h5>Retention Features:</h5>
+                            <ul>
+                                <li>Configurable retention periods</li>
+                                <li>Archive tables for historical data</li>
+                                <li>Automatic cleanup and scheduled archiving</li>
+                                <li>Space management and database optimization</li>
+                                <li>Data integrity verification</li>
+                            </ul>
+
+                            <h5>Export Features:</h5>
+                            <ul>
+                                <li>Complete export of all database tables</li>
+                                <li>JSON format for standardized data interchange</li>
+                                <li>Timestamp tracking for export generation</li>
+                                <li>Data integrity verification</li>
+                                <li>Direct file download capability</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="h5 mb-0">Data Analytics Engine</h3>
+                        </div>
+                        <div class="card-body">
+                            <h5>Analytics Features:</h5>
+                            <ul>
+                                <li>Descriptive statistics (min, max, mean, std dev)</li>
+                                <li>Trend analysis with directional indicators</li>
+                                <li>Comparative analysis for period-over-period</li>
+                                <li>Anomaly detection with statistical outlier identification</li>
+                                <li>Performance metrics and system tracking</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Configuration & Settings -->
+                <section id="config" class="content-section">
+                    <h2 class="section-title">Configuration & Settings</h2>
+                    
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="h5 mb-0">System Configuration</h3>
+                        </div>
+                        <div class="card-body">
+                            <h4 class="h6">Environment Variable Management</h4>
+                            <div class="code-block mb-3">
+                                <pre><code class="language-python"># Load environment variables
+load_dotenv()
+
+# Database Configuration
+DATABASE_PATH = os.getenv('DATABASE_PATH', 'events.db')
+
+# AI Configuration
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
+GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-1.5-flash')
+
+# Notification Configuration
+GMAIL_SENDER_EMAIL = os.getenv('GMAIL_SENDER_EMAIL')
+GMAIL_SENDER_PASSWORD = os.getenv('GMAIL_SENDER_PASSWORD')
+TEAMS_WEBHOOK_URL = os.getenv('TEAMS_WEBHOOK_URL')
+
+# Security Configuration
+SECRET_KEY = os.getenv('SECRET_KEY', os.urandom(24).hex())</code></pre>
+                            </div>
+
+                            <h5>Configuration Features:</h5>
+                            <ul>
+                                <li>Environment variables for secure configuration</li>
+                                <li>Default values with fallback configurations</li>
+                                <li>Configuration validation on startup</li>
+                                <li>Runtime updates with dynamic configuration changes</li>
+                                <li>Security with sensitive data protection</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="h5 mb-0">User & Environment Settings</h3>
+                        </div>
+                        <div class="card-body">
+                            <h5>User Settings:</h5>
+                            <ul>
+                                <li>Configurable refresh rates for data updates</li>
+                                <li>Display preferences and UI customization</li>
+                                <li>Environment-specific configurations</li>
+                                <li>Notification preferences and alert configuration</li>
+                                <li>Session persistence across sessions</li>
+                            </ul>
+
+                            <h5>Environment Configuration:</h5>
+                            <ul>
+                                <li>Custom names and descriptions for environments</li>
+                                <li>Visual settings with colors and icons</li>
+                                <li>Priority settings for monitoring</li>
+                                <li>Database persistence for settings</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Deployment & Operations -->
+                <section id="deployment" class="content-section">
+                    <h2 class="section-title">Deployment & Operations</h2>
+                    
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="h5 mb-0">System Architecture</h3>
+                        </div>
+                        <div class="card-body">
+                            <h4 class="h6">Production Deployment</h4>
+                            <div class="code-block mb-3">
+                                <pre><code class="language-python"># Production configuration
+if __name__ == '__main__':
+    # Production settings
+    app.config['ENV'] = 'production'
+    app.config['DEBUG'] = False
+    app.config['TESTING'] = False
+    
+    # Security headers
+    @app.after_request
+    def security_headers(response):
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        response.headers['X-Frame-Options'] = 'DENY'
+        response.headers['X-XSS-Protection'] = '1; mode=block'
+        response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+        return response
+    
+    # Start application
+    app.run(host='0.0.0.0', port=5000, ssl_context='adhoc')</code></pre>
+                            </div>
+
+                            <h5>Deployment Features:</h5>
+                            <ul>
+                                <li>Production mode optimization</li>
+                                <li>Security headers implementation</li>
+                                <li>SSL support with HTTPS encryption</li>
+                                <li>Process management with Gunicorn/uWSGI compatibility</li>
+                                <li>Load balancing for multi-instance deployment</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="h5 mb-0">Hardware Deployment</h3>
+                        </div>
+                        <div class="card-body">
+                            <h4 class="h6">Raspberry Pi Setup</h4>
+                            <div class="code-block mb-3">
+                                <pre><code class="language-bash"># System preparation script
+#!/bin/bash
+
+# Update system
+sudo apt update && sudo apt full-upgrade -y
+
+# Install dependencies
+sudo apt install -y python3-pip python3-venv python3-full \
+  libatlas-base-dev libopenblas-dev \
+  i2c-tools wiringpi raspi-gpio
+
+# Enable interfaces
+sudo raspi-config nonint do_i2c 0
+sudo raspi-config nonint do_serial 2
+sudo raspi-config nonint do_spi 0
+
+# Create virtual environment
+python3 -m venv scope_env
+source scope_env/bin/activate
+
+# Install Python packages
+pip install -r requirements.txt
+
+# Setup systemd service
+sudo cp scope-monitor.service /etc/systemd/system/
+sudo systemctl enable scope-monitor
+sudo systemctl start scope-monitor</code></pre>
+                            </div>
+
+                            <h5>Hardware Features:</h5>
+                            <ul>
+                                <li>Automated setup with one-command initialization</li>
+                                <li>Service management with systemd configuration</li>
+                                <li>Hardware detection with automatic sensor identification</li>
+                                <li>Performance tuning for Raspberry Pi optimization</li>
+                                <li>Remote management with SSH and access setup</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="h5 mb-0">Monitoring & Maintenance</h3>
+                        </div>
+                        <div class="card-body">
+                            <h5>Maintenance Features:</h5>
+                            <ul>
+                                <li>Health checks with automated system monitoring</li>
+                                <li>Performance metrics with real-time tracking</li>
+                                <li>Alert systems for automatic issue notification</li>
+                                <li>Log management with centralized collection</li>
+                                <li>Backup systems with automated procedures</li>
+                                <li>Update management with rollback capability</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Integration Capabilities -->
+                <section id="integration" class="content-section">
+                    <h2 class="section-title">Integration Capabilities</h2>
+                    
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="h5 mb-0">API Integration Framework</h3>
+                        </div>
+                        <div class="card-body">
+                            <h4 class="h6">Third-Party System Integration</h4>
+                            <div class="code-block mb-3">
+                                <pre><code class="language-python"># External API integration framework
+class ExternalAPIManager:
+    """Manage integrations with external systems"""
+    
+    def __init__(self):
+        self.integrations = {
+            'building_management': BuildingManagementAPI(),
+            'access_control': AccessControlAPI(),
+            'camera_system': CameraSystemAPI(),
+            'emergency_services': EmergencyServicesAPI()
+        }
+    
+    def send_alert_to_system(self, system_name, alert_data):
+        """Send alert to integrated system"""
+        
+        if system_name in self.integrations:
+            try:
+                result = self.integrations[system_name].send_alert(alert_data)
+                return {'success': True, 'result': result}
+            except Exception as e:
+                return {'success': False, 'error': str(e)}
+        else:
+            return {'success': False, 'error': 'Unknown system'}</code></pre>
+                            </div>
+
+                            <h5>Integration Features:</h5>
+                            <ul>
+                                <li>RESTful APIs with standard support</li>
+                                <li>Webhook support for outbound notifications</li>
+                                <li>Data transformation with format conversion</li>
+                                <li>Authentication with OAuth, API keys, and certificates</li>
+                                <li>Error handling with robust retry logic</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="h5 mb-0">System Integration Options</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h5>Building Management Integration:</h5>
+                                    <ul>
+                                        <li>HVAC control with automated ventilation</li>
+                                        <li>Lighting control with scene-based adjustments</li>
+                                        <li>Energy management with optimization</li>
+                                        <li>Environmental control with temperature management</li>
+                                        <li>Alert forwarding to building systems</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h5>Security System Integration:</h5>
+                                    <ul>
+                                        <li>Lockdown automation with facility triggering</li>
+                                        <li>Area control with selective locking/unlocking</li>
+                                        <li>Access logging with security correlation</li>
+                                        <li>Emergency protocols with predefined responses</li>
+                                        <li>User notification with alert forwarding</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <h5>Camera System Integration:</h5>
+                                    <ul>
+                                        <li>Event recording with automatic trigger</li>
+                                        <li>Camera selection with intelligent location</li>
+                                        <li>Snapshot capture with real-time images</li>
+                                        <li>Video analytics with motion detection</li>
+                                        <li>Evidence management with preservation</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h5>Emergency Services Integration:</h5>
+                                    <ul>
+                                        <li>Automatic alerting for critical threats</li>
+                                        <li>Incident classification with emergency types</li>
+                                        <li>Location services with precise coordinates</li>
+                                        <li>Contact management with emergency information</li>
+                                        <li>Response coordination with real-time communication</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Performance Features -->
+                <section id="performance" class="content-section">
+                    <h2 class="section-title">Performance Features</h2>
+                    
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="h5 mb-0">Data Processing Optimization</h3>
+                        </div>
+                        <div class="card-body">
+                            <h4 class="h6">Efficient Data Structures</h4>
+                            <div class="code-block mb-3">
+                                <pre><code class="language-python">class OptimizedDataStore:
+    """High-performance data storage with optimized structures"""
+    
+    def __init__(self, max_history=100):
+        # Use deques for O(1) append/pop operations
+        self.threat_history = deque(maxlen=max_history)
+        self.quality_history = deque(maxlen=max_history)
+        self.people_history = deque(maxlen=max_history)
+        
+        # Use numpy arrays for numerical operations
+        self.threat_array = np.zeros(max_history)
+        self.quality_array = np.zeros(max_history)
+        self.people_array = np.zeros(max_history)
+        
+        # Circular buffer index
+        self.current_index = 0
+        self.is_full = False</code></pre>
+                            </div>
+
+                            <h5>Optimization Features:</h5>
+                            <ul>
+                                <li>Circular buffers for efficient memory usage</li>
+                                <li>NumPy integration for fast computations</li>
+                                <li>Lazy loading with on-demand data</li>
+                                <li>Memory management with automatic cleanup</li>
+                                <li>Batch processing for efficient operations</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="h5 mb-0">Database & Streaming Performance</h3>
+                        </div>
+                        <div class="card-body">
+                            <h5>Database Performance:</h5>
+                            <ul>
+                                <li>Strategic indexing for optimized query performance</li>
+                                <li>Query caching for frequently accessed data</li>
+                                <li>Connection pooling for efficient management</li>
+                                <li>Batch operations for bulk insert/update</li>
+                                <li>Query optimization with execution plan analysis</li>
+                            </ul>
+
+                            <h5>Streaming Performance:</h5>
+                            <ul>
+                                <li>Batch processing with combined updates</li>
+                                <li>Client management with efficient connection tracking</li>
+                                <li>Memory optimization with limited buffer sizes</li>
+                                <li>CPU management with controlled processing frequency</li>
+                                <li>Network optimization with efficient serialization</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="h5 mb-0">Caching & Resource Management</h3>
+                        </div>
+                        <div class="card-body">
+                            <h5>Multi-Level Caching:</h5>
+                            <ul>
+                                <li>L1: In-memory cache (fastest)</li>
+                                <li>L2: Redis cache (if available)</li>
+                                <li>L3: Database cache (persistent)</li>
+                                <li>TTL management with automatic expiration</li>
+                                <li>Cache invalidation with smart updates</li>
+                            </ul>
+
+                            <h5>Resource Management:</h5>
+                            <ul>
+                                <li>Memory monitoring with real-time usage tracking</li>
+                                <li>CPU management with processing load optimization</li>
+                                <li>Automatic cleanup when thresholds exceeded</li>
+                                <li>Performance tuning with dynamic adjustment</li>
+                                <li>Resource allocation with intelligent distribution</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Advanced Features -->
+                <section id="advanced" class="content-section">
+                    <h2 class="section-title">Advanced Features</h2>
+                    
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="h5 mb-0">Machine Learning Integration</h3>
+                        </div>
+                        <div class="card-body">
+                            <h4 class="h6">Predictive Analytics</h4>
+                            <div class="code-block mb-3">
+                                <pre><code class="language-python">class ThreatPredictor:
+    """Machine learning-based threat prediction"""
+    
+    def __init__(self):
+        self.model = self._load_or_train_model()
+        self.feature_scaler = StandardScaler()
+        self.prediction_window = 30  # 30 minutes ahead
+    
+    def predict_threat_trajectory(self, current_data, historical_data):
+        """Predict future threat levels using ML"""
+        
+        # Extract features
+        features = self._extract_features(current_data, historical_data)
+        
+        # Scale features
+        features_scaled = self.feature_scaler.transform([features])
+        
+        # Make prediction
+        prediction = self.model.predict(features_scaled)[0]
+        
+        # Calculate confidence
+        confidence = self._calculate_prediction_confidence(features_scaled)
+        
+        return {
+            'predicted_threat': prediction,
+            'confidence': confidence,
+            'time_horizon': self.prediction_window,
+            'factors': self._get_influencing_factors(features)
+        }</code></pre>
+                            </div>
+
+                            <h5>ML Features:</h5>
+                            <ul>
+                                <li>Threat prediction with future level forecasting</li>
+                                <li>Pattern recognition with anomaly detection</li>
+                                <li>Behavioral analysis with activity pattern learning</li>
+                                <li>Adaptive thresholds with dynamic adjustment</li>
+                                <li>Model retraining with continuous improvement</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="h5 mb-0">Advanced Analytics & Security</h3>
+                        </div>
+                        <div class="card-body">
+                            <h5>Analytics Features:</h5>
+                            <ul>
+                                <li>Correlation analysis between sensors</li>
+                                <li>Trend detection with long-term patterns</li>
+                                <li>Anomaly detection with statistical outliers</li>
+                                <li>Seasonal analysis with time-based patterns</li>
+                                <li>Causal inference with cause-effect relationships</li>
+                            </ul>
+
+                            <h5>Security Features:</h5>
+                            <ul>
+                                <li>Pattern recognition with advanced threat identification</li>
+                                <li>Behavioral analysis with user profiling</li>
+                                <li>Escalation prediction with threat forecasting</li>
+                                <li>Risk assessment with comprehensive evaluation</li>
+                                <li>Response planning with automated recommendations</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="h5 mb-0">Advanced Automation & Reporting</h3>
+                        </div>
+                        <div class="card-body">
+                            <h5>Automation Features:</h5>
+                            <ul>
+                                <li>Rule engine with configurable automation</li>
+                                <li>Response templates with predefined actions</li>
+                                <li>Escalation chains with multi-level alerts</li>
+                                <li>Integration workflows with cross-system automation</li>
+                                <li>Learning algorithms with adaptive optimization</li>
+                            </ul>
+
+                            <h5>Executive Features:</h5>
+                            <ul>
+                                <li>KPI dashboards with performance tracking</li>
+                                <li>Trend analysis with long-term identification</li>
+                                <li>Benchmarking with performance comparison</li>
+                                <li>ROI analysis with system return calculation</li>
+                                <li>Strategic planning with long-term recommendations</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Conclusion -->
+                <section id="conclusion" class="content-section">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <h2 class="card-title">Conclusion</h2>
+                            <p class="card-text">The SCOPE System represents a comprehensive, enterprise-grade environmental monitoring and threat detection platform with extensive capabilities spanning real-time monitoring, AI-powered analytics, multi-environment support, professional web interface, advanced analytics, multi-channel notifications, scenario simulation, comprehensive reporting, user management, data management, integration readiness, performance optimization, security focus, and scalable architecture.</p>
+                            
+                            <h4 class="h5 mt-4">Technical Excellence:</h4>
+                            <ul>
+                                <li>3,699+ lines of production code in the main application</li>
+                                <li>2,894 lines of hardware interface code for sensor integration</li>
+                                <li>901 lines of data simulation for testing and training</li>
+                                <li>Comprehensive database schema with 70+ fields</li>
+                                <li>Multi-threaded architecture for concurrent processing</li>
+                                <li>Real-time streaming with Server-Sent Events</li>
+                                <li>AI Integration with Google Gemini</li>
+                                <li>Professional UI/UX with Bootstrap 5 and Chart.js</li>
+                                <li>Enterprise security with proper authentication</li>
+                            </ul>
+                            
+                            <p class="card-text mt-3">The system demonstrates production-ready quality with extensive features, robust architecture, and comprehensive documentation suitable for deployment in educational facilities, corporate environments, or any setting requiring advanced environmental monitoring and threat detection capabilities.</p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>SCOPE System Documentation</h5>
+                    <p class="text-muted">System for Comprehensive Observation and Protection of Environments</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="text-muted mb-0">© 2024 SCOPE System. Advanced Environmental Monitoring & Threat Detection.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Floating Action Button -->
+    <div class="floating-action-menu">
+        <button class="fab-main" onclick="toggleFabMenu()" title="Quick Actions">
+            <i class="bi bi-three-dots-vertical"></i>
+        </button>
+        <div class="fab-options">
+            <button class="fab-option" onclick="scrollToTop()" title="Back to Top">
+                <i class="bi bi-arrow-up"></i>
+            </button>
+            <button class="fab-option" onclick="toggleFullscreen()" title="Toggle Fullscreen">
+                <i class="bi bi-fullscreen"></i>
+            </button>
+            <button class="fab-option" onclick="downloadPDF()" title="Download PDF">
+                <i class="bi bi-file-pdf"></i>
+            </button>
+            <button class="fab-option" onclick="shareDocumentation()" title="Share">
+                <i class="bi bi-share"></i>
+            </button>
+            <button class="fab-option" onclick="openWebApp()" title="Launch SCOPE App">
+                <i class="bi bi-box-arrow-up-right"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script src="scope-docs.js"></script>
+</body>
+</html>
