@@ -2,119 +2,480 @@
 
 {% block title %}Person Tracking - SCOPE{% endblock %}
 
+{% block extra_css %}
+<style>
+    :root {
+        --primary-color: #007bff;
+        --secondary-color: #6c757d;
+        --success-color: #28a745;
+        --warning-color: #ffc107;
+        --danger-color: #dc3545;
+        --info-color: #17a2b8;
+        --light-bg: #fafbfc;
+        --dark-bg: #1a2634;
+    }
+    
+    body {
+        background: var(--light-bg);
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    
+    .enhanced-card {
+        background: #ffffff;
+        border: 1px solid #d0d7de;
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 24px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        transition: all 0.3s ease;
+    }
+    
+    .enhanced-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        border-color: var(--primary-color);
+    }
+    
+    .stat-card-enhanced {
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        border: 1px solid #e1e4e8;
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stat-card-enhanced::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary-color), var(--info-color));
+    }
+    
+    .stat-card-enhanced:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
+    }
+    
+    .stat-value-enhanced {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 8px;
+        line-height: 1;
+    }
+    
+    .radar-enhanced {
+        background: var(--dark-bg);
+        border-radius: 16px;
+        padding: 24px;
+        position: relative;
+        box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3);
+        border: 2px solid #2c3e50;
+    }
+    
+    .target-card {
+        background: #ffffff;
+        border: 1px solid #e1e4e8;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 16px;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+    
+    .target-card.danger {
+        border-left: 4px solid var(--danger-color);
+        background: linear-gradient(135deg, #fff5f5 0%, #ffffff 100%);
+    }
+    
+    .target-card.warning {
+        border-left: 4px solid var(--warning-color);
+        background: linear-gradient(135deg, #fffbf0 0%, #ffffff 100%);
+    }
+    
+    .target-card.success {
+        border-left: 4px solid var(--success-color);
+        background: linear-gradient(135deg, #f0fff4 0%, #ffffff 100%);
+    }
+    
+    .target-card:hover {
+        transform: translateX(4px);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    }
+    
+    .pulse-indicator {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: 8px;
+        animation: pulse 2s infinite;
+    }
+    
+    .pulse-indicator.active {
+        background: var(--success-color);
+    }
+    
+    .pulse-indicator.warning {
+        background: var(--warning-color);
+    }
+    
+    .pulse-indicator.danger {
+        background: var(--danger-color);
+    }
+    
+    @keyframes pulse {
+        0% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.6; transform: scale(1.1); }
+        100% { opacity: 1; transform: scale(1); }
+    }
+    
+    .enhanced-table {
+        background: #ffffff;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+    
+    .enhanced-table thead {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    }
+    
+    .enhanced-table th {
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.875rem;
+        letter-spacing: 0.05em;
+        border: none;
+        padding: 16px;
+    }
+    
+    .enhanced-table td {
+        padding: 12px 16px;
+        border-top: 1px solid #f1f3f4;
+        vertical-align: middle;
+    }
+    
+    .enhanced-table tbody tr:hover {
+        background: #f8f9fa;
+    }
+    
+    .activity-badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .activity-badge.stationary { background: #e3f2fd; color: #1976d2; }
+    .activity-badge.sitting { background: #f3e5f5; color: #7b1fa2; }
+    .activity-badge.walking { background: #fff3e0; color: #f57c00; }
+    .activity-badge.running { background: #ffebee; color: #d32f2f; }
+    
+    .breathing-indicator {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+    
+    .breathing-indicator.normal {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .breathing-indicator.abnormal {
+        background: #f8d7da;
+        color: #721c24;
+        animation: blink 1s infinite;
+    }
+    
+    @keyframes blink {
+        0%, 50% { opacity: 1; }
+        25%, 75% { opacity: 0.5; }
+    }
+    
+    .confidence-bar {
+        height: 6px;
+        background: #e9ecef;
+        border-radius: 3px;
+        overflow: hidden;
+        margin-top: 4px;
+    }
+    
+    .confidence-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--success-color), var(--info-color));
+        transition: width 0.3s ease;
+    }
+    
+    .header-enhanced {
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        border-bottom: 2px solid #e1e4e8;
+        padding: 24px 0;
+        margin-bottom: 32px;
+    }
+    
+    .header-enhanced h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #24292f;
+        margin-bottom: 8px;
+    }
+    
+    .refresh-btn {
+        background: linear-gradient(135deg, var(--primary-color), var(--info-color));
+        border: none;
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .refresh-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">Person Tracking</h1>
-    <div class="btn-toolbar mb-2 mb-md-0">
-        <button class="btn btn-sm btn-outline-primary" onclick="refreshTargets()">
-            <i class="bi bi-arrow-clockwise"></i> Refresh
-        </button>
-    </div>
-</div>
-
-<!-- Live Person Overview -->
-<div class="row mb-4">
-    <div class="col-md-3">
-        <div class="stat-card text-center">
-            <h3 class="text-primary" id="total-people">0</h3>
-            <small>Total People</small>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="stat-card text-center">
-            <h3 class="text-success" id="active-people">0</h3>
-            <small>Active People</small>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="stat-card text-center">
-            <h3 class="text-warning" id="avg-distance">0.0m</h3>
-            <small>Avg Distance</small>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="stat-card text-center">
-            <h3 class="text-info" id="abnormal-count">0</h3>
-            <small>Abnormal Breathing</small>
-        </div>
-    </div>
-</div>
-
-<!-- Radar Visualization -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="stat-card">
-            <h5>Person Positions (Radar View)</h5>
-            <div class="position-relative" style="height: 400px; background: #1a2634; border-radius: 10px;">
-                <canvas id="radar-canvas" width="800" height="400"></canvas>
+<div class="header-enhanced">
+    <div class="container-fluid">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1><i class="bi bi-geo-alt-fill text-primary"></i> Person Tracking System</h1>
+                <p class="text-muted mb-0">Real-time monitoring and analysis of human presence and behavior</p>
+            </div>
+            <div class="d-flex gap-3 align-items-center">
+                <div class="text-end">
+                    <div class="small text-muted">Last Update</div>
+                    <div id="last-update" class="fw-bold">--:--:--</div>
+                </div>
+                <button class="btn refresh-btn" onclick="refreshTargets()">
+                    <i class="bi bi-arrow-clockwise"></i> Refresh Data
+                </button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Current Targets -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="stat-card">
-            <h5>Current People</h5>
-            <div class="row" id="target-cards">
-                <div class="col-12 text-center">No targets detected</div>
+<!-- Enhanced Statistics Overview -->
+<div class="container-fluid mb-4">
+    <div class="row">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stat-card-enhanced">
+                <div class="pulse-indicator active"></div>
+                <div class="stat-value-enhanced text-primary" id="total-people">0</div>
+                <div class="text-muted">Total People Detected</div>
+                <div class="small text-secondary mt-2">
+                    <i class="bi bi-clock"></i> Live scanning
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stat-card-enhanced">
+                <div class="pulse-indicator success"></div>
+                <div class="stat-value-enhanced text-success" id="active-people">0</div>
+                <div class="text-muted">Currently Active</div>
+                <div class="small text-secondary mt-2">
+                    <i class="bi bi-activity"></i> Movement detected
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stat-card-enhanced">
+                <div class="pulse-indicator warning"></div>
+                <div class="stat-value-enhanced text-warning" id="avg-distance">0.0m</div>
+                <div class="text-muted">Average Distance</div>
+                <div class="small text-secondary mt-2">
+                    <i class="bi bi-rulers"></i> From sensor
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stat-card-enhanced">
+                <div class="pulse-indicator danger"></div>
+                <div class="stat-value-enhanced text-danger" id="abnormal-count">0</div>
+                <div class="text-muted">Abnormal Breathing</div>
+                <div class="small text-secondary mt-2">
+                    <i class="bi bi-exclamation-triangle"></i> Health alerts
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Target History -->
-<div class="row">
-    <div class="col-12">
-        <div class="stat-card">
-            <h5>Recent Person Activity</h5>
+<!-- Enhanced Radar Visualization -->
+<div class="container-fluid mb-4">
+    <div class="enhanced-card">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">
+                <i class="bi bi-radar text-primary"></i> Live Person Position Tracking
+            </h5>
+            <div class="d-flex gap-2">
+                <span class="badge bg-success">
+                    <i class="bi bi-circle-fill"></i> Normal
+                </span>
+                <span class="badge bg-warning">
+                    <i class="bi bi-circle-fill"></i> Walking
+                </span>
+                <span class="badge bg-danger">
+                    <i class="bi bi-circle-fill"></i> Running/Alert
+                </span>
+            </div>
+        </div>
+        <div class="radar-enhanced">
+            <canvas id="radar-canvas" width="1200" height="600" style="width: 100%; height: 600px;"></canvas>
+            
+            <!-- Real-time Target Info Overlay -->
+            <div class="position-absolute top-0 start-0 p-3" id="target-overlay">
+                <!-- Target info will be dynamically added here -->
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col-md-3 text-center">
+                <small class="text-muted">Detection Range</small>
+                <div class="fw-bold">0-10 meters</div>
+            </div>
+            <div class="col-md-3 text-center">
+                <small class="text-muted">Angular Coverage</small>
+                <div class="fw-bold">360° rotation</div>
+            </div>
+            <div class="col-md-3 text-center">
+                <small class="text-muted">Update Rate</small>
+                <div class="fw-bold">2 seconds</div>
+            </div>
+            <div class="col-md-3 text-center">
+                <small class="text-muted">Accuracy</small>
+                <div class="fw-bold">±0.1m</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Current Targets -->
+<div class="container-fluid mb-4">
+    <div class="enhanced-card">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">
+                <i class="bi bi-people-fill text-primary"></i> Current Person Details
+            </h5>
+            <div class="text-muted">
+                <i class="bi bi-info-circle"></i> Real-time biometric and behavioral analysis
+            </div>
+        </div>
+        <div id="target-cards">
+            <div class="text-center text-muted py-5">
+                <i class="bi bi-search" style="font-size: 3rem;"></i>
+                <p class="mt-3">No people currently detected</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Comprehensive Activity Timeline -->
+<div class="container-fluid">
+    <div class="enhanced-card">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">
+                <i class="bi bi-clock-history text-primary"></i> Person Activity Timeline
+            </h5>
+            <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-outline-primary" onclick="exportTimeline()">
+                    <i class="bi bi-download"></i> Export
+                </button>
+                <button class="btn btn-sm btn-outline-secondary" onclick="clearTimeline()">
+                    <i class="bi bi-trash"></i> Clear
+                </button>
+            </div>
+        </div>
+        <div class="enhanced-table">
             <div class="table-responsive">
-                <table class="table table-hover">
+                <table class="table table-hover mb-0">
                     <thead>
                         <tr>
-                            <th>Timestamp</th>
-                            <th>Person ID</th>
-                            <th>Distance</th>
-                            <th>Angle</th>
-                            <th>Velocity</th>
-                            <th>Activity</th>
-                            <th>Breathing Rate</th>
-                            <th>Status</th>
+                            <th><i class="bi bi-clock"></i> Timestamp</th>
+                            <th><i class="bi bi-person-badge"></i> Person ID</th>
+                            <th><i class="bi bi-geo-alt"></i> Distance</th>
+                            <th><i class="bi bi-compass"></i> Angle</th>
+                            <th><i class="bi bi-speedometer"></i> Velocity</th>
+                            <th><i class="bi bi-activity"></i> Activity</th>
+                            <th><i class="bi bi-heart-pulse"></i> Breathing</th>
+                            <th><i class="bi bi-shield-check"></i> Status</th>
+                            <th><i class="bi bi-graph-up"></i> Confidence</th>
                         </tr>
                     </thead>
                     <tbody id="target-history">
                         {% for target in targets %}
-                        <tr>
-                            <td>{{ target.event_timestamp|format_datetime }}</td>
-                            <td><code>{{ target.target_id }}</code></td>
-                            <td>{{ "%.2f"|format(target.target_distance) }}m</td>
-                            <td>{{ "%.1f"|format(target.target_angle) }}°</td>
-                            <td>{{ "%.2f"|format(target.target_velocity) }} m/s</td>
+                        <tr class="target-row">
                             <td>
-                                <span class="badge bg-secondary">{{ target.target_activity }}</span>
+                                <div class="small">{{ target.event_timestamp|format_datetime }}</div>
+                            </td>
+                            <td>
+                                <code class="bg-light px-2 py-1 rounded">{{ target.target_id }}</code>
+                            </td>
+                            <td>
+                                <div class="fw-bold">{{ "%.2f"|format(target.target_distance) }}m</div>
+                                <div class="progress confidence-bar mt-1" style="height: 4px;">
+                                    <div class="confidence-fill" style="width: {{ (10 - target.target_distance) * 10 }}%;"></div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="fw-bold">{{ "%.1f"|format(target.target_angle) }}°</div>
+                                <div class="small text-muted">{{ 'N' if target.target_angle >= -22.5 and target.target_angle < 22.5 else 'NE' if target.target_angle >= 22.5 and target.target_angle < 67.5 else 'E' if target.target_angle >= 67.5 and target.target_angle < 112.5 else 'SE' if target.target_angle >= 112.5 and target.target_angle < 157.5 else 'S' if target.target_angle >= 157.5 or target.target_angle < -157.5 else 'SW' if target.target_angle >= -157.5 and target.target_angle < -112.5 else 'W' if target.target_angle >= -112.5 and target.target_angle < -67.5 else 'NW' }}</div>
+                            </td>
+                            <td>
+                                <div class="fw-bold">{{ "%.2f"|format(target.target_velocity) }} m/s</div>
+                                <div class="small text-muted">{{ (target.target_velocity * 3.6)|round(1) }} km/h</div>
+                            </td>
+                            <td>
+                                <span class="activity-badge {{ target.target_activity }}">{{ target.target_activity or 'unknown' }}</span>
                             </td>
                             <td>
                                 {% if target.target_breathing_rate %}
-                                    {{ "%.1f"|format(target.target_breathing_rate) }} bpm
-                                    {% if target.target_abnormal_breathing %}
-                                        <span class="badge bg-danger">⚠️</span>
-                                    {% endif %}
+                                    <div class="breathing-indicator {{ 'abnormal' if target.target_abnormal_breathing else 'normal' }}">
+                                        <i class="bi bi-{{ 'exclamation-triangle' if target.target_abnormal_breathing else 'check-circle' }}"></i>
+                                        {{ "%.1f"|format(target.target_breathing_rate) }} bpm
+                                    </div>
                                 {% else %}
-                                    --
+                                    <span class="text-muted">--</span>
                                 {% endif %}
                             </td>
                             <td>
                                 {% if target.target_abnormal_breathing %}
-                                    <span class="badge bg-danger">Abnormal</span>
+                                    <span class="badge bg-danger">
+                                        <i class="bi bi-exclamation-triangle-fill"></i> Alert
+                                    </span>
                                 {% else %}
-                                    <span class="badge bg-success">Normal</span>
+                                    <span class="badge bg-success">
+                                        <i class="bi bi-check-circle-fill"></i> Normal
+                                    </span>
                                 {% endif %}
+                            </td>
+                            <td>
+                                <div class="fw-bold">{{ (target.target_confidence * 100)|round(0) }}%</div>
+                                <div class="progress confidence-bar">
+                                    <div class="confidence-fill" style="width: {{ target.target_confidence * 100 }}%;"></div>
+                                </div>
                             </td>
                         </tr>
                         {% else %}
                         <tr>
-                            <td colspan="8" class="text-center">No person history found</td>
+                            <td colspan="9" class="text-center py-5">
+                                <i class="bi bi-clock-history" style="font-size: 2rem; color: #6c757d;"></i>
+                                <p class="mt-2 text-muted">No person activity history found</p>
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -134,44 +495,49 @@
     let animationFrame;
 
     function drawRadar(targets) {
-        ctx.clearRect(0, 0, 800, 400);
+        // Clear canvas with new dimensions
+        ctx.clearRect(0, 0, 1200, 600);
         
         // Draw radar background
         ctx.fillStyle = '#1a2634';
-        ctx.fillRect(0, 0, 800, 400);
+        ctx.fillRect(0, 0, 1200, 600);
         
         // Draw grid
         ctx.strokeStyle = '#2c3e50';
         ctx.lineWidth = 1;
         
-        // Distance rings (scaled for 0-10m range)
+        // Distance rings (scaled for 0-10m range with larger canvas)
+        const centerX = 600;
+        const centerY = 300;
+        const maxRadius = 250;
+        
         for (let i = 1; i <= 5; i++) {
             ctx.beginPath();
-            ctx.arc(400, 200, i * 35, 0, Math.PI * 2);
+            ctx.arc(centerX, centerY, i * 50, 0, Math.PI * 2);
             ctx.strokeStyle = '#2c3e50';
             ctx.stroke();
             
             // Distance labels
             ctx.fillStyle = '#6c757d';
-            ctx.font = '10px Arial';
-            ctx.fillText((i * 2) + 'm', 400 + i * 35 + 5, 200);
+            ctx.font = '12px Arial';
+            ctx.fillText((i * 2) + 'm', centerX + i * 50 + 5, centerY);
         }
         
         // Angle lines
         for (let i = 0; i < 360; i += 30) {
             let rad = (i - 90) * Math.PI / 180;
-            let x = 400 + Math.cos(rad) * 175;
-            let y = 200 + Math.sin(rad) * 175;
+            let x = centerX + Math.cos(rad) * maxRadius;
+            let y = centerY + Math.sin(rad) * maxRadius;
             
             ctx.beginPath();
-            ctx.moveTo(400, 200);
+            ctx.moveTo(centerX, centerY);
             ctx.lineTo(x, y);
             ctx.strokeStyle = '#2c3e50';
             ctx.stroke();
             
             // Angle labels
             ctx.fillStyle = '#6c757d';
-            ctx.font = '10px Arial';
+            ctx.font = '12px Arial';
             if (i === 0) ctx.fillText('0°', x + 5, y);
             else if (i === 90) ctx.fillText('90°', x + 5, y);
             else if (i === 180) ctx.fillText('180°', x - 20, y);
@@ -183,17 +549,17 @@
             let distance = target.target_distance || 0;
             let angle = target.target_angle || 0;
             
-            // Scale distance to fit radar (0-10m maps to 0-175px radius)
-            let scaledDistance = Math.min(distance, 10) * 17.5;
+            // Scale distance to fit radar (0-10m maps to 0-250px radius)
+            let scaledDistance = Math.min(distance, 10) * 25;
             
             // Convert polar to cartesian
             let rad = (angle - 90) * Math.PI / 180;
-            let x = 400 + Math.cos(rad) * scaledDistance;
-            let y = 200 + Math.sin(rad) * scaledDistance;
+            let x = centerX + Math.cos(rad) * scaledDistance;
+            let y = centerY + Math.sin(rad) * scaledDistance;
             
-            // Draw target
+            // Draw target with larger size
             ctx.beginPath();
-            ctx.arc(x, y, 8, 0, Math.PI * 2);
+            ctx.arc(x, y, 12, 0, Math.PI * 2);
             
             // Color based on activity
             if (target.target_abnormal_breathing) {
@@ -208,18 +574,18 @@
             
             ctx.fill();
             ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 3;
             ctx.stroke();
             
-            // Target ID
+            // Target ID with larger font
             ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 12px Arial';
-            ctx.fillText(target.target_id, x + 15, y - 10);
+            ctx.font = 'bold 14px Arial';
+            ctx.fillText(target.target_id, x + 20, y - 15);
         });
         
         // Draw center point
         ctx.beginPath();
-        ctx.arc(400, 200, 5, 0, Math.PI * 2);
+        ctx.arc(centerX, centerY, 8, 0, Math.PI * 2);
         ctx.fillStyle = '#ffffff';
         ctx.fill();
     }
@@ -228,6 +594,9 @@
         fetch('/api/live')
             .then(response => response.json())
             .then(data => {
+                // Update last update time
+                document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
+                
                 // Check if no real data is available
                 if (data.no_data || (!data.targets || data.targets.length === 0) && !fake_mode) {
                     // Show "No Data Available" message
@@ -237,21 +606,19 @@
                     document.getElementById('abnormal-count').textContent = '--';
                     
                     // Clear radar visualization
-                    const radarCanvas = document.getElementById('radar-canvas');
                     if (radarCanvas) {
-                        const ctx = radarCanvas.getContext('2d');
-                        ctx.clearRect(0, 0, 800, 400);
+                        ctx.clearRect(0, 0, 1200, 600);
                         ctx.fillStyle = '#1a2634';
-                        ctx.fillRect(0, 0, 800, 400);
+                        ctx.fillRect(0, 0, 1200, 600);
                         ctx.fillStyle = '#666';
-                        ctx.font = '16px Arial';
+                        ctx.font = '20px Arial';
                         ctx.textAlign = 'center';
-                        ctx.fillText('No Real Data Available', 400, 200);
+                        ctx.fillText('No Real Data Available', 600, 300);
                     }
                     
                     // Update target cards
                     const cardsContainer = document.getElementById('target-cards');
-                    cardsContainer.innerHTML = '<div class="col-12 text-center text-muted">No real data available from Raspberry Pi sensors</div>';
+                    cardsContainer.innerHTML = '<div class="text-center text-muted py-5"><i class="bi bi-wifi-off" style="font-size: 3rem;"></i><p class="mt-3">No real data available from Raspberry Pi sensors</p></div>';
                     
                     return;
                 }
@@ -284,47 +651,107 @@
                 // Update radar visualization
                 drawRadar(currentList);
                 
+                // Update target overlay
+                const overlayContainer = document.getElementById('target-overlay');
+                let overlayHtml = '';
+                currentList.forEach(target => {
+                    overlayHtml += `
+                        <div class="small mb-2 bg-white p-2 rounded" style="border-left: 3px solid ${target.target_abnormal_breathing ? '#dc3545' : '#28a745'}; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                            <div class="d-flex align-items-center">
+                                <span class="pulse-indicator ${target.target_abnormal_breathing ? 'danger' : 'success'}"></span>
+                                <strong>${target.target_id}</strong>: ${target.target_distance?.toFixed(1)}m 
+                                <span class="activity-badge ${target.target_activity}">${target.target_activity || 'unknown'}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+                overlayContainer.innerHTML = overlayHtml;
+                
                 // Update target cards
                 const cardsContainer = document.getElementById('target-cards');
                 if (currentList.length === 0) {
-                    cardsContainer.innerHTML = '<div class="col-12 text-center">No people detected</div>';
+                    cardsContainer.innerHTML = '<div class="text-center text-muted py-5"><i class="bi bi-search" style="font-size: 3rem;"></i><p class="mt-3">No people currently detected</p></div>';
                 } else {
-                    let cardsHtml = '';
+                    let cardsHtml = '<div class="row">';
                     currentList.forEach((target, i) => {
+                        const cardClass = target.target_abnormal_breathing ? 'danger' : 
+                                       target.target_activity === 'running' ? 'warning' : 'success';
                         cardsHtml += `
-                            <div class="col-md-4 mb-3">
-                                <div class="card ${target.target_abnormal_breathing ? 'border-danger' : ''}">
-                                    <div class="card-body">
-                                        <h5 class="card-title">Person ${target.target_id}</h5>
-                                        <h6 class="card-subtitle mb-2 text-muted">
-                                            Activity: ${target.target_activity || 'unknown'}
-                                        </h6>
-                                        <p class="card-text">
-                                            <i class="bi bi-geo-alt"></i> Distance: ${target.target_distance?.toFixed(2)}m<br>
-                                            <i class="bi bi-arrow-right"></i> Angle: ${target.target_angle?.toFixed(1)}°<br>
-                                            <i class="bi bi-speedometer2"></i> Velocity: ${target.target_velocity?.toFixed(2)} m/s<br>
-                                            <i class="bi bi-heart-pulse"></i> Breathing: 
-                                            ${target.target_breathing_rate ? target.target_breathing_rate.toFixed(1) + ' bpm' : '--'}
-                                            ${target.target_abnormal_breathing ? ' ⚠️' : ''}
-                                        </p>
-                                        <div class="progress mb-2">
-                                            <div class="progress-bar bg-${target.target_abnormal_breathing ? 'danger' : 'success'}" 
-                                                 style="width: ${target.target_confidence * 100}%">
-                                                Conf: ${(target.target_confidence * 100).toFixed(0)}%
+                            <div class="col-lg-4 col-md-6 mb-3">
+                                <div class="target-card ${cardClass}">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h5 class="mb-0">
+                                            <i class="bi bi-person-circle"></i> Person ${target.target_id}
+                                        </h5>
+                                        <span class="pulse-indicator ${target.target_abnormal_breathing ? 'danger' : 'success'}"></span>
+                                    </div>
+                                    <div class="mb-2">
+                                        <span class="activity-badge ${target.target_activity}">${target.target_activity || 'unknown'}</span>
+                                    </div>
+                                    <div class="row text-sm">
+                                        <div class="col-6">
+                                            <div class="small text-muted">Distance</div>
+                                            <div class="fw-bold">${target.target_distance?.toFixed(2)}m</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="small text-muted">Angle</div>
+                                            <div class="fw-bold">${target.target_angle?.toFixed(1)}°</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="small text-muted">Velocity</div>
+                                            <div class="fw-bold">${target.target_velocity?.toFixed(2)} m/s</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="small text-muted">Breathing</div>
+                                            <div class="fw-bold">
+                                                ${target.target_breathing_rate ? target.target_breathing_rate.toFixed(1) + ' bpm' : '--'}
+                                                ${target.target_abnormal_breathing ? ' ⚠️' : ''}
                                             </div>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2">
+                                        <div class="d-flex justify-content-between">
+                                            <span class="small text-muted">Confidence</span>
+                                            <span class="small fw-bold">${(target.target_confidence * 100).toFixed(0)}%</span>
+                                        </div>
+                                        <div class="confidence-bar">
+                                            <div class="confidence-fill" style="width: ${target.target_confidence * 100}%;"></div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         `;
                     });
+                    cardsHtml += '</div>';
                     cardsContainer.innerHTML = cardsHtml;
                 }
+            })
+            .catch(error => {
+                console.error('Error updating targets:', error);
             });
     }
 
     function refreshTargets() {
         updateTargets();
+    }
+    
+    function exportTimeline() {
+        // Export functionality placeholder
+        alert('Export functionality will be implemented soon');
+    }
+    
+    function clearTimeline() {
+        // Clear functionality placeholder
+        if (confirm('Are you sure you want to clear the timeline?')) {
+            document.getElementById('target-history').innerHTML = `
+                <tr>
+                    <td colspan="9" class="text-center py-5">
+                        <i class="bi bi-clock-history" style="font-size: 2rem; color: #6c757d;"></i>
+                        <p class="mt-2 text-muted">Timeline cleared</p>
+                    </td>
+                </tr>
+            `;
+        }
     }
 
     // Initialize
