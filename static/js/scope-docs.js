@@ -39,6 +39,9 @@ function initializeDocumentation() {
     // Set dark mode by default
     document.body.classList.add('dark-mode');
     
+    // Handle initial hash after a short delay
+    setTimeout(handleInitialHash, 200);
+    
     console.log('SCOPE Documentation initialized successfully');
 }
 
@@ -120,13 +123,54 @@ function updateActiveNavigation(sectionId) {
  * Smooth scroll to section
  */
 function scrollToSection(section) {
-    const navbarHeight = document.querySelector('.navbar').offsetHeight;
-    const sectionTop = section.offsetTop - navbarHeight - 20;
+    // Get current scroll position
+    const currentScroll = window.pageYOffset || document.documentElement.scrollTop;
     
-    window.scrollTo({
-        top: sectionTop,
-        behavior: 'smooth'
-    });
+    // Get navbar height
+    const navbar = document.querySelector('.navbar');
+    const navbarHeight = navbar ? navbar.offsetHeight : 0;
+    const scrollMargin = 10; // Reduced margin for better accuracy
+    
+    // Calculate target position
+    let targetPosition = 0;
+    
+    if (section && typeof section === 'object') {
+        // Section is an element object
+        const rect = section.getBoundingClientRect();
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        targetPosition = rect.top + scrollTop - navbarHeight - scrollMargin;
+    } else if (typeof section === 'string') {
+        // Section is an ID string
+        const targetElement = document.getElementById(section);
+        if (targetElement) {
+            const rect = targetElement.getBoundingClientRect();
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            targetPosition = rect.top + scrollTop - navbarHeight - scrollMargin;
+        }
+    } else {
+        // Fallback to top
+        targetPosition = 0;
+    }
+    
+    // Only scroll if target is different from current position
+    if (Math.abs(targetPosition - currentScroll) > 5) { // Reduced threshold
+        // Smooth scroll with fallback
+        try {
+            window.scrollTo({
+                top: targetPosition,
+                behavior: 'smooth'
+            });
+        } catch (error) {
+            // Fallback for browsers that don't support smooth scrolling
+            window.scrollTo(0, targetPosition);
+        }
+    }
+    
+    // Update URL hash
+    const sectionId = section.id || (typeof section === 'string' ? section : section.getAttribute('id'));
+    if (sectionId) {
+        history.pushState(null, null, `#${sectionId}`);
+    }
 }
 
 /**
@@ -270,7 +314,7 @@ function navigateToSection(sectionId) {
     const section = document.getElementById(sectionId);
     if (section) {
         hideSearchResults();
-        scrollToSection(section);
+        scrollToSection(section); // Pass the element directly
         document.getElementById('searchInput').value = '';
     }
 }
@@ -384,7 +428,7 @@ function initializeTableOfContents() {
         link.textContent = section.textContent.trim();
         link.addEventListener('click', (e) => {
             e.preventDefault();
-            scrollToSection(section);
+            scrollToSection(section); // Pass to element directly
             updateActiveTOC(section.id);
         });
         
@@ -442,15 +486,38 @@ function initializeSmoothScrolling() {
     // Enable smooth scrolling for all anchor links
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function(e) {
-            const targetId = this.getAttribute('href').substring(1);
+            e.preventDefault();
+            
+            const targetId = anchor.getAttribute('href').substring(1);
             const targetElement = document.getElementById(targetId);
             
             if (targetElement) {
-                e.preventDefault();
                 scrollToSection(targetElement);
+                updateActiveNavigation(targetId);
             }
         });
     });
+    
+    // Handle hash changes on page load
+    handleInitialHash();
+}
+
+/**
+ * Handle initial hash on page load
+ */
+function handleInitialHash() {
+    const hash = window.location.hash;
+    if (hash) {
+        const targetId = hash.substring(1);
+        const targetElement = document.getElementById(targetId);
+        if (targetElement) {
+            // Wait for page to fully render before scrolling
+            setTimeout(() => {
+                scrollToSection(targetElement);
+                updateActiveNavigation(targetId);
+            }, 300);
+        }
+    }
 }
 
 /**
