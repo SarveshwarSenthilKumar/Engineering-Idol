@@ -2,4 +2,4 @@
 
 create a webpage with js code and create a summary for each section of code and make it look good and add a chatbot to ask, a documentation page to cover everything including every advantage and everything fof the webapp and also add a feature where you can play with the scoring system
 
-create a feature to create a scenario for fake scenarios and change the value of the sensors to fit that on the fake data page for the website
+
