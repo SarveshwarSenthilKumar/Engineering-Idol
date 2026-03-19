@@ -9,6 +9,15 @@ let activeSection = '';
 
 // Initialize on DOM content loaded
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Bootstrap 5 components
+    if (typeof bootstrap !== 'undefined') {
+        // Initialize all dropdowns
+        const dropdowns = document.querySelectorAll('.dropdown-toggle');
+        dropdowns.forEach(function(dropdown) {
+            new bootstrap.Dropdown(dropdown);
+        });
+    }
+    
     initializeDocumentation();
 });
 

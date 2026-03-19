@@ -11,52 +11,67 @@
 </head>
 <body>
     <!-- Navigation Header -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top shadow-lg">
-        <div class="container-fluid">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-lg">
+        <div class="container">
             <a class="navbar-brand fw-bold" href="#overview">
                 <i class="bi bi-shield-check me-2"></i>SCOPE System
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item"><a class="nav-link" href="#overview">Overview</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#real-world">Real-World Applications</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#architecture">Architecture</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#hardware">Hardware</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#software">Software</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#web-app">Web Application</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#database">Database</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#api">API</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#security">Security</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#monitoring">Real-time</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#analytics">Analytics</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#notifications">Notifications</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#environments">Environments</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#scenarios">Scenarios</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#users">Users</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#data">Data</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#config">Configuration</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#deployment">Deployment</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#integration">Integration</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#performance">Performance</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#advanced">Advanced</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#documentation">Documentation</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#testing">Testing</a></li>
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navigationDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-list-ul me-1"></i>Navigation
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navigationDropdown">
+                            <li><a class="dropdown-item" href="#overview">Overview</a></li>
+                            <li><a class="dropdown-item" href="#real-world">Real-World Applications</a></li>
+                            <li><a class="dropdown-item" href="#architecture">Architecture</a></li>
+                            <li><a class="dropdown-item" href="#hardware">Hardware</a></li>
+                            <li><a class="dropdown-item" href="#software">Software</a></li>
+                            <li><a class="dropdown-item" href="#web-app">Web Application</a></li>
+                            <li><a class="dropdown-item" href="#database">Database</a></li>
+                            <li><a class="dropdown-item" href="#api">API</a></li>
+                            <li><a class="dropdown-item" href="#security">Security</a></li>
+                            <li><a class="dropdown-item" href="#monitoring">Real-time</a></li>
+                            <li><a class="dropdown-item" href="#analytics">Analytics</a></li>
+                            <li><a class="dropdown-item" href="#notifications">Notifications</a></li>
+                            <li><a class="dropdown-item" href="#environments">Environments</a></li>
+                            <li><a class="dropdown-item" href="#scenarios">Scenarios</a></li>
+                            <li><a class="dropdown-item" href="#users">Users</a></li>
+                            <li><a class="dropdown-item" href="#data">Data</a></li>
+                            <li><a class="dropdown-item" href="#config">Configuration</a></li>
+                            <li><a class="dropdown-item" href="#deployment">Deployment</a></li>
+                            <li><a class="dropdown-item" href="#integration">Integration</a></li>
+                            <li><a class="dropdown-item" href="#performance">Performance</a></li>
+                            <li><a class="dropdown-item" href="#advanced">Advanced</a></li>
+                            <li><a class="dropdown-item" href="#documentation">Documentation</a></li>
+                            <li><a class="dropdown-item" href="#testing">Testing</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="actionsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-gear me-1"></i>Actions
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="actionsDropdown">
+                            <li><a class="dropdown-item" href="#" onclick="printDocumentation()"><i class="bi bi-printer me-2"></i>Print Documentation</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="downloadPDF()"><i class="bi bi-file-pdf me-2"></i>Download PDF</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="shareDocumentation()"><i class="bi bi-share me-2"></i>Share</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="http://localhost:5000" target="_blank" onclick="openWebApp()"><i class="bi bi-box-arrow-up-right me-2"></i>Launch SCOPE App</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <div class="input-group" style="width: 250px;">
+                            <input type="text" class="form-control" id="searchInput" placeholder="Search documentation...">
+                            <button class="btn btn-outline-light" type="button">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+                    </li>
                 </ul>
-                <!-- Quick Actions -->
-                <div class="d-flex gap-2">
-                    <button class="btn btn-outline-light btn-sm" onclick="printDocumentation()" title="Print Documentation">
-                        <i class="bi bi-printer"></i>
-                    </button>
-                    <div class="input-group">
-                        <input type="text" class="form-control" id="searchInput" placeholder="Search documentation...">
-                        <button class="btn btn-outline-light" type="button">
-                            <i class="bi bi-search"></i>
-                        </button>
-                    </div>
-                </div>
             </div>
         </div>
     </nav>
