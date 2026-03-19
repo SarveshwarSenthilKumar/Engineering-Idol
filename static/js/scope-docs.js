@@ -862,6 +862,7 @@ window.ScopeDocs = {
     showQuickGuide,
     closeQuickGuide,
     toggleFabMenu,
+    scrollToTop,
     toggleFullscreen,
     downloadPDF,
     shareDocumentation,
@@ -995,6 +996,17 @@ function toggleFabMenu() {
     
     fabMain.classList.toggle('active');
     fabOptions.classList.toggle('show');
+}
+
+/**
+ * Scroll to Top
+ */
+function scrollToTop() {
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+    });
+    showNotification('Scrolled to top', 'info', 1000);
 }
 
 /**
