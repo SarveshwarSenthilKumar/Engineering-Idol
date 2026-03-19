@@ -1110,17 +1110,21 @@ code[class*="language-"] {
 /* Table of Contents */
 .toc {
     background: var(--light-color);
-    padding: 1.5rem;
+    padding: 2rem;
     border-radius: var(--border-radius);
     margin-bottom: 2rem;
+    box-shadow: var(--box-shadow);
     border-left: 4px solid var(--primary-color);
 }
 
 .toc h3 {
     margin-top: 0;
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
     color: var(--primary-color);
-    font-size: 1.25rem;
+    font-size: 1.4rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 .toc ul {
@@ -1130,35 +1134,59 @@ code[class*="language-"] {
 }
 
 .toc li {
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
+    border-bottom: 1px solid #e9ecef;
+    padding-bottom: 0.5rem;
+}
+
+.toc li:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
 }
 
 .toc a {
     color: var(--dark-color);
     text-decoration: none;
-    padding: 0.25rem 0.5rem;
+    padding: 0.75rem 1rem;
+    display: block;
+    font-size: 1.05rem;
+    font-weight: 500;
+    line-height: 1.5;
     border-radius: var(--border-radius);
     transition: all 0.3s ease;
-    display: block;
 }
 
 .toc a:hover {
     background-color: var(--primary-color);
     color: white;
-    transform: translateX(5px);
+    transform: translateX(8px);
+    box-shadow: var(--box-shadow);
 }
 
 .toc a.active {
     background-color: var(--primary-color);
     color: white;
+    font-weight: 600;
 }
 
 .toc-level-2 {
-    padding-left: 1.5rem;
+    padding-left: 2rem;
+    margin-top: 0.5rem;
 }
 
 .toc-level-3 {
-    padding-left: 3rem;
+    padding-left: 3.5rem;
+    margin-top: 0.25rem;
+}
+
+.toc-level-2 li, .toc-level-3 li {
+    border-bottom: 1px solid #f1f3f5;
+    margin-bottom: 0.5rem;
+}
+
+.toc-level-2 a, .toc-level-3 a {
+    font-size: 0.95rem;
+    padding: 0.5rem 0.75rem;
 }
 
 /* Notification Styles */
@@ -1481,6 +1509,34 @@ code[class*="language-"] {
 .dark-mode .toc {
     background-color: #2d3748 !important;
     color: #e9ecef !important;
+    border-left-color: #4299e1 !important;
+}
+
+.dark-mode .toc h3 {
+    color: #4299e1 !important;
+}
+
+.dark-mode .toc a {
+    color: #e9ecef !important;
+    font-weight: 500 !important;
+}
+
+.dark-mode .toc a:hover {
+    background-color: #4299e1 !important;
+    color: white !important;
+}
+
+.dark-mode .toc a.active {
+    background-color: #4299e1 !important;
+    color: white !important;
+}
+
+.dark-mode .toc li {
+    border-bottom-color: #4a5568 !important;
+}
+
+.dark-mode .toc-level-2 li, .dark-mode .toc-level-3 li {
+    border-bottom-color: #4a5568 !important;
 }
 
 .dark-mode .quick-guide-content {
