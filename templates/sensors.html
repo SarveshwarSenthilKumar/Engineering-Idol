@@ -1045,8 +1045,8 @@
         function drawRadar() {
             ctx.clearRect(0, 0, width, height);
             
-            // Draw grid
-            ctx.strokeStyle = '#dee2e6';
+            // Draw grid - made darker
+            ctx.strokeStyle = '#00ff00'; // Changed from #dee2e6 to #00ff00 for darker green
             ctx.lineWidth = 1;
             
             // Distance rings
@@ -1068,9 +1068,9 @@
                 ctx.stroke();
             }
             
-            // Sweep animation
+            // Sweep animation - made faster
             const time = Date.now() / 1000;
-            const sweepAngle = (time * 2) % 360;
+            const sweepAngle = (time * 8) % 360; // Increased from 2 to 8 for faster sweep
             const sweepRad = (sweepAngle - 90) * Math.PI / 180;
             
             ctx.beginPath();
