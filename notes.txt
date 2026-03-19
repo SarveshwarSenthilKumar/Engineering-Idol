@@ -1,14 +1,7 @@
-figure out a way to send a notification or something similar to ping the front office and show the concern score
 
 create an ai summary of each event and store it with time stamps
 
-create a weekly report at the end of the week summarizing the events, show trends, and give preventative tips
-
-get rid of storing certain events that set off the alarm, create the portal, create a teams bot type of thing, detect action and breathing patterns
-
 change the temperature of the summary based on the score, suggest an approach where observe activity or confront
-
-update the rasp pi code to Software UART (bit-banging) using things like pigpio
 
 create a webpage with js code and create a summary for each section of code and make it look good and add a chatbot to ask, a documentation page to cover everything including every advantage and everything fof the webapp and also add a feature where you can play with the scoring system
 
