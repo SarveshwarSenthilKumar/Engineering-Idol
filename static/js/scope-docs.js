@@ -1230,3 +1230,147 @@ if ('serviceWorker' in navigator) {
             });
     });
 }
+
+// ==================== SCORING PLAYGROUND ====================
+
+/**
+ * Initialize scoring playground functionality
+ */
+function initializeScoringPlayground() {
+    // Check if scoring elements exist on the page
+    if (document.getElementById('peopleCount')) {
+        updateScoringDisplay();
+        console.log('Scoring playground initialized');
+    }
+}
+
+/**
+ * Update scoring display based on current slider values
+ */
+function updateScoringDisplay() {
+    const peopleCount = parseInt(document.getElementById('peopleCount').value);
+    const noiseLevel = parseInt(document.getElementById('noiseLevel').value);
+    const aqiLevel = parseInt(document.getElementById('aqiLevel').value);
+    const vocLevel = parseInt(document.getElementById('vocLevel').value);
+    const pm25Level = parseInt(document.getElementById('pm25Level').value);
+    const timeOfDay = document.getElementById('timeOfDay').value;
+    const environmentType = document.getElementById('environmentType').value;
+    
+    // Update display values
+    document.getElementById('peopleValue').textContent = peopleCount;
+    document.getElementById('noiseValue').textContent = noiseLevel;
+    document.getElementById('aqiValue').textContent = aqiLevel;
+    document.getElementById('vocValue').textContent = vocLevel;
+    document.getElementById('pm25Value').textContent = pm25Level;
+    
+    // Calculate individual scores
+    const peopleScore = Math.min(peopleCount * 2, 100);
+    const noiseScore = Math.min((noiseLevel / 120) * 100, 100);
+    const aqiScore = Math.min((aqiLevel / 500) * 100, 100);
+    const vocScore = Math.min((vocLevel / 1000) * 100, 100);
+    const pm25Score = Math.min((pm25Level / 500) * 100, 100);
+    
+    // Calculate weighted total
+    let totalScore = (peopleScore * 0.3) + (noiseScore * 0.2) + (aqiScore * 0.2) + 
+                   (vocScore * 0.15) + (pm25Score * 0.15);
+    
+    // Apply time and environment modifiers
+    if (timeOfDay === 'night') totalScore *= 1.2;
+    if (timeOfDay === 'evening') totalScore *= 1.1;
+    if (environmentType === 'classroom') totalScore *= 0.8;
+    if (environmentType === 'library') totalScore *= 0.7;
+    if (environmentType === 'cafeteria') totalScore *= 1.2;
+    if (environmentType === 'outdoor') totalScore *= 1.1;
+    
+    totalScore = Math.min(Math.round(totalScore), 100);
+    
+    // Update display
+    document.getElementById('threatScore').textContent = totalScore;
+    document.getElementById('peopleScore').textContent = Math.round(peopleScore);
+    document.getElementById('noiseScore').textContent = Math.round(noiseScore);
+    document.getElementById('aqiScore').textContent = Math.round(aqiScore);
+    document.getElementById('vocScore').textContent = Math.round(vocScore);
+    document.getElementById('pm25Score').textContent = Math.round(pm25Score);
+    
+    // Update threat level badge and recommendation
+    const threatBadge = document.getElementById('threatBadge');
+    const recommendationBox = document.getElementById('recommendationBox');
+    const recommendationText = document.getElementById('recommendationText');
+    
+    let status, badgeClass, alertClass, recommendation;
+    
+    if (totalScore < 25) {
+        status = 'LOW';
+        badgeClass = 'bg-success';
+        alertClass = 'alert-success';
+        recommendation = 'Normal monitoring - conditions are within acceptable parameters';
+    } else if (totalScore < 50) {
+        status = 'MODERATE';
+        badgeClass = 'bg-warning';
+        alertClass = 'alert-warning';
+        recommendation = 'Increased attention required - monitor for changes';
+    } else if (totalScore < 75) {
+        status = 'HIGH';
+        badgeClass = 'bg-danger';
+        alertClass = 'alert-danger';
+        recommendation = 'Immediate investigation needed - potential threat detected';
+    } else {
+        status = 'CRITICAL';
+        badgeClass = 'bg-dark';
+        alertClass = 'alert-dark';
+        recommendation = 'Emergency response required - critical threat level';
+    }
+    
+    threatBadge.className = `badge ${badgeClass}`;
+    threatBadge.textContent = status;
+    
+    recommendationBox.className = `alert ${alertClass}`;
+    recommendationText.textContent = recommendation;
+    
+    // Add animation effect
+    const scoreElement = document.getElementById('threatScore');
+    scoreElement.style.transform = 'scale(1.1)';
+    setTimeout(() => {
+        scoreElement.style.transform = 'scale(1)';
+    }, 200);
+}
+
+/**
+ * Reset scoring values to defaults
+ */
+function resetScoringValues() {
+    document.getElementById('peopleCount').value = 5;
+    document.getElementById('noiseLevel').value = 40;
+    document.getElementById('aqiLevel').value = 50;
+    document.getElementById('vocLevel').value = 100;
+    document.getElementById('pm25Level').value = 25;
+    document.getElementById('timeOfDay').value = 'morning';
+    document.getElementById('environmentType').value = 'classroom';
+    
+    updateScoringDisplay();
+    
+    // Visual feedback
+    const resetButton = event.target;
+    resetButton.innerHTML = '<i class="bi bi-check-circle me-2"></i>Reset Complete!';
+    setTimeout(() => {
+        resetButton.innerHTML = '<i class="bi bi-arrow-clockwise me-2"></i>Reset Values';
+    }, 1500);
+}
+
+// Initialize scoring playground when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    // Add scoring playground initialization to the existing initializeDocumentation function
+    if (typeof initializeDocumentation === 'function') {
+        const originalInit = initializeDocumentation;
+        initializeDocumentation = function() {
+            originalInit();
+            initializeScoringPlayground();
+        };
+    } else {
+        initializeScoringPlayground();
+    }
+});
+
+// Make functions globally accessible
+window.updateScoringDisplay = updateScoringDisplay;
+window.resetScoringValues = resetScoringValues;
