@@ -2745,27 +2745,31 @@ class ExternalAPIManager:
                                         <div class="col-md-6">
                                             <div class="card">
                                                 <div class="card-body">
-                                                    <h6><i class="bi bi-speedometer2 me-2"></i>Individual Scores</h6>
+                                                    <h6><i class="bi bi-speedometer2 me-2"></i>Individual Component Scores</h6>
                                                     <div class="small">
                                                         <div class="d-flex justify-content-between mb-1">
-                                                            <span>People:</span>
+                                                            <span>Proximity (15%):</span>
                                                             <span id="peopleScore">10</span>
                                                         </div>
                                                         <div class="d-flex justify-content-between mb-1">
-                                                            <span>Noise:</span>
-                                                            <span id="noiseScore">8</span>
+                                                            <span>Count (15%):</span>
+                                                            <span id="countScore">10</span>
                                                         </div>
                                                         <div class="d-flex justify-content-between mb-1">
-                                                            <span>Air Quality:</span>
-                                                            <span id="aqiScore">3</span>
+                                                            <span>Behavior (30%):</span>
+                                                            <span id="pm25Score">10</span>
                                                         </div>
                                                         <div class="d-flex justify-content-between mb-1">
-                                                            <span>VOC:</span>
-                                                            <span id="vocScore">4</span>
+                                                            <span>Vital Signs (15%):</span>
+                                                            <span id="vocScore">10</span>
+                                                        </div>
+                                                        <div class="d-flex justify-content-between mb-1">
+                                                            <span>Air Quality (15%):</span>
+                                                            <span id="aqiScore">10</span>
                                                         </div>
                                                         <div class="d-flex justify-content-between">
-                                                            <span>PM2.5:</span>
-                                                            <span id="pm25Score">5</span>
+                                                            <span>Noise (10%):</span>
+                                                            <span id="noiseScore">10</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -2778,8 +2782,10 @@ class ExternalAPIManager:
                                             <h6><i class="bi bi-graph-up me-2"></i>Score Calculation</h6>
                                             <div class="alert alert-info">
                                                 <small>
-                                                    <strong>Formula:</strong> Total = (People × 2) + (Noise × 0.5) + (AQI × 0.1) + (VOC × 0.05) + (PM2.5 × 0.1)<br>
-                                                    <strong>Modifiers:</strong> Time of day and environment type affect the final score
+                                                    <strong>Actual SCOPE Formula:</strong><br>
+                                                    Total = (Proximity × 0.15) + (Count × 0.15) + (Behavior × 0.30) + (Vital Signs × 0.15) + (Air Quality × 0.15) + (Noise × 0.10)<br>
+                                                    <strong>Modifiers:</strong> Time of day and environment type affect the final score<br>
+                                                    <strong>Natural Variation:</strong> Small time-based oscillation and random variation added for realism
                                                 </small>
                                             </div>
                                             <div id="recommendationBox" class="alert alert-success">
@@ -2795,21 +2801,25 @@ class ExternalAPIManager:
                                                 <div class="col-6">
                                                     <div class="d-flex align-items-center mb-2">
                                                         <span class="badge bg-success me-2">LOW</span>
-                                                        <small>0-25: Normal conditions</small>
+                                                        <small>0-20: Normal conditions</small>
                                                     </div>
                                                     <div class="d-flex align-items-center mb-2">
-                                                        <span class="badge bg-warning me-2">MODERATE</span>
-                                                        <small>26-50: Monitor closely</small>
+                                                        <span class="badge bg-info me-2">MODERATE</span>
+                                                        <small>21-40: Monitor closely</small>
                                                     </div>
                                                 </div>
                                                 <div class="col-6">
                                                     <div class="d-flex align-items-center mb-2">
+                                                        <span class="badge bg-warning me-2">ELEVATED</span>
+                                                        <small>41-60: Increased attention</small>
+                                                    </div>
+                                                    <div class="d-flex align-items-center mb-2">
                                                         <span class="badge bg-danger me-2">HIGH</span>
-                                                        <small>51-75: Investigate immediately</small>
+                                                        <small>61-80: Investigate immediately</small>
                                                     </div>
                                                     <div class="d-flex align-items-center mb-2">
                                                         <span class="badge bg-dark me-2">CRITICAL</span>
-                                                        <small>76-100: Emergency response</small>
+                                                        <small>81-100: Emergency response</small>
                                                     </div>
                                                 </div>
                                             </div>

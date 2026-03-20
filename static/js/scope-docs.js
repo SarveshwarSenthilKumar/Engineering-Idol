@@ -1263,62 +1263,90 @@ function updateScoringDisplay() {
     document.getElementById('vocValue').textContent = vocLevel;
     document.getElementById('pm25Value').textContent = pm25Level;
     
-    // Calculate individual scores
-    const peopleScore = Math.min(peopleCount * 2, 100);
-    const noiseScore = Math.min((noiseLevel / 120) * 100, 100);
-    const aqiScore = Math.min((aqiLevel / 500) * 100, 100);
-    const vocScore = Math.min((vocLevel / 1000) * 100, 100);
-    const pm25Score = Math.min((pm25Level / 500) * 100, 100);
+    // Calculate individual scores using actual SCOPE algorithm
+    // Proximity score (15% weight) - based on people density
+    const proximityScore = Math.min((peopleCount / 20) * 100, 100);
     
-    // Calculate weighted total
-    let totalScore = (peopleScore * 0.3) + (noiseScore * 0.2) + (aqiScore * 0.2) + 
-                   (vocScore * 0.15) + (pm25Score * 0.15);
+    // Count score (15% weight) - based on absolute people count
+    const countScore = Math.min((peopleCount / 30) * 100, 100);
     
-    // Apply time and environment modifiers
-    if (timeOfDay === 'night') totalScore *= 1.2;
-    if (timeOfDay === 'evening') totalScore *= 1.1;
-    if (environmentType === 'classroom') totalScore *= 0.8;
-    if (environmentType === 'library') totalScore *= 0.7;
-    if (environmentType === 'cafeteria') totalScore *= 1.2;
-    if (environmentType === 'outdoor') totalScore *= 1.1;
+    // Behavior score (30% weight) - influenced by people count and noise
+    const behaviorScore = Math.min(((peopleCount * 2) + (noiseLevel / 2)) / 3, 100);
     
-    totalScore = Math.min(Math.round(totalScore), 100);
+    // Vital signs score (15% weight) - only matters if behavior is high
+    const vitalSignsScore = behaviorScore > 70 ? behaviorScore * 0.8 : Math.random() * 30;
+    
+    // Air quality score (15% weight) - based on AQI and VOC
+    const airQualityScore = Math.min(((aqiLevel / 200) * 50) + ((vocLevel / 500) * 50), 100);
+    
+    // Noise score (10% weight) - scale dB to 0-100 (30-100dB range)
+    const noiseScore = Math.max(0, Math.min(((noiseLevel - 30) / 70) * 100, 100));
+    
+    // Calculate weighted total using actual SCOPE weights
+    let calculatedThreat = (proximityScore * 0.15) + 
+                          (countScore * 0.15) + 
+                          (behaviorScore * 0.30) + 
+                          (vitalSignsScore * 0.15) + 
+                          (airQualityScore * 0.15) + 
+                          (noiseScore * 0.10);
+    
+    // Apply time and environment modifiers (as used in SCOPE)
+    if (timeOfDay === 'night') calculatedThreat *= 1.2;
+    if (timeOfDay === 'evening') calculatedThreat *= 1.1;
+    if (environmentType === 'classroom') calculatedThreat *= 0.8;
+    if (environmentType === 'library') calculatedThreat *= 0.7;
+    if (environmentType === 'cafeteria') calculatedThreat *= 1.2;
+    if (environmentType === 'outdoor') calculatedThreat *= 1.1;
+    
+    // Add natural variation (as in real SCOPE)
+    const currentTime = Date.now() / 1000;
+    const timeFactor = Math.sin(currentTime / 30) * 3; // Slow oscillation
+    const smallVariation = (Math.random() - 0.5) * 2; // Small random variation
+    
+    let totalScore = calculatedThreat + timeFactor + smallVariation;
+    totalScore = Math.max(0, Math.min(100, totalScore)); // Clamp to 0-100 range
     
     // Update display
-    document.getElementById('threatScore').textContent = totalScore;
-    document.getElementById('peopleScore').textContent = Math.round(peopleScore);
+    document.getElementById('threatScore').textContent = Math.round(totalScore);
+    document.getElementById('peopleScore').textContent = Math.round(proximityScore);
+    document.getElementById('countScore').textContent = Math.round(countScore);
     document.getElementById('noiseScore').textContent = Math.round(noiseScore);
-    document.getElementById('aqiScore').textContent = Math.round(aqiScore);
-    document.getElementById('vocScore').textContent = Math.round(vocScore);
-    document.getElementById('pm25Score').textContent = Math.round(pm25Score);
+    document.getElementById('aqiScore').textContent = Math.round(airQualityScore);
+    document.getElementById('vocScore').textContent = Math.round(vitalSignsScore);
+    document.getElementById('pm25Score').textContent = Math.round(behaviorScore);
     
-    // Update threat level badge and recommendation
+    // Update threat level badge and recommendation using actual SCOPE thresholds
     const threatBadge = document.getElementById('threatBadge');
     const recommendationBox = document.getElementById('recommendationBox');
     const recommendationText = document.getElementById('recommendationText');
     
     let status, badgeClass, alertClass, recommendation;
     
-    if (totalScore < 25) {
+    if (totalScore > 80) {
+        status = 'CRITICAL';
+        badgeClass = 'bg-dark';
+        alertClass = 'alert-dark';
+        recommendation = 'Emergency response required - critical threat level detected';
+    } else if (totalScore > 60) {
+        status = 'HIGH';
+        badgeClass = 'bg-danger';
+        alertClass = 'alert-danger';
+        recommendation = 'Immediate investigation needed - high threat level';
+    } else if (totalScore > 40) {
+        status = 'ELEVATED';
+        badgeClass = 'bg-warning';
+        alertClass = 'alert-warning';
+        recommendation = 'Increased attention required - elevated threat conditions';
+    } else if (totalScore > 20) {
+        status = 'MODERATE';
+        badgeClass = 'bg-info';
+        alertClass = 'alert-info';
+        recommendation = 'Monitor closely - moderate threat level detected';
+    } else {
         status = 'LOW';
         badgeClass = 'bg-success';
         alertClass = 'alert-success';
         recommendation = 'Normal monitoring - conditions are within acceptable parameters';
-    } else if (totalScore < 50) {
-        status = 'MODERATE';
-        badgeClass = 'bg-warning';
-        alertClass = 'alert-warning';
-        recommendation = 'Increased attention required - monitor for changes';
-    } else if (totalScore < 75) {
-        status = 'HIGH';
-        badgeClass = 'bg-danger';
-        alertClass = 'alert-danger';
-        recommendation = 'Immediate investigation needed - potential threat detected';
-    } else {
-        status = 'CRITICAL';
-        badgeClass = 'bg-dark';
-        alertClass = 'alert-dark';
-        recommendation = 'Emergency response required - critical threat level';
     }
     
     threatBadge.className = `badge ${badgeClass}`;
