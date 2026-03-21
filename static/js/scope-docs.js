@@ -1248,122 +1248,114 @@ function initializeScoringPlayground() {
  * Update scoring display based on current slider values
  */
 function updateScoringDisplay() {
-    const peopleCount = parseInt(document.getElementById('peopleCount').value);
-    const noiseLevel = parseInt(document.getElementById('noiseLevel').value);
-    const aqiLevel = parseInt(document.getElementById('aqiLevel').value);
-    const vocLevel = parseInt(document.getElementById('vocLevel').value);
-    const pm25Level = parseInt(document.getElementById('pm25Level').value);
-    const timeOfDay = document.getElementById('timeOfDay').value;
-    const environmentType = document.getElementById('environmentType').value;
+    // Get DOM elements with null checks
+    const peopleCountEl = document.getElementById('peopleCount');
+    const noiseLevelEl = document.getElementById('noiseLevel');
+    const aqiLevelEl = document.getElementById('aqiLevel');
+    const vocLevelEl = document.getElementById('vocLevel');
+    const pm25LevelEl = document.getElementById('pm25Level');
+    const peopleValueEl = document.getElementById('peopleValue');
+    const noiseValueEl = document.getElementById('noiseValue');
+    const aqiValueEl = document.getElementById('aqiValue');
+    const vocValueEl = document.getElementById('vocValue');
+    const pm25ValueEl = document.getElementById('pm25Value');
+    const threatScoreEl = document.getElementById('threatScore');
+    const peopleScoreEl = document.getElementById('peopleScore');
+    const pm25ScoreEl = document.getElementById('pm25Score');
+    const vocScoreEl = document.getElementById('vocScore');
+    const aqiScoreEl = document.getElementById('aqiScore');
+    const noiseScoreEl = document.getElementById('noiseScore');
+    const threatBadgeEl = document.getElementById('threatBadge');
+    const recommendationTextEl = document.getElementById('recommendationText');
+    const recommendationBoxEl = document.getElementById('recommendationBox');
+    
+    // Check if all elements exist before proceeding
+    if (!peopleCountEl || !noiseLevelEl || !aqiLevelEl || !vocLevelEl || !pm25LevelEl ||
+        !peopleValueEl || !noiseValueEl || !aqiValueEl || !vocValueEl || !pm25ValueEl ||
+        !threatScoreEl || !peopleScoreEl || !pm25ScoreEl || !vocScoreEl || !aqiScoreEl || !noiseScoreEl ||
+        !threatBadgeEl || !recommendationTextEl || !recommendationBoxEl) {
+        console.error('Some DOM elements are missing');
+        return;
+    }
+    
+    // Get input values
+    const peopleCount = parseInt(peopleCountEl.value);
+    const noiseLevel = parseInt(noiseLevelEl.value);
+    const aqiLevel = parseInt(aqiLevelEl.value);
+    const vocLevel = parseInt(vocLevelEl.value);
+    const pm25Level = parseInt(pm25LevelEl.value);
     
     // Update display values
-    document.getElementById('peopleValue').textContent = peopleCount;
-    document.getElementById('noiseValue').textContent = noiseLevel;
-    document.getElementById('aqiValue').textContent = aqiLevel;
-    document.getElementById('vocValue').textContent = vocLevel;
-    document.getElementById('pm25Value').textContent = pm25Level;
+    peopleValueEl.textContent = peopleCount;
+    noiseValueEl.textContent = noiseLevel;
+    aqiValueEl.textContent = aqiLevel;
+    vocValueEl.textContent = vocLevel;
+    pm25ValueEl.textContent = pm25Level;
     
-    // Calculate individual component scores using exact rasppi.py logic
-    // Count threat (15% weight) - based on number of targets
+    // Simple scoring calculator - no time factors or environment modifiers
+    // Calculate individual component scores (0-100 range)
     const countScore = Math.min((peopleCount / 15) * 100, 100);
-    
-    // Behavior threat (45% weight) - includes proximity and activity patterns
-    // Based on people count and noise level
     const behaviorScore = Math.min(((peopleCount * 3) + (noiseLevel / 1)) / 2, 100);
-    
-    // Vital signs threat (15% weight) - dependent on behavior score
-    const vitalSignsScore = behaviorScore > 40 ? Math.min(behaviorScore * 1.5, 100) : Math.min(peopleCount * 4, 50);
-    
-    // Air quality threat (15% weight) - combined AQI, VOC, PM2.5
+    const vitalSignsScore = Math.min(peopleCount * 4, 100);
     const aqiComponent = Math.min((aqiLevel / 80) * 100, 100);
     const vocComponent = Math.min((vocLevel / 200) * 100, 100);
     const pm25Component = Math.min((pm25Level / 80) * 100, 100);
     const airQualityScore = Math.min((aqiComponent * 0.4) + (vocComponent * 0.3) + (pm25Component * 0.3), 100);
-    
-    // Noise threat (10% weight) - based on sound level
     const noiseScore = Math.min((noiseLevel / 80) * 100, 100);
     
-    // Calculate base weighted threat using exact rasppi.py weights
-    let calculatedThreat = (countScore * 0.15) + 
-                          (behaviorScore * 0.45) + 
-                          (vitalSignsScore * 0.15) + 
-                          (airQualityScore * 0.15) + 
-                          (noiseScore * 0.10);
+    // Calculate weighted total using SCOPE weights
+    const totalScore = (countScore * 0.15) + 
+                       (behaviorScore * 0.45) + 
+                       (vitalSignsScore * 0.15) + 
+                       (airQualityScore * 0.15) + 
+                       (noiseScore * 0.10);
     
-    // Apply time modifiers (from rasppi.py temporal logic)
-    if (timeOfDay === 'night') calculatedThreat *= 1.2;
-    if (timeOfDay === 'evening') calculatedThreat *= 1.1;
+    // Clamp to 0-100 range
+    const finalScore = Math.max(0, Math.min(100, totalScore));
     
-    // Apply environment modifiers
-    if (environmentType === 'classroom') calculatedThreat *= 0.8;
-    if (environmentType === 'library') calculatedThreat *= 0.7;
-    if (environmentType === 'cafeteria') calculatedThreat *= 1.2;
-    if (environmentType === 'outdoor') calculatedThreat *= 1.1;
+    // Update display elements
+    threatScoreEl.textContent = Math.round(finalScore);
+    peopleScoreEl.textContent = Math.round(countScore);
+    pm25ScoreEl.textContent = Math.round(behaviorScore);
+    vocScoreEl.textContent = Math.round(vitalSignsScore);
+    aqiScoreEl.textContent = Math.round(airQualityScore);
+    noiseScoreEl.textContent = Math.round(noiseScore);
     
-    // Add natural variation (time-based oscillation + random variation)
-    const currentTime = Date.now() / 1000;
-    const timeFactor = Math.sin(currentTime / 30) * 3; // 30-second oscillation
-    const smallVariation = (Math.random() - 0.5) * 2; // ±1 variation
-    
-    let totalScore = calculatedThreat + timeFactor + smallVariation;
-    totalScore = Math.max(0, Math.min(100, totalScore)); // Clamp to 0-100 range
-    
-    // DEBUG: Log calculations for verification
-    console.log('SCOPE Scoring Calculation:', {
-        inputs: { peopleCount, noiseLevel, aqiLevel, vocLevel, pm25Level, timeOfDay, environmentType },
-        components: { countScore, behaviorScore, vitalSignsScore, airQualityScore, noiseScore },
-        calculatedThreat,
-        modifiers: { timeFactor, smallVariation },
-        finalScore: totalScore
-    });
-    
-    // Update display elements with correct mapping
-    document.getElementById('threatScore').textContent = Math.round(totalScore);
-    document.getElementById('peopleScore').textContent = Math.round(countScore); // Count component
-    document.getElementById('pm25Score').textContent = Math.round(behaviorScore); // Behavior component
-    document.getElementById('vocScore').textContent = Math.round(vitalSignsScore); // Vital Signs component
-    document.getElementById('aqiScore').textContent = Math.round(airQualityScore); // Air Quality component
-    document.getElementById('noiseScore').textContent = Math.round(noiseScore); // Noise component
-    
-    // Update threat level badge and recommendation using actual SCOPE thresholds
-    const threatBadge = document.getElementById('threatBadge');
-    const recommendationBox = document.getElementById('recommendationBox');
-    const recommendationText = document.getElementById('recommendationText');
-    
+    // Update threat level and recommendation
     let status, badgeClass, alertClass, recommendation;
     
-    if (totalScore > 80) {
+    if (finalScore > 80) {
         status = 'CRITICAL';
         badgeClass = 'bg-dark';
-        alertClass = 'alert-dark';
-        recommendation = 'Emergency response required - critical threat level detected';
-    } else if (totalScore > 60) {
+        alertClass = 'alert-danger';
+        recommendation = 'Emergency response required';
+    } else if (finalScore > 60) {
         status = 'HIGH';
         badgeClass = 'bg-danger';
-        alertClass = 'alert-danger';
-        recommendation = 'Immediate investigation needed - high threat level';
-    } else if (totalScore > 40) {
+        alertClass = 'alert-warning';
+        recommendation = 'Investigate immediately';
+    } else if (finalScore > 40) {
         status = 'ELEVATED';
         badgeClass = 'bg-warning';
         alertClass = 'alert-warning';
-        recommendation = 'Increased attention required - elevated threat conditions';
-    } else if (totalScore > 20) {
+        recommendation = 'Increased attention required';
+    } else if (finalScore > 20) {
         status = 'MODERATE';
         badgeClass = 'bg-info';
         alertClass = 'alert-info';
-        recommendation = 'Monitor closely - moderate threat level detected';
+        recommendation = 'Monitor closely';
     } else {
         status = 'LOW';
         badgeClass = 'bg-success';
         alertClass = 'alert-success';
-        recommendation = 'Normal monitoring - conditions are within acceptable parameters';
+        recommendation = 'Normal monitoring';
     }
     
-    threatBadge.className = `badge ${badgeClass}`;
-    threatBadge.textContent = status;
-    
-    recommendationBox.className = `alert ${alertClass}`;
-    recommendationText.textContent = recommendation;
+    // Update UI elements
+    threatBadgeEl.textContent = status;
+    threatBadgeEl.className = `badge ${badgeClass}`;
+    recommendationBoxEl.className = `alert ${alertClass}`;
+    recommendationTextEl.textContent = recommendation;
     
     // Add animation effect
     const scoreElement = document.getElementById('threatScore');

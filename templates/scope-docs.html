@@ -2661,17 +2661,17 @@ class ExternalAPIManager:
 
                 <!-- Scoring Playground -->
                 <section id="scoring-playground" class="content-section">
-                    <h2 class="section-title">🎯 Threat Scoring Playground</h2>
-                    <p class="lead">Interactive tool to understand and experiment with SCOPE's threat scoring algorithms</p>
+                    <h2 class="section-title">🎯 Threat Scoring Calculator</h2>
+                    <p class="lead">Simple calculator to understand SCOPE's threat scoring components</p>
                     
                     <div class="card mb-4">
                         <div class="card-header bg-primary text-white">
-                            <h5 class="mb-0"><i class="bi bi-sliders me-2"></i>Scoring Laboratory</h5>
+                            <h5 class="mb-0"><i class="bi bi-calculator me-2"></i>Scoring Calculator</h5>
                         </div>
                         <div class="card-body">
                             <div class="row">
-                                <div class="col-lg-4">
-                                    <h6><i class="bi bi-gear me-2"></i>Input Parameters</h6>
+                                <div class="col-lg-6">
+                                    <h6><i class="bi bi-sliders me-2"></i>Input Parameters</h6>
                                     
                                     <div class="mb-3">
                                         <label for="peopleCount" class="form-label">People Count</label>
@@ -2703,33 +2703,12 @@ class ExternalAPIManager:
                                         <small class="text-muted">Current: <span id="pm25Value">25</span> μg/m³</small>
                                     </div>
 
-                                    <div class="mb-3">
-                                        <label for="timeOfDay" class="form-label">Time of Day</label>
-                                        <select class="form-select" id="timeOfDay" onchange="updateScoringDisplay()">
-                                            <option value="morning">Morning (6AM-12PM)</option>
-                                            <option value="afternoon">Afternoon (12PM-6PM)</option>
-                                            <option value="evening">Evening (6PM-10PM)</option>
-                                            <option value="night">Night (10PM-6AM)</option>
-                                        </select>
-                                    </div>
-
-                                    <div class="mb-3">
-                                        <label for="environmentType" class="form-label">Environment Type</label>
-                                        <select class="form-select" id="environmentType" onchange="updateScoringDisplay()">
-                                            <option value="classroom">Classroom</option>
-                                            <option value="hallway">Hallway</option>
-                                            <option value="cafeteria">Cafeteria</option>
-                                            <option value="library">Library</option>
-                                            <option value="outdoor">Outdoor</option>
-                                        </select>
-                                    </div>
-
                                     <button class="btn btn-outline-primary w-100" onclick="resetScoringValues()">
                                         <i class="bi bi-arrow-clockwise me-2"></i>Reset Values
                                     </button>
                                 </div>
 
-                                <div class="col-lg-8">
+                                <div class="col-lg-6">
                                     <div class="row">
                                         <div class="col-md-6">
                                             <div class="card bg-light">
@@ -2742,10 +2721,11 @@ class ExternalAPIManager:
                                                 </div>
                                             </div>
                                         </div>
+                                        
                                         <div class="col-md-6">
                                             <div class="card">
                                                 <div class="card-body">
-                                                    <h6><i class="bi bi-speedometer2 me-2"></i>Individual Component Scores</h6>
+                                                    <h6><i class="bi bi-speedometer2 me-2"></i>Component Scores</h6>
                                                     <div class="small">
                                                         <div class="d-flex justify-content-between mb-1">
                                                             <span>Count (15%):</span>
@@ -2775,50 +2755,16 @@ class ExternalAPIManager:
 
                                     <div class="card mt-3">
                                         <div class="card-body">
-                                            <h6><i class="bi bi-graph-up me-2"></i>Score Calculation</h6>
+                                            <h6><i class="bi bi-info-circle me-2"></i>Score Formula</h6>
                                             <div class="alert alert-info">
                                                 <small>
-                                                    <strong>Actual SCOPE Formula:</strong><br>
+                                                    <strong>SCOPE Formula:</strong><br>
                                                     Total = (Count × 0.15) + (Behavior × 0.45) + (Vital Signs × 0.15) + (Air Quality × 0.15) + (Noise × 0.10)<br>
-                                                    <strong>Key Insight:</strong> Behavior score includes proximity analysis (45% total weight)<br>
-                                                    <strong>Modifiers:</strong> Time of day and environment type affect final score<br>
-                                                    <strong>Natural Variation:</strong> Small time-based oscillation and random variation added for realism
+                                                    <strong>Components:</strong> Each scored 0-100, then weighted by importance
                                                 </small>
                                             </div>
                                             <div id="recommendationBox" class="alert alert-success">
                                                 <strong>Recommendation:</strong> <span id="recommendationText">Normal monitoring</span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="card mt-3">
-                                        <div class="card-body">
-                                            <h6><i class="bi bi-info-circle me-2"></i>Understanding Threat Levels</h6>
-                                            <div class="row">
-                                                <div class="col-6">
-                                                    <div class="d-flex align-items-center mb-2">
-                                                        <span class="badge bg-success me-2">LOW</span>
-                                                        <small>0-20: Normal conditions</small>
-                                                    </div>
-                                                    <div class="d-flex align-items-center mb-2">
-                                                        <span class="badge bg-info me-2">MODERATE</span>
-                                                        <small>21-40: Monitor closely</small>
-                                                    </div>
-                                                </div>
-                                                <div class="col-6">
-                                                    <div class="d-flex align-items-center mb-2">
-                                                        <span class="badge bg-warning me-2">ELEVATED</span>
-                                                        <small>41-60: Increased attention</small>
-                                                    </div>
-                                                    <div class="d-flex align-items-center mb-2">
-                                                        <span class="badge bg-danger me-2">HIGH</span>
-                                                        <small>61-80: Investigate immediately</small>
-                                                    </div>
-                                                    <div class="d-flex align-items-center mb-2">
-                                                        <span class="badge bg-dark me-2">CRITICAL</span>
-                                                        <small>81-100: Emergency response</small>
-                                                    </div>
-                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -2829,22 +2775,22 @@ class ExternalAPIManager:
 
                     <div class="card">
                         <div class="card-header">
-                            <h6 class="mb-0"><i class="bi bi-shield-check me-2"></i>How Scoring Works in SCOPE</h6>
+                            <h6 class="mb-0"><i class="bi bi-shield-check me-2"></i>How SCOPE Scoring Works</h6>
                         </div>
                         <div class="card-body">
-                            <p>The SCOPE threat scoring system uses a sophisticated algorithm that analyzes multiple sensor inputs to calculate an overall threat level. This playground allows you to experiment with different parameters to understand how they contribute to the final score.</p>
+                            <p>The SCOPE threat scoring system analyzes multiple sensor inputs to calculate an overall threat level. Each component is scored 0-100, then weighted by importance to determine the final threat assessment.</p>
                             
                             <h6>Key Components:</h6>
                             <ul>
-                                <li><strong>People Detection:</strong> Uses radar sensors to count individuals and track movement patterns</li>
-                                <li><strong>Noise Monitoring:</strong> Measures sound levels in decibels to detect unusual activity</li>
-                                <li><strong>Air Quality:</strong> Monitors AQI, VOC, and PM2.5 levels for environmental threats</li>
-                                <li><strong>Temporal Analysis:</strong> Considers time of day for context-aware scoring</li>
-                                <li><strong>Environmental Context:</strong> Adjusts scoring based on location type</li>
+                                <li><strong>Count Detection:</strong> Number of people detected in the area (15% weight)</li>
+                                <li><strong>Behavior Analysis:</strong> Activity patterns including movement and noise levels (45% weight)</li>
+                                <li><strong>Vital Signs:</strong> Abnormal breathing patterns or medical emergencies (15% weight)</li>
+                                <li><strong>Air Quality:</strong> Combined AQI, VOC, and PM2.5 measurements (15% weight)</li>
+                                <li><strong>Noise Monitoring:</strong> Sound pressure levels and acoustic events (10% weight)</li>
                             </ul>
 
                             <div class="alert alert-warning">
-                                <strong>Note:</strong> This is a simplified version of the actual SCOPE scoring algorithm. The production system includes additional factors such as behavior analysis, vital signs detection, historical patterns, and AI-powered anomaly detection.
+                                <strong>Note:</strong> This is a simplified version of the actual SCOPE scoring algorithm. The production system includes additional factors such as temporal trends, persistence analysis, and AI-powered anomaly detection.
                             </div>
                         </div>
                     </div>
