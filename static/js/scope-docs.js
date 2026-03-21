@@ -1263,57 +1263,67 @@ function updateScoringDisplay() {
     document.getElementById('vocValue').textContent = vocLevel;
     document.getElementById('pm25Value').textContent = pm25Level;
     
-    // Calculate individual scores using actual SCOPE algorithm
-    // Proximity score (15% weight) - based on people density
-    const proximityScore = Math.min((peopleCount / 20) * 100, 100);
+    // Calculate individual component scores using exact rasppi.py logic
+    // Count threat (15% weight) - based on number of targets
+    const countScore = Math.min((peopleCount / 15) * 100, 100);
     
-    // Count score (15% weight) - based on absolute people count
-    const countScore = Math.min((peopleCount / 30) * 100, 100);
+    // Behavior threat (45% weight) - includes proximity and activity patterns
+    // Based on people count and noise level
+    const behaviorScore = Math.min(((peopleCount * 3) + (noiseLevel / 1)) / 2, 100);
     
-    // Behavior score (30% weight) - influenced by people count and noise
-    const behaviorScore = Math.min(((peopleCount * 2) + (noiseLevel / 2)) / 3, 100);
+    // Vital signs threat (15% weight) - dependent on behavior score
+    const vitalSignsScore = behaviorScore > 40 ? Math.min(behaviorScore * 1.5, 100) : Math.min(peopleCount * 4, 50);
     
-    // Vital signs score (15% weight) - only matters if behavior is high
-    const vitalSignsScore = behaviorScore > 70 ? behaviorScore * 0.8 : Math.random() * 30;
+    // Air quality threat (15% weight) - combined AQI, VOC, PM2.5
+    const aqiComponent = Math.min((aqiLevel / 80) * 100, 100);
+    const vocComponent = Math.min((vocLevel / 200) * 100, 100);
+    const pm25Component = Math.min((pm25Level / 80) * 100, 100);
+    const airQualityScore = Math.min((aqiComponent * 0.4) + (vocComponent * 0.3) + (pm25Component * 0.3), 100);
     
-    // Air quality score (15% weight) - based on AQI and VOC
-    const airQualityScore = Math.min(((aqiLevel / 200) * 50) + ((vocLevel / 500) * 50), 100);
+    // Noise threat (10% weight) - based on sound level
+    const noiseScore = Math.min((noiseLevel / 80) * 100, 100);
     
-    // Noise score (10% weight) - scale dB to 0-100 (30-100dB range)
-    const noiseScore = Math.max(0, Math.min(((noiseLevel - 30) / 70) * 100, 100));
-    
-    // Calculate weighted total using actual SCOPE weights
-    let calculatedThreat = (proximityScore * 0.15) + 
-                          (countScore * 0.15) + 
-                          (behaviorScore * 0.30) + 
+    // Calculate base weighted threat using exact rasppi.py weights
+    let calculatedThreat = (countScore * 0.15) + 
+                          (behaviorScore * 0.45) + 
                           (vitalSignsScore * 0.15) + 
                           (airQualityScore * 0.15) + 
                           (noiseScore * 0.10);
     
-    // Apply time and environment modifiers (as used in SCOPE)
+    // Apply time modifiers (from rasppi.py temporal logic)
     if (timeOfDay === 'night') calculatedThreat *= 1.2;
     if (timeOfDay === 'evening') calculatedThreat *= 1.1;
+    
+    // Apply environment modifiers
     if (environmentType === 'classroom') calculatedThreat *= 0.8;
     if (environmentType === 'library') calculatedThreat *= 0.7;
     if (environmentType === 'cafeteria') calculatedThreat *= 1.2;
     if (environmentType === 'outdoor') calculatedThreat *= 1.1;
     
-    // Add natural variation (as in real SCOPE)
+    // Add natural variation (time-based oscillation + random variation)
     const currentTime = Date.now() / 1000;
-    const timeFactor = Math.sin(currentTime / 30) * 3; // Slow oscillation
-    const smallVariation = (Math.random() - 0.5) * 2; // Small random variation
+    const timeFactor = Math.sin(currentTime / 30) * 3; // 30-second oscillation
+    const smallVariation = (Math.random() - 0.5) * 2; // ±1 variation
     
     let totalScore = calculatedThreat + timeFactor + smallVariation;
     totalScore = Math.max(0, Math.min(100, totalScore)); // Clamp to 0-100 range
     
-    // Update display
+    // DEBUG: Log calculations for verification
+    console.log('SCOPE Scoring Calculation:', {
+        inputs: { peopleCount, noiseLevel, aqiLevel, vocLevel, pm25Level, timeOfDay, environmentType },
+        components: { countScore, behaviorScore, vitalSignsScore, airQualityScore, noiseScore },
+        calculatedThreat,
+        modifiers: { timeFactor, smallVariation },
+        finalScore: totalScore
+    });
+    
+    // Update display elements with correct mapping
     document.getElementById('threatScore').textContent = Math.round(totalScore);
-    document.getElementById('peopleScore').textContent = Math.round(proximityScore);
-    document.getElementById('countScore').textContent = Math.round(countScore);
-    document.getElementById('noiseScore').textContent = Math.round(noiseScore);
-    document.getElementById('aqiScore').textContent = Math.round(airQualityScore);
-    document.getElementById('vocScore').textContent = Math.round(vitalSignsScore);
-    document.getElementById('pm25Score').textContent = Math.round(behaviorScore);
+    document.getElementById('peopleScore').textContent = Math.round(countScore); // Count component
+    document.getElementById('pm25Score').textContent = Math.round(behaviorScore); // Behavior component
+    document.getElementById('vocScore').textContent = Math.round(vitalSignsScore); // Vital Signs component
+    document.getElementById('aqiScore').textContent = Math.round(airQualityScore); // Air Quality component
+    document.getElementById('noiseScore').textContent = Math.round(noiseScore); // Noise component
     
     // Update threat level badge and recommendation using actual SCOPE thresholds
     const threatBadge = document.getElementById('threatBadge');
