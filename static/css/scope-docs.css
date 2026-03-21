@@ -1152,7 +1152,7 @@ html {
 
 .form-label {
     font-weight: 600;
-    color: var(--dark-color);
+    color: whitesmoke;
 }
 
 /* Custom Animations */
@@ -1491,6 +1491,10 @@ code[class*="language-"] {
     font-family: var(--font-family-mono);
     font-size: 0.875rem;
     line-height: 1.5;
+}
+
+.text-muted {
+    color: rgba(255, 255, 255, 0.7) !important;
 }
 
 /* Search Results */
