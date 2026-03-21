@@ -1942,9 +1942,50 @@ code[class*="language-"] {
     border-bottom-color: #4a5568 !important;
 }
 
-.dark-mode .quick-guide-content {
+body.dark-mode .quick-guide-modal {
+    background: rgba(0, 0, 0, 0.7) !important;
+}
+
+body.dark-mode .quick-guide-content {
     background-color: #2d3748 !important;
     color: #e9ecef !important;
+    border: 1px solid #4a5568 !important;
+}
+
+body.dark-mode .quick-guide-header {
+    border-bottom-color: #4a5568 !important;
+}
+
+body.dark-mode .quick-guide-title {
+    color: #64b5f6 !important;
+}
+
+body.dark-mode .guide-section h4 {
+    color: #64b5f6 !important;
+}
+
+body.dark-mode .guide-section li {
+    border-bottom-color: #4a5568 !important;
+    color: #e9ecef !important;
+}
+
+body.dark-mode .guide-section li:hover {
+    background: #1e293b !important;
+}
+
+body.dark-mode .guide-section code {
+    background: #64b5f6 !important;
+    color: white !important;
+}
+
+body.dark-mode .close-btn {
+    color: #adb5bd !important;
+    border-color: #4a5568 !important;
+}
+
+body.dark-mode .close-btn:hover {
+    background: #dc3545 !important;
+    color: white !important;
 }
 
 /* Dark Mode Notifications */
