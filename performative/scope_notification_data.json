@@ -1,0 +1,45 @@
+{
+  "timestamp": "2026-03-22 13:49:42",
+  "system_status": "ACTIVE",
+  "threat_level": "ELEVATED",
+  "threat_score": 68.4,
+  "location": "Washroom Area B - Stall 3",
+  "event_type": "VAPING DETECTED",
+  "confidence": 94.2,
+  "people_count": 2,
+  "duration": "00:03:47",
+  "air_quality": {
+    "aqi": 277.1,
+    "voc_ppm": 186.3,
+    "pm25": 62.8,
+    "status": "HAZARDOUS"
+  },
+  "sound_level": {
+    "db": 73.2,
+    "peak": 89.1,
+    "baseline": 45.3,
+    "status": "LOUD"
+  },
+  "radar_data": {
+    "targets": 2,
+    "activity": "IRREGULAR_MOVEMENT",
+    "proximity": "CLOSE",
+    "breathing_abnormal": true
+  },
+  "response_actions": [
+    "\ud83d\udea8 Immediate security response required",
+    "\ud83d\udccd Location: Washroom Area B - Stall 3",
+    "\u23f0 Duration: 3 minutes 47 seconds",
+    "\ud83d\udc65 Personnel count: 2 individuals",
+    "\ud83d\udca8 Air quality: HAZARDOUS (AQI 277)",
+    "\ud83d\udd0a Sound level: ELEVATED (73.2 dB peak)",
+    "\ud83d\udce1 Confidence: 94.2%"
+  ],
+  "system_info": {
+    "version": "SCOPE v2.0.0",
+    "sensors_online": 12,
+    "last_calibration": "2026-03-22 13:15:00",
+    "data_retention": "30 days",
+    "alert_level": "HIGH_PRIORITY"
+  }
+}
