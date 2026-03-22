@@ -7,6 +7,7 @@ Generates realistic sensor data and events for testing/demo purposes
 import sqlite3
 import random
 import time
+import math
 from datetime import datetime, timedelta
 import numpy as np
 import json
@@ -541,7 +542,7 @@ class FakeDataGenerator:
             # Calculate derived metrics
             physical_risk = (components['proximity']['score'] + components['count']['score'] + components['behavior']['score']) / 3
             health_risk = (components['vital_signs']['score'] + components['air_quality']['score']) / 2
-            facility_risk = (components['noise']['score'] + components['air_quality']['score']) / 2
+            environmental_risk = (components['noise']['score'] + components['air_quality']['score']) / 2
             danger_index = threat_score * temporal['persistence_factor']
             comfort_index = 100 - (threat_score * 0.5)
             urgency_score = threat_score * (1 + abs(temporal['slope']) / 10)
@@ -597,7 +598,7 @@ class FakeDataGenerator:
                     radar_target_count, radar_format,
                     motion_pattern, motion_activity_level, motion_total_targets, motion_active_targets,
                     activity_events, radar_targets,
-                    physical_risk, health_risk, facility_risk, danger_index, comfort_index, urgency_score,
+                    physical_risk, health_risk, environmental_risk, danger_index, comfort_index, urgency_score,
                     sensor_radar_connected, sensor_pms_connected, sensor_mq135_connected, sensor_sound_connected,
                     alert_critical_threat, alert_high_threat, alert_rapid_escalation, alert_abnormal_vitals, alert_air_quality
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
