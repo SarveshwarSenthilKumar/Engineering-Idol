@@ -1,795 +1,621 @@
 // SCOPE System Documentation JavaScript
 
-// Global variables
-let searchResults = [];
-let currentSearchTerm = '';
-let isSearchVisible = false;
-let tocItems = [];
-let activeSection = '';
-
-// Initialize on DOM content loaded
+// Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize Bootstrap 5 components
-    if (typeof bootstrap !== 'undefined') {
-        // Initialize all dropdowns
-        const dropdowns = document.querySelectorAll('.dropdown-toggle');
-        dropdowns.forEach(function(dropdown) {
-            new bootstrap.Dropdown(dropdown);
-        });
-    }
-    
     initializeDocumentation();
 });
 
-/**
- * Initialize all documentation features
- */
 function initializeDocumentation() {
+    // Initialize navigation
     initializeNavigation();
+    
+    // Initialize search
     initializeSearch();
-    initializeTableOfContents();
-    initializeSmoothScrolling();
-    initializeCodeHighlighting();
-    initializeProgressIndicator();
-    initializeKeyboardShortcuts();
-    initializePrintOptimization();
-    initializeAccessibility();
-    initializeAnalytics();
     
-    // Set dark mode by default
-    document.body.classList.add('dark-mode');
+    // Initialize scoring playground
+    initializeScoringPlayground();
     
-    // Handle initial hash after a short delay
-    setTimeout(handleInitialHash, 200);
+    // Initialize floating action button
+    initializeFAB();
     
-    console.log('SCOPE Documentation initialized successfully');
+    // Initialize smooth scrolling
+    initializeSmoothScroll();
+    
+    // Initialize theme toggle
+    initializeThemeToggle();
+    
+    // Show quick guide on first visit
+    showQuickGuideOnFirstVisit();
 }
 
-/**
- * Navigation functionality
- */
+// Navigation functionality
 function initializeNavigation() {
-    // Active navigation highlighting
-    const navLinks = document.querySelectorAll('.sidebar .nav-link');
-    const sections = document.querySelectorAll('.content-section');
+    // Add smooth scrolling to navigation links
+    const navLinks = document.querySelectorAll('a[href^="#"]');
+    navLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href').substring(1);
+            const targetElement = document.getElementById(targetId);
+            if (targetElement) {
+                targetElement.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+                
+                // Update active state
+                navLinks.forEach(l => l.classList.remove('active'));
+                this.classList.add('active');
+            }
+        });
+    });
     
-    // Intersection Observer for section tracking
+    // Highlight current section in sidebar
+    highlightCurrentSection();
+}
+
+function highlightCurrentSection() {
+    const sections = document.querySelectorAll('.content-section');
+    const sidebarLinks = document.querySelectorAll('.sidebar .nav-link');
+    
     const observerOptions = {
         root: null,
-        rootMargin: '-100px 0px -70% 0px',
+        rootMargin: '-20% 0px -70% 0px',
         threshold: 0
     };
     
-    const sectionObserver = new IntersectionObserver((entries) => {
+    const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
-                const sectionId = entry.target.id;
-                updateActiveNavigation(sectionId);
-                updateProgressBar(sectionId);
+                const id = entry.target.id;
+                sidebarLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href') === `#${id}`) {
+                        link.classList.add('active');
+                    }
+                });
             }
         });
     }, observerOptions);
     
-    // Observe all sections
-    sections.forEach(section => {
-        sectionObserver.observe(section);
-    });
-    
-    // Handle navigation clicks
-    navLinks.forEach(link => {
-        link.addEventListener('click', function(e) {
-            const targetId = this.getAttribute('href').substring(1);
-            const targetSection = document.getElementById(targetId);
-            
-            if (targetSection) {
-                e.preventDefault();
-                scrollToSection(targetSection);
-                updateActiveNavigation(targetId);
-                
-                // Update URL hash without jumping
-                history.pushState(null, null, `#${targetId}`);
-            }
-        });
-    });
-    
-    // Handle initial hash
-    if (window.location.hash) {
-        const initialSection = document.getElementById(window.location.hash.substring(1));
-        if (initialSection) {
-            setTimeout(() => {
-                scrollToSection(initialSection);
-            }, 100);
-        }
-    }
+    sections.forEach(section => observer.observe(section));
 }
 
-/**
- * Update active navigation item
- */
-function updateActiveNavigation(sectionId) {
-    const navLinks = document.querySelectorAll('.sidebar .nav-link');
-    
-    navLinks.forEach(link => {
-        link.classList.remove('active');
-        if (link.getAttribute('href') === `#${sectionId}`) {
-            link.classList.add('active');
-        }
-    });
-    
-    activeSection = sectionId;
-}
-
-/**
- * Smooth scroll to section
- */
-function scrollToSection(section) {
-    // Get current scroll position
-    const currentScroll = window.pageYOffset || document.documentElement.scrollTop;
-    
-    // Get navbar height
-    const navbar = document.querySelector('.navbar');
-    const navbarHeight = navbar ? navbar.offsetHeight : 0;
-    const scrollMargin = 10; // Reduced margin for better accuracy
-    
-    // Calculate target position
-    let targetPosition = 0;
-    
-    if (section && typeof section === 'object') {
-        // Section is an element object
-        const rect = section.getBoundingClientRect();
-        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-        targetPosition = rect.top + scrollTop - navbarHeight - scrollMargin;
-    } else if (typeof section === 'string') {
-        // Section is an ID string
-        const targetElement = document.getElementById(section);
-        if (targetElement) {
-            const rect = targetElement.getBoundingClientRect();
-            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-            targetPosition = rect.top + scrollTop - navbarHeight - scrollMargin;
-        }
-    } else {
-        // Fallback to top
-        targetPosition = 0;
-    }
-    
-    // Only scroll if target is different from current position
-    if (Math.abs(targetPosition - currentScroll) > 5) { // Reduced threshold
-        // Smooth scroll with fallback
-        try {
-            window.scrollTo({
-                top: targetPosition,
-                behavior: 'smooth'
-            });
-        } catch (error) {
-            // Fallback for browsers that don't support smooth scrolling
-            window.scrollTo(0, targetPosition);
-        }
-    }
-    
-    // Update URL hash
-    const sectionId = section.id || (typeof section === 'string' ? section : section.getAttribute('id'));
-    if (sectionId) {
-        history.pushState(null, null, `#${sectionId}`);
-    }
-}
-
-/**
- * Search functionality
- */
+// Search functionality
 function initializeSearch() {
     const searchInput = document.getElementById('searchInput');
-    const searchButton = searchInput.nextElementSibling;
-    
     if (!searchInput) return;
     
-    // Create search results container
-    const searchResultsContainer = document.createElement('div');
-    searchResultsContainer.className = 'search-results';
-    searchResultsContainer.style.display = 'none';
-    searchInput.parentNode.appendChild(searchResultsContainer);
+    let searchTimeout;
     
-    // Search input event listeners
-    searchInput.addEventListener('input', debounce(handleSearch, 300));
-    searchInput.addEventListener('focus', () => showSearchResults());
-    searchInput.addEventListener('keydown', handleSearchKeydown);
-    
-    // Search button click
-    searchButton.addEventListener('click', () => {
-        performSearch(searchInput.value);
+    searchInput.addEventListener('input', function(e) {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            performSearch(e.target.value);
+        }, 300);
     });
     
-    // Click outside to close
-    document.addEventListener('click', (e) => {
-        if (!searchInput.contains(e.target) && !searchResultsContainer.contains(e.target)) {
-            hideSearchResults();
-        }
-    });
-    
-    // Build search index
-    buildSearchIndex();
-}
-
-/**
- * Build search index from content
- */
-function buildSearchIndex() {
-    const sections = document.querySelectorAll('.content-section');
-    
-    sections.forEach(section => {
-        const title = section.querySelector('h2, h3');
-        const content = section.textContent || section.innerText;
-        
-        if (title) {
-            searchResults.push({
-                id: section.id,
-                title: title.textContent.trim(),
-                content: content.substring(0, 500), // First 500 chars
-                section: section,
-                keywords: extractKeywords(content)
-            });
+    // Add keyboard shortcut 's' for search
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 's' && !e.ctrlKey && !e.metaKey && 
+            document.activeElement.tagName !== 'INPUT' && 
+            document.activeElement.tagName !== 'TEXTAREA') {
+            e.preventDefault();
+            searchInput.focus();
         }
     });
 }
 
-/**
- * Extract keywords from content
- */
-function extractKeywords(content) {
-    const words = content.toLowerCase()
-        .replace(/[^\w\s]/g, '')
-        .split(/\s+/)
-        .filter(word => word.length > 3)
-        .filter((word, index, array) => array.indexOf(word) === index);
-    
-    return words.slice(0, 20); // Top 20 keywords
-}
-
-/**
- * Handle search input
- */
-function handleSearch(e) {
-    const searchTerm = e.target.value.trim();
-    
-    if (searchTerm.length < 2) {
+function performSearch(query) {
+    if (!query.trim()) {
         hideSearchResults();
         return;
     }
     
-    performSearch(searchTerm);
+    const content = document.body.textContent.toLowerCase();
+    const queryLower = query.toLowerCase();
+    
+    if (content.includes(queryLower)) {
+        showSearchResults(query);
+    } else {
+        showNoResults();
+    }
 }
 
-/**
- * Perform search
- */
-function performSearch(searchTerm) {
-    currentSearchTerm = searchTerm.toLowerCase();
-    const results = searchResults.filter(item => {
-        return item.title.toLowerCase().includes(currentSearchTerm) ||
-               item.content.toLowerCase().includes(currentSearchTerm) ||
-               item.keywords.some(keyword => keyword.includes(currentSearchTerm));
+function showSearchResults(query) {
+    // Remove existing results
+    hideSearchResults();
+    
+    const sections = document.querySelectorAll('.content-section, .card');
+    const results = [];
+    
+    sections.forEach(section => {
+        const text = section.textContent.toLowerCase();
+        if (text.includes(query.toLowerCase())) {
+            const title = section.querySelector('h2, h3, h4, h5, h6');
+            if (title) {
+                results.push({
+                    element: section,
+                    title: title.textContent,
+                    id: section.id || ''
+                });
+            }
+        }
     });
     
-    displaySearchResults(results);
-}
-
-/**
- * Display search results
- */
-function displaySearchResults(results) {
-    const container = document.querySelector('.search-results');
-    
-    if (results.length === 0) {
-        container.innerHTML = `
-            <div class="search-result-item">
-                <div class="search-result-title">No results found</div>
-                <div class="search-result-excerpt">Try searching for different keywords</div>
-            </div>
-        `;
-    } else {
-        container.innerHTML = results.map(result => `
-            <div class="search-result-item" onclick="navigateToSection('${result.id}')">
-                <div class="search-result-title">${highlightSearchTerm(result.title)}</div>
-                <div class="search-result-excerpt">${highlightSearchTerm(result.content.substring(0, 200))}...</div>
-            </div>
-        `).join('');
+    if (results.length > 0) {
+        createSearchResultsPopup(results, query);
     }
-    
-    showSearchResults();
 }
 
-/**
- * Highlight search term in text
- */
-function highlightSearchTerm(text) {
-    if (!currentSearchTerm) return text;
+function createSearchResultsPopup(results, query) {
+    const popup = document.createElement('div');
+    popup.className = 'search-results';
+    popup.innerHTML = `
+        <div class="search-results-header">
+            <h6>Search Results (${results.length})</h6>
+            <button class="close-search" onclick="hideSearchResults()">×</button>
+        </div>
+        <div class="search-results-list">
+            ${results.map(result => `
+                <div class="search-result-item" onclick="scrollToSection('${result.id}')">
+                    <div class="search-result-title">${highlightText(result.title, query)}</div>
+                    <div class="search-result-excerpt">${highlightText(getExcerpt(result.element), query)}</div>
+                </div>
+            `).join('')}
+        </div>
+    `;
     
-    const regex = new RegExp(`(${currentSearchTerm})`, 'gi');
+    // Position popup near search input
+    const searchInput = document.getElementById('searchInput');
+    const rect = searchInput.getBoundingClientRect();
+    popup.style.position = 'fixed';
+    popup.style.top = `${rect.bottom + 10}px`;
+    popup.style.left = `${rect.left}px`;
+    popup.style.width = `${rect.width}px`;
+    popup.style.zIndex = '1050';
+    
+    document.body.appendChild(popup);
+}
+
+function highlightText(text, query) {
+    if (!query) return text;
+    const regex = new RegExp(`(${query})`, 'gi');
     return text.replace(regex, '<span class="search-highlight">$1</span>');
 }
 
-/**
- * Navigate to section from search
- */
-function navigateToSection(sectionId) {
-    const section = document.getElementById(sectionId);
-    if (section) {
-        hideSearchResults();
-        scrollToSection(section); // Pass the element directly
-        document.getElementById('searchInput').value = '';
-    }
+function getExcerpt(element) {
+    const text = element.textContent;
+    const maxLength = 150;
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
 }
 
-/**
- * Show/hide search results
- */
-function showSearchResults() {
-    const container = document.querySelector('.search-results');
-    if (container) {
-        container.style.display = 'block';
-        isSearchVisible = true;
+function scrollToSection(id) {
+    const element = document.getElementById(id);
+    if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+        hideSearchResults();
     }
 }
 
 function hideSearchResults() {
-    const container = document.querySelector('.search-results');
-    if (container) {
-        container.style.display = 'none';
-        isSearchVisible = false;
+    const existingResults = document.querySelector('.search-results');
+    if (existingResults) {
+        existingResults.remove();
     }
 }
 
-/**
- * Handle search keyboard navigation
- */
-function handleSearchKeydown(e) {
-    if (!isSearchVisible) return;
+function showNoResults() {
+    const popup = document.createElement('div');
+    popup.className = 'search-results';
+    popup.innerHTML = `
+        <div class="search-results-header">
+            <h6>No Results Found</h6>
+            <button class="close-search" onclick="hideSearchResults()">×</button>
+        </div>
+        <div class="search-results-list">
+            <div class="search-result-item">
+                <div class="search-result-title">No matching content found</div>
+                <div class="search-result-excerpt">Try different keywords or check the navigation menu.</div>
+            </div>
+        </div>
+    `;
     
-    const items = document.querySelectorAll('.search-result-item');
-    let currentIndex = -1;
+    const searchInput = document.getElementById('searchInput');
+    const rect = searchInput.getBoundingClientRect();
+    popup.style.position = 'fixed';
+    popup.style.top = `${rect.bottom + 10}px`;
+    popup.style.left = `${rect.left}px`;
+    popup.style.width = `${rect.width}px`;
+    popup.style.zIndex = '1050';
     
-    // Find current selected item
-    items.forEach((item, index) => {
-        if (item.classList.contains('selected')) {
-            currentIndex = index;
-        }
-    });
-    
-    switch (e.key) {
-        case 'ArrowDown':
-            e.preventDefault();
-            currentIndex = Math.min(currentIndex + 1, items.length - 1);
-            updateSearchSelection(items, currentIndex);
-            break;
-            
-        case 'ArrowUp':
-            e.preventDefault();
-            currentIndex = Math.max(currentIndex - 1, 0);
-            updateSearchSelection(items, currentIndex);
-            break;
-            
-        case 'Enter':
-            e.preventDefault();
-            if (currentIndex >= 0 && items[currentIndex]) {
-                items[currentIndex].click();
-            }
-            break;
-            
-        case 'Escape':
-            hideSearchResults();
-            break;
-    }
+    document.body.appendChild(popup);
 }
 
-/**
- * Update search selection
- */
-function updateSearchSelection(items, selectedIndex) {
-    items.forEach((item, index) => {
-        item.classList.toggle('selected', index === selectedIndex);
-        if (index === selectedIndex) {
-            item.scrollIntoView({ block: 'nearest' });
-        }
-    });
-}
-
-/**
- * Table of Contents
- */
-function initializeTableOfContents() {
-    const sections = document.querySelectorAll('.content-section h2, .content-section h3');
-    const tocContainer = document.createElement('div');
-    tocContainer.className = 'toc';
-    tocContainer.innerHTML = '<h3>Table of Contents</h3><ul></ul>';
-    
-    // Insert after hero section
-    const heroSection = document.querySelector('.hero-section');
-    if (heroSection && heroSection.nextElementSibling) {
-        heroSection.parentNode.insertBefore(tocContainer, heroSection.nextElementSibling);
-    }
-    
-    const tocList = tocContainer.querySelector('ul');
-    
-    sections.forEach((section, index) => {
-        const level = section.tagName.toLowerCase() === 'h3' ? 2 : 1;
-        const sectionId = section.textContent.toLowerCase()
-            .replace(/[^\w\s-]/g, '')
-            .replace(/\s+/g, '-');
-        
-        // Add ID if not present
-        if (!section.id) {
-            section.id = sectionId;
-        }
-        
-        const li = document.createElement('li');
-        li.className = `toc-level-${level}`;
-        
-        const link = document.createElement('a');
-        link.href = `#${section.id}`;
-        link.textContent = section.textContent.trim();
-        link.addEventListener('click', (e) => {
-            e.preventDefault();
-            scrollToSection(section); // Pass to element directly
-            updateActiveTOC(section.id);
-        });
-        
-        li.appendChild(link);
-        tocList.appendChild(li);
-        
-        tocItems.push({
-            element: section,
-            link: link,
-            level: level,
-            id: section.id
-        });
-    });
-    
-    // Initialize TOC intersection observer
-    initializeTOCObserver();
-}
-
-/**
- * Initialize TOC intersection observer
- */
-function initializeTOCObserver() {
-    const observerOptions = {
-        root: null,
-        rootMargin: '-100px 0px -70% 0px',
-        threshold: 0
+// Scoring Playground
+function initializeScoringPlayground() {
+    const sliders = {
+        count: document.getElementById('countSlider'),
+        behavior: document.getElementById('behaviorSlider'),
+        vital: document.getElementById('vitalSlider'),
+        aqi: document.getElementById('aqiSlider'),
+        noise: document.getElementById('noiseSlider')
     };
     
-    const tocObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                updateActiveTOC(entry.target.id);
-            }
-        });
-    }, observerOptions);
+    const values = {
+        count: document.getElementById('countValue'),
+        behavior: document.getElementById('behaviorValue'),
+        vital: document.getElementById('vitalValue'),
+        aqi: document.getElementById('aqiValue'),
+        noise: document.getElementById('noiseValue')
+    };
     
-    tocItems.forEach(item => {
-        tocObserver.observe(item.element);
-    });
-}
-
-/**
- * Update active TOC item
- */
-function updateActiveTOC(sectionId) {
-    tocItems.forEach(item => {
-        item.link.classList.toggle('active', item.id === sectionId);
-    });
-}
-
-/**
- * Smooth scrolling
- */
-function initializeSmoothScrolling() {
-    // Enable smooth scrolling for all anchor links
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function(e) {
-            e.preventDefault();
-            
-            const targetId = anchor.getAttribute('href').substring(1);
-            const targetElement = document.getElementById(targetId);
-            
-            if (targetElement) {
-                scrollToSection(targetElement);
-                updateActiveNavigation(targetId);
-            }
-        });
-    });
+    const scores = {
+        count: document.getElementById('countScore'),
+        behavior: document.getElementById('behaviorScore'),
+        vital: document.getElementById('vitalScore'),
+        aqi: document.getElementById('aqiScore'),
+        noise: document.getElementById('noiseScore')
+    };
     
-    // Handle hash changes on page load
-    handleInitialHash();
-}
-
-/**
- * Handle initial hash on page load
- */
-function handleInitialHash() {
-    const hash = window.location.hash;
-    if (hash) {
-        const targetId = hash.substring(1);
-        const targetElement = document.getElementById(targetId);
-        if (targetElement) {
-            // Wait for page to fully render before scrolling
-            setTimeout(() => {
-                scrollToSection(targetElement);
-                updateActiveNavigation(targetId);
-            }, 300);
-        }
-    }
-}
-
-/**
- * Code highlighting
- */
-function initializeCodeHighlighting() {
-    // Add copy buttons to code blocks
-    document.querySelectorAll('.code-block pre').forEach(block => {
-        const button = document.createElement('button');
-        button.className = 'btn btn-sm btn-outline-primary copy-btn';
-        button.innerHTML = '<i class="bi bi-clipboard"></i> Copy';
-        button.style.position = 'absolute';
-        button.style.top = '0.5rem';
-        button.style.right = '0.5rem';
-        
-        block.style.position = 'relative';
-        block.appendChild(button);
-        
-        button.addEventListener('click', () => {
-            const text = block.textContent || block.innerText;
-            navigator.clipboard.writeText(text).then(() => {
-                button.innerHTML = '<i class="bi bi-check"></i> Copied!';
-                setTimeout(() => {
-                    button.innerHTML = '<i class="bi bi-clipboard"></i> Copy';
-                }, 2000);
+    const weights = {
+        count: 0.15,
+        behavior: 0.45,
+        vital: 0.15,
+        aqi: 0.15,
+        noise: 0.10
+    };
+    
+    // Add event listeners
+    Object.keys(sliders).forEach(key => {
+        if (sliders[key]) {
+            sliders[key].addEventListener('input', function() {
+                updateScoringDisplay(key, this.value, values, scores, weights);
             });
-        });
+        }
     });
-}
-
-/**
- * Progress indicator
- */
-function initializeProgressIndicator() {
-    const progressBar = document.createElement('div');
-    progressBar.className = 'reading-progress';
-    progressBar.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        height: 3px;
-        background: linear-gradient(90deg, var(--primary-color) 0%, var(--accent-color) 100%);
-        z-index: 9999;
-        transition: width 0.3s ease;
-    `;
-    document.body.appendChild(progressBar);
     
-    window.addEventListener('scroll', () => {
-        const windowHeight = window.innerHeight;
-        const documentHeight = document.documentElement.scrollHeight - windowHeight;
-        const scrolled = window.pageYOffset;
-        const progress = (scrolled / documentHeight) * 100;
-        
-        progressBar.style.width = `${Math.min(progress, 100)}%`;
-    });
-}
-
-/**
- * Update progress bar based on section
- */
-function updateProgressBar(sectionId) {
-    const section = document.getElementById(sectionId);
-    if (!section) return;
-    
-    const sections = Array.from(document.querySelectorAll('.content-section'));
-    const currentIndex = sections.indexOf(section);
-    const totalSections = sections.length;
-    const progress = ((currentIndex + 1) / totalSections) * 100;
-    
-    const progressBar = document.querySelector('.reading-progress');
-    if (progressBar) {
-        progressBar.style.width = `${progress}%`;
-    }
-}
-
-/**
- * Keyboard shortcuts
- */
-function initializeKeyboardShortcuts() {
-    document.addEventListener('keydown', (e) => {
-        // Only handle shortcuts when not typing in input fields
-        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-        
-        switch (e.key) {
-            case '/':
-                e.preventDefault();
-                document.getElementById('searchInput').focus();
-                break;
-                
-            case 'Escape':
-                hideSearchResults();
-                document.getElementById('searchInput').blur();
-                break;
-                
-            case 'ArrowUp':
-                if (e.ctrlKey || e.metaKey) {
-                    e.preventDefault();
-                    navigateToPreviousSection();
-                }
-                break;
-                
-            case 'ArrowDown':
-                if (e.ctrlKey || e.metaKey) {
-                    e.preventDefault();
-                    navigateToNextSection();
-                }
-                break;
+    // Initialize display
+    Object.keys(sliders).forEach(key => {
+        if (sliders[key]) {
+            updateScoringDisplay(key, sliders[key].value, values, scores, weights);
         }
     });
 }
 
-/**
- * Navigate to previous section
- */
-function navigateToPreviousSection() {
-    const sections = Array.from(document.querySelectorAll('.content-section'));
-    const currentIndex = sections.findIndex(section => section.id === activeSection);
+function updateScoringDisplay(component, value, values, scores, weights) {
+    // Update value display
+    if (values[component]) {
+        values[component].textContent = value;
+    }
     
-    if (currentIndex > 0) {
-        const previousSection = sections[currentIndex - 1];
-        scrollToSection(previousSection);
+    // Calculate component score (normalize to 0-100)
+    let componentScore = parseInt(value);
+    if (component === 'count') {
+        componentScore = Math.min((value / 20) * 100, 100);
+    }
+    
+    // Update score display
+    if (scores[component]) {
+        scores[component].textContent = Math.round(componentScore);
+    }
+    
+    // Calculate overall threat
+    calculateOverallThreat(weights);
+}
+
+function calculateOverallThreat(weights) {
+    const sliders = {
+        count: document.getElementById('countSlider'),
+        behavior: document.getElementById('behaviorSlider'),
+        vital: document.getElementById('vitalSlider'),
+        aqi: document.getElementById('aqiSlider'),
+        noise: document.getElementById('noiseSlider')
+    };
+    
+    let overallThreat = 0;
+    
+    Object.keys(weights).forEach(key => {
+        if (sliders[key]) {
+            let value = parseInt(sliders[key].value);
+            if (key === 'count') {
+                value = Math.min((value / 20) * 100, 100);
+            }
+            overallThreat += value * weights[key];
+        }
+    });
+    
+    overallThreat = Math.round(overallThreat);
+    
+    // Update display
+    const threatDisplay = document.getElementById('overallThreat');
+    const threatBar = document.getElementById('threatBar');
+    const recommendationBox = document.getElementById('recommendationBox');
+    const recommendationText = document.getElementById('recommendationText');
+    
+    if (threatDisplay) {
+        threatDisplay.textContent = overallThreat;
+    }
+    
+    if (threatBar) {
+        threatBar.style.width = `${overallThreat}%`;
+        threatBar.className = 'progress-bar';
+        if (overallThreat > 80) {
+            threatBar.classList.add('bg-danger');
+        } else if (overallThreat > 60) {
+            threatBar.classList.add('bg-warning');
+        } else if (overallThreat > 40) {
+            threatBar.classList.add('bg-info');
+        } else {
+            threatBar.classList.add('bg-success');
+        }
+    }
+    
+    if (recommendationBox && recommendationText) {
+        let recommendation = 'Normal monitoring';
+        let alertClass = 'alert-success';
+        
+        if (overallThreat > 80) {
+            recommendation = 'CRITICAL: Immediate attention required. Check all systems and alert authorities if necessary.';
+            alertClass = 'alert-danger';
+        } else if (overallThreat > 60) {
+            recommendation = 'HIGH: Increased monitoring recommended. Investigate potential threats.';
+            alertClass = 'alert-warning';
+        } else if (overallThreat > 40) {
+            recommendation = 'MODERATE: Enhanced monitoring advised. Review security protocols.';
+            alertClass = 'alert-info';
+        } else if (overallThreat > 20) {
+            recommendation = 'ELEVATED: Maintain awareness and continue standard monitoring.';
+            alertClass = 'alert-primary';
+        }
+        
+        recommendationText.textContent = recommendation;
+        recommendationBox.className = `alert ${alertClass}`;
     }
 }
 
-/**
- * Navigate to next section
- */
-function navigateToNextSection() {
-    const sections = Array.from(document.querySelectorAll('.content-section'));
-    const currentIndex = sections.findIndex(section => section.id === activeSection);
+// Floating Action Button
+function initializeFAB() {
+    const fabMain = document.querySelector('.fab-main');
+    const fabOptions = document.querySelector('.fab-options');
     
-    if (currentIndex < sections.length - 1) {
-        const nextSection = sections[currentIndex + 1];
-        scrollToSection(nextSection);
+    if (!fabMain || !fabOptions) return;
+    
+    fabMain.addEventListener('click', function() {
+        this.classList.toggle('active');
+        fabOptions.classList.toggle('show');
+    });
+    
+    // Close FAB when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!fabMain.contains(e.target) && !fabOptions.contains(e.target)) {
+            fabMain.classList.remove('active');
+            fabOptions.classList.remove('show');
+        }
+    });
+}
+
+// Smooth scrolling
+function initializeSmoothScroll() {
+    // Already handled in navigation initialization
+}
+
+// Theme toggle
+function initializeThemeToggle() {
+    // Check for saved theme preference
+    const savedTheme = localStorage.getItem('scope-theme');
+    if (savedTheme === 'dark') {
+        document.body.classList.add('dark-mode');
+    }
+    
+    // Add theme toggle button if not exists
+    if (!document.querySelector('.theme-toggle')) {
+        const themeToggle = document.createElement('button');
+        themeToggle.className = 'theme-toggle btn btn-sm btn-outline-secondary position-fixed';
+        themeToggle.style.cssText = 'top: 20px; right: 20px; z-index: 1000;';
+        themeToggle.innerHTML = '<i class="bi bi-moon-stars"></i>';
+        themeToggle.title = 'Toggle dark mode';
+        
+        themeToggle.addEventListener('click', toggleTheme);
+        document.body.appendChild(themeToggle);
     }
 }
 
-/**
- * Print optimization
- */
-function initializePrintOptimization() {
-    window.addEventListener('beforeprint', () => {
-        // Expand all collapsed content for printing
-        document.querySelectorAll('.accordion-collapse:not(.show)').forEach(collapse => {
-            collapse.classList.add('show');
-        });
-        
-        // Hide navigation and other non-essential elements
-        document.querySelector('.sidebar').style.display = 'none';
-        document.querySelector('.navbar').style.display = 'none';
-    });
+function toggleTheme() {
+    const body = document.body;
+    const themeToggle = document.querySelector('.theme-toggle');
     
-    window.addEventListener('afterprint', () => {
-        // Restore collapsed state
-        document.querySelectorAll('.accordion-collapse.show').forEach(collapse => {
-            collapse.classList.remove('show');
-        });
-        
-        // Show navigation again
-        document.querySelector('.sidebar').style.display = '';
-        document.querySelector('.navbar').style.display = '';
-    });
+    body.classList.toggle('dark-mode');
+    
+    if (body.classList.contains('dark-mode')) {
+        localStorage.setItem('scope-theme', 'dark');
+        if (themeToggle) themeToggle.innerHTML = '<i class="bi bi-sun"></i>';
+    } else {
+        localStorage.setItem('scope-theme', 'light');
+        if (themeToggle) themeToggle.innerHTML = '<i class="bi bi-moon-stars"></i>';
+    }
 }
 
-/**
- * Accessibility improvements
- */
-function initializeAccessibility() {
-    // Add ARIA labels to dynamic elements
-    document.querySelectorAll('.code-block').forEach((block, index) => {
-        block.setAttribute('role', 'region');
-        block.setAttribute('aria-label', `Code block ${index + 1}`);
-    });
+// Quick Guide
+function showQuickGuide() {
+    // Remove existing modal
+    hideQuickGuide();
     
-    // Focus management for search
-    const searchInput = document.getElementById('searchInput');
-    searchInput.setAttribute('aria-label', 'Search documentation');
-    
-    // Skip to main content link
-    const skipLink = document.createElement('a');
-    skipLink.href = '#main-content';
-    skipLink.textContent = 'Skip to main content';
-    skipLink.className = 'skip-link';
-    skipLink.style.cssText = `
-        position: absolute;
-        top: -40px;
-        left: 6px;
-        background: var(--primary-color);
-        color: white;
-        padding: 8px;
-        text-decoration: none;
-        border-radius: 4px;
-        z-index: 10000;
+    const modal = document.createElement('div');
+    modal.className = 'quick-guide-modal';
+    modal.innerHTML = `
+        <div class="quick-guide-content">
+            <div class="quick-guide-header">
+                <h3 class="quick-guide-title">Quick Guide</h3>
+                <button class="close-btn" onclick="hideQuickGuide()">×</button>
+            </div>
+            
+            <div class="guide-section">
+                <h4>Navigation</h4>
+                <ul>
+                    <li><strong>Sidebar:</strong> Use the left sidebar for quick navigation between sections</li>
+                    <li><strong>Dropdown Menu:</strong> Access all sections from the Navigation dropdown</li>
+                    <li><strong>Search:</strong> Press 'S' key or use the search bar to find content</li>
+                    <li><strong>Smooth Scrolling:</strong> All navigation links provide smooth scrolling</li>
+                </ul>
+            </div>
+            
+            <div class="guide-section">
+                <h4>Interactive Features</h4>
+                <ul>
+                    <li><strong>Scoring Playground:</strong> Adjust sliders to see real-time threat calculations</li>
+                    <li><strong>Code Examples:</strong> Syntax highlighting for all code blocks</li>
+                    <li><strong>Responsive Design:</strong> Works on desktop, tablet, and mobile devices</li>
+                    <li><strong>Dark Mode:</strong> Toggle dark/light theme using the button in top-right</li>
+                </ul>
+            </div>
+            
+            <div class="guide-section">
+                <h4>Keyboard Shortcuts</h4>
+                <ul>
+                    <li><code>S</code> - Activate search</li>
+                    <li><code>ESC</code> - Close modals and search results</li>
+                    <li><code>↑</code> - Scroll to top (when using floating action button)</li>
+                    <li><code>F</code> - Toggle fullscreen (when using floating action button)</li>
+                </ul>
+            </div>
+            
+            <div class="guide-section">
+                <h4>Getting Started</h4>
+                <ul>
+                    <li>Start with the <strong>System Overview</strong> to understand SCOPE architecture</li>
+                    <li>Review <strong>Hardware Components</strong> for sensor information</li>
+                    <li>Explore <strong>Software Components</strong> for implementation details</li>
+                    <li>Try the <strong>Scoring Playground</strong> to understand threat calculations</li>
+                    <li><strong>Launch SCOPE App</strong> to see the system in action</li>
+                </ul>
+            </div>
+        </div>
     `;
     
-    skipLink.addEventListener('focus', () => {
-        skipLink.style.top = '6px';
+    document.body.appendChild(modal);
+    
+    // Show with animation
+    setTimeout(() => {
+        modal.classList.add('show');
+    }, 10);
+    
+    // Close on ESC key
+    const handleEscape = function(e) {
+        if (e.key === 'Escape') {
+            hideQuickGuide();
+            document.removeEventListener('keydown', handleEscape);
+        }
+    };
+    document.addEventListener('keydown', handleEscape);
+    
+    // Close on background click
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            hideQuickGuide();
+        }
     });
-    
-    skipLink.addEventListener('blur', () => {
-        skipLink.style.top = '-40px';
-    });
-    
-    document.body.insertBefore(skipLink, document.body.firstChild);
-    
-    // Add main content id to main content area
-    const mainContent = document.querySelector('.main-content');
-    if (mainContent) {
-        mainContent.id = 'main-content';
+}
+
+function hideQuickGuide() {
+    const modal = document.querySelector('.quick-guide-modal');
+    if (modal) {
+        modal.classList.remove('show');
+        setTimeout(() => {
+            modal.remove();
+        }, 300);
     }
 }
 
-/**
- * Analytics tracking
- */
-function initializeAnalytics() {
-    // Track section views
-    const sectionObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                trackSectionView(entry.target.id);
-            }
+function showQuickGuideOnFirstVisit() {
+    const hasVisited = localStorage.getItem('scope-docs-visited');
+    if (!hasVisited) {
+        setTimeout(() => {
+            showQuickGuide();
+        }, 2000);
+        localStorage.setItem('scope-docs-visited', 'true');
+    }
+}
+
+// Action functions
+function scrollToTop() {
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+    });
+}
+
+function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        }
+    }
+}
+
+function downloadPDF() {
+    // In a real implementation, this would generate a PDF
+    // For now, we'll show a message
+    showNotification('PDF download feature coming soon!', 'info');
+}
+
+function shareDocumentation() {
+    if (navigator.share) {
+        navigator.share({
+            title: 'SCOPE System Documentation',
+            text: 'Comprehensive documentation for the SCOPE environmental monitoring system',
+            url: window.location.href
         });
-    }, { threshold: 0.5 });
-    
-    document.querySelectorAll('.content-section').forEach(section => {
-        sectionObserver.observe(section);
-    });
-    
-    // Track search usage
-    let searchTimeout;
-    document.getElementById('searchInput')?.addEventListener('input', () => {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(() => {
-            trackSearchUsage();
-        }, 1000);
-    });
-}
-
-/**
- * Track section view (placeholder for analytics)
- */
-function trackSectionView(sectionId) {
-    // This would integrate with your analytics service
-    console.log('Section viewed:', sectionId);
-    
-    // Example: gtag('config', 'GA_MEASUREMENT_ID', {
-    //     page_path: `#${sectionId}`
-    // });
-}
-
-/**
- * Track search usage (placeholder for analytics)
- */
-function trackSearchUsage() {
-    const searchTerm = document.getElementById('searchInput').value;
-    if (searchTerm.length > 2) {
-        console.log('Search performed:', searchTerm);
-        
-        // Example: gtag('event', 'search', {
-        //     search_term: searchTerm
-        // });
+    } else {
+        // Fallback: copy to clipboard
+        navigator.clipboard.writeText(window.location.href).then(() => {
+            showNotification('Documentation link copied to clipboard!', 'success');
+        });
     }
 }
 
-/**
- * Utility functions
- */
+function printDocumentation() {
+    window.print();
+}
 
-/**
- * Debounce function
- */
+function openGitHub() {
+    window.open('https://github.com/SarveshwarSenthilKumar/Engineering-Idol', '_blank');
+}
+
+function openWebApp() {
+    window.open('http://localhost:5000', '_blank');
+}
+
+// Notification system
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.innerHTML = `
+        <div class="notification-content">
+            <p>${message}</p>
+            <button class="notification-close" onclick="this.parentElement.parentElement.remove()">×</button>
+        </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.remove();
+        }
+    }, 5000);
+    
+    // Remove on click
+    notification.addEventListener('click', function() {
+        this.remove();
+    });
+}
+
+// Utility functions
 function debounce(func, wait) {
     let timeout;
     return function executedFunction(...args) {
@@ -802,605 +628,29 @@ function debounce(func, wait) {
     };
 }
 
-/**
- * Throttle function
- */
-function throttle(func, limit) {
-    let inThrottle;
-    return function() {
-        const args = arguments;
-        const context = this;
-        if (!inThrottle) {
-            func.apply(context, args);
-            inThrottle = true;
-            setTimeout(() => inThrottle = false, limit);
-        }
-    };
-}
-
-/**
- * Get element offset
- */
-function getElementOffset(element) {
-    const rect = element.getBoundingClientRect();
-    return {
-        top: rect.top + window.pageYOffset,
-        left: rect.left + window.pageXOffset
-    };
-}
-
-/**
- * Check if element is in viewport
- */
-function isElementInViewport(element) {
-    const rect = element.getBoundingClientRect();
-    return (
-        rect.top >= 0 &&
-        rect.left >= 0 &&
-        rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
-        rect.right <= (window.innerWidth || document.documentElement.clientWidth)
-    );
-}
-
-/**
- * Format bytes
- */
-function formatBytes(bytes, decimals = 2) {
-    if (bytes === 0) return '0 Bytes';
-    
-    const k = 1024;
-    const dm = decimals < 0 ? 0 : decimals;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
-    
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-}
-
-/**
- * Get time ago string
- */
-function timeAgo(date) {
-    const seconds = Math.floor((new Date() - date) / 1000);
-    
-    let interval = seconds / 31536000;
-    if (interval > 1) return Math.floor(interval) + ' years ago';
-    
-    interval = seconds / 2592000;
-    if (interval > 1) return Math.floor(interval) + ' months ago';
-    
-    interval = seconds / 86400;
-    if (interval > 1) return Math.floor(interval) + ' days ago';
-    
-    interval = seconds / 3600;
-    if (interval > 1) return Math.floor(interval) + ' hours ago';
-    
-    interval = seconds / 60;
-    if (interval > 1) return Math.floor(interval) + ' minutes ago';
-    
-    return 'Just now';
-}
-
-/**
- * Show notification
- */
-function showNotification(message, type = 'info', duration = 5000) {
-    const notification = document.createElement('div');
-    notification.className = `notification ${type}`;
-    notification.innerHTML = `
-        <div class="notification-content">
-            <i class="bi bi-${getNotificationIcon(type)}"></i>
-            <span>${message}</span>
-        </div>
-        <button class="notification-close" onclick="this.parentElement.remove()">
-            <i class="bi bi-x"></i>
-        </button>
-    `;
-    
-    document.body.appendChild(notification);
-    
-    // Auto remove
-    setTimeout(() => {
-        if (notification.parentElement) {
-            notification.remove();
-        }
-    }, duration);
-}
-
-/**
- * Get notification icon
- */
-function getNotificationIcon(type) {
-    const icons = {
-        success: 'check-circle',
-        error: 'x-circle',
-        warning: 'exclamation-triangle',
-        info: 'info-circle'
-    };
-    return icons[type] || 'info-circle';
-}
-
-/**
- * Export functions for global use
- */
-window.ScopeDocs = {
-    navigateToSection,
-    showNotification,
-    hideSearchResults,
-    performSearch,
-    updateActiveNavigation,
-    scrollToSection,
-    debounce,
-    throttle,
-    formatBytes,
-    timeAgo,
-    printDocumentation,
-    showQuickGuide,
-    closeQuickGuide,
-    toggleFabMenu,
-    scrollToTop,
-    toggleFullscreen,
-    downloadPDF,
-    shareDocumentation,
-    openWebApp,
-    openGitHub
-};
-
-/**
- * Open GitHub Repository
- */
-function openGitHub() {
-    window.open('https://github.com/SarveshwarSenthilKumar/Engineering-Idol', '_blank');
-    showNotification('Opening GitHub repository...', 'info', 2000);
-}
-
-/**
- * Print Documentation
- */
-function printDocumentation() {
-    // Show print dialog
-    window.print();
-    showNotification('Print dialog opened', 'info', 2000);
-}
-
-/**
- * Show Quick Guide
- */
-function showQuickGuide() {
-    // Create modal if it doesn't exist
-    let modal = document.querySelector('.quick-guide-modal');
-    
-    if (!modal) {
-        modal = createQuickGuideModal();
-        document.body.appendChild(modal);
+// Handle window resize
+window.addEventListener('resize', debounce(() => {
+    // Re-initialize position-dependent elements
+    const searchResults = document.querySelector('.search-results');
+    if (searchResults) {
+        hideSearchResults();
     }
-    
-    modal.style.display = 'flex';
-    setTimeout(() => {
-        modal.classList.add('show');
-    }, 10);
-}
+}, 250));
 
-/**
- * Create Quick Guide Modal
- */
-function createQuickGuideModal() {
-    const modal = document.createElement('div');
-    modal.className = 'quick-guide-modal';
-    modal.innerHTML = `
-        <div class="quick-guide-content">
-            <div class="quick-guide-header">
-                <h3 class="quick-guide-title">Quick Guide</h3>
-                <button class="close-btn" onclick="closeQuickGuide()">
-                    <i class="bi bi-x"></i>
-                </button>
-            </div>
-            
-            <div class="guide-section">
-                <h4>🔍 Navigation</h4>
-                <ul>
-                    <li>Use the sidebar menu to jump between sections</li>
-                    <li>Click on any section title for smooth scrolling</li>
-                    <li>Use <code>/</code> to quickly focus search</li>
-                    <li>Use <code>↑</code> and <code>↓</code> arrows to navigate sections</li>
-                </ul>
-            </div>
-            
-            <div class="guide-section">
-                <h4>🔎 Search</h4>
-                <ul>
-                    <li>Type in the search box to find content</li>
-                    <li>Use arrow keys to navigate search results</li>
-                    <li>Press <code>Enter</code> to jump to a result</li>
-                    <li>Press <code>Escape</code> to close search</li>
-                </ul>
-            </div>
-            
-            <div class="guide-section">
-                <h4>🎨 Interface Features</h4>
-                <ul>
-                    <li>Click the moon icon to toggle dark mode</li>
-                    <li>Click the printer icon to print documentation</li>
-                    <li>Use the floating action button for quick actions</li>
-                    <li>Click the back-to-top arrow to scroll up</li>
-                </ul>
-            </div>
-            
-            <div class="guide-section">
-                <h4>⌨️ Keyboard Shortcuts</h4>
-                <ul>
-                    <li><code>/</code> - Focus search</li>
-                    <li><code>Escape</code> - Close search/modals</li>
-                    <li><code>Ctrl + ↑</code> - Previous section</li>
-                    <li><code>Ctrl + ↓</code> - Next section</li>
-                    <li><code>F11</code> - Toggle fullscreen</li>
-                </ul>
-            </div>
-            
-            <div class="guide-section">
-                <h4>📱 Mobile</h4>
-                <ul>
-                    <li>Swipe to navigate between sections</li>
-                    <li>Tap menu icon to show/hide sidebar</li>
-                    <li>Pinch to zoom for better readability</li>
-                    <li>Use touch-friendly buttons and controls</li>
-                </ul>
-            </div>
-        </div>
-    `;
-    
-    // Close modal when clicking outside
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
-            closeQuickGuide();
-        }
-    });
-    
-    return modal;
-}
-
-/**
- * Close Quick Guide
- */
-function closeQuickGuide() {
-    const modal = document.querySelector('.quick-guide-modal');
-    if (modal) {
-        modal.classList.remove('show');
-        setTimeout(() => {
-            modal.style.display = 'none';
-        }, 300);
+// Handle escape key for closing modals
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        hideSearchResults();
     }
-}
-
-/**
- * Toggle FAB Menu
- */
-function toggleFabMenu() {
-    const fabMain = document.querySelector('.fab-main');
-    const fabOptions = document.querySelector('.fab-options');
-    
-    fabMain.classList.toggle('active');
-    fabOptions.classList.toggle('show');
-}
-
-/**
- * Scroll to Top
- */
-function scrollToTop() {
-    window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-    });
-    showNotification('Scrolled to top', 'info', 1000);
-}
-
-/**
- * Toggle Fullscreen
- */
-function toggleFullscreen() {
-    if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen().then(() => {
-            showNotification('Fullscreen mode enabled', 'info', 2000);
-        }).catch(err => {
-            showNotification('Error enabling fullscreen', 'error', 3000);
-        });
-    } else {
-        document.exitFullscreen().then(() => {
-            showNotification('Fullscreen mode disabled', 'info', 2000);
-        }).catch(err => {
-            showNotification('Error exiting fullscreen', 'error', 3000);
-        });
-    }
-    
-    // Close FAB menu
-    const fabOptions = document.querySelector('.fab-options');
-    const fabMain = document.querySelector('.fab-main');
-    fabOptions.classList.remove('show');
-    fabMain.classList.remove('active');
-}
-
-/**
- * Download PDF (placeholder)
- */
-function downloadPDF() {
-    // In a real implementation, this would generate a PDF
-    // For now, we'll trigger the print dialog which can save as PDF
-    showNotification('Preparing PDF download...', 'info', 2000);
-    
-    setTimeout(() => {
-        printDocumentation();
-        showNotification('Use browser print dialog to save as PDF', 'info', 3000);
-    }, 1000);
-    
-    // Close FAB menu
-    const fabOptions = document.querySelector('.fab-options');
-    const fabMain = document.querySelector('.fab-main');
-    fabOptions.classList.remove('show');
-    fabMain.classList.remove('active');
-}
-
-/**
- * Open SCOPE Web App
- */
-function openWebApp() {
-    const webAppUrl = 'http://localhost:5000';
-    
-    // Check if the web app is running
-    fetch(webAppUrl, { method: 'HEAD', mode: 'no-cors' })
-        .then(() => {
-            // Open in new tab
-            window.open(webAppUrl, '_blank');
-            showNotification('Opening SCOPE Web App...', 'success', 2000);
-        })
-        .catch(() => {
-            // If fetch fails, still try to open (might be CORS issue)
-            window.open(webAppUrl, '_blank');
-            showNotification('Opening SCOPE Web App...', 'info', 2000);
-        });
-    
-    // Close FAB menu if called from there
-    const fabOptions = document.querySelector('.fab-options');
-    const fabMain = document.querySelector('.fab-main');
-    if (fabOptions && fabMain) {
-        fabOptions.classList.remove('show');
-        fabMain.classList.remove('active');
-    }
-}
-
-/**
- * Share Documentation
- */
-function shareDocumentation() {
-    const url = window.location.href;
-    const title = 'SCOPE System Documentation';
-    
-    if (navigator.share) {
-        navigator.share({
-            title: title,
-            url: url
-        }).then(() => {
-            showNotification('Documentation shared successfully', 'success', 2000);
-        }).catch(err => {
-            showNotification('Error sharing documentation', 'error', 3000);
-        });
-    } else {
-        // Fallback: Copy to clipboard
-        navigator.clipboard.writeText(url).then(() => {
-            showNotification('Link copied to clipboard', 'success', 2000);
-        }).catch(err => {
-            showNotification('Error copying link', 'error', 3000);
-        });
-    }
-    
-    // Close FAB menu
-    const fabOptions = document.querySelector('.fab-options');
-    const fabMain = document.querySelector('.fab-main');
-    fabOptions.classList.remove('show');
-    fabMain.classList.remove('active');
-}
-
-// Error handling
-window.addEventListener('error', (e) => {
-    console.error('Documentation error:', e.error);
-    showNotification('An error occurred. Please refresh the page.', 'error');
 });
 
 // Performance monitoring
-window.addEventListener('load', () => {
-    const loadTime = performance.now();
-    console.log(`Documentation loaded in ${loadTime.toFixed(2)}ms`);
-    
-    // Track performance if analytics is available
-    if (typeof gtag !== 'undefined') {
-        gtag('event', 'page_load_time', {
-            value: Math.round(loadTime)
-        });
-    }
-});
-
-// Service Worker registration for offline support (if available)
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
-            .then(registration => {
-                console.log('SW registered: ', registration);
-            })
-            .catch(registrationError => {
-                console.log('SW registration failed: ', registrationError);
-            });
+if (window.performance) {
+    window.addEventListener('load', function() {
+        setTimeout(() => {
+            const perfData = window.performance.timing;
+            const loadTime = perfData.loadEventEnd - perfData.navigationStart;
+            console.log(`Documentation loaded in ${loadTime}ms`);
+        }, 0);
     });
 }
-
-// ==================== SCORING PLAYGROUND ====================
-
-/**
- * Initialize scoring playground functionality
- */
-function initializeScoringPlayground() {
-    // Check if scoring elements exist on the page
-    if (document.getElementById('peopleCount')) {
-        updateScoringDisplay();
-        console.log('Scoring playground initialized');
-    }
-}
-
-/**
- * Update scoring display based on current slider values
- */
-function updateScoringDisplay() {
-    // Get DOM elements with null checks
-    const peopleCountEl = document.getElementById('peopleCount');
-    const noiseLevelEl = document.getElementById('noiseLevel');
-    const aqiLevelEl = document.getElementById('aqiLevel');
-    const vocLevelEl = document.getElementById('vocLevel');
-    const pm25LevelEl = document.getElementById('pm25Level');
-    const peopleValueEl = document.getElementById('peopleValue');
-    const noiseValueEl = document.getElementById('noiseValue');
-    const aqiValueEl = document.getElementById('aqiValue');
-    const vocValueEl = document.getElementById('vocValue');
-    const pm25ValueEl = document.getElementById('pm25Value');
-    const threatScoreEl = document.getElementById('threatScore');
-    const peopleScoreEl = document.getElementById('peopleScore');
-    const pm25ScoreEl = document.getElementById('pm25Score');
-    const vocScoreEl = document.getElementById('vocScore');
-    const aqiScoreEl = document.getElementById('aqiScore');
-    const noiseScoreEl = document.getElementById('noiseScore');
-    const threatBadgeEl = document.getElementById('threatBadge');
-    const recommendationTextEl = document.getElementById('recommendationText');
-    const recommendationBoxEl = document.getElementById('recommendationBox');
-    
-    // Check if all elements exist before proceeding
-    if (!peopleCountEl || !noiseLevelEl || !aqiLevelEl || !vocLevelEl || !pm25LevelEl ||
-        !peopleValueEl || !noiseValueEl || !aqiValueEl || !vocValueEl || !pm25ValueEl ||
-        !threatScoreEl || !peopleScoreEl || !pm25ScoreEl || !vocScoreEl || !aqiScoreEl || !noiseScoreEl ||
-        !threatBadgeEl || !recommendationTextEl || !recommendationBoxEl) {
-        console.error('Some DOM elements are missing');
-        return;
-    }
-    
-    // Get input values
-    const peopleCount = parseInt(peopleCountEl.value);
-    const noiseLevel = parseInt(noiseLevelEl.value);
-    const aqiLevel = parseInt(aqiLevelEl.value);
-    const vocLevel = parseInt(vocLevelEl.value);
-    const pm25Level = parseInt(pm25LevelEl.value);
-    
-    // Update display values
-    peopleValueEl.textContent = peopleCount;
-    noiseValueEl.textContent = noiseLevel;
-    aqiValueEl.textContent = aqiLevel;
-    vocValueEl.textContent = vocLevel;
-    pm25ValueEl.textContent = pm25Level;
-    
-    // Simple scoring calculator - no time factors or environment modifiers
-    // Calculate individual component scores (0-100 range)
-    const countScore = Math.min((peopleCount / 15) * 100, 100);
-    const behaviorScore = Math.min(((peopleCount * 3) + (noiseLevel / 1)) / 2, 100);
-    const vitalSignsScore = Math.min(peopleCount * 4, 100);
-    const aqiComponent = Math.min((aqiLevel / 80) * 100, 100);
-    const vocComponent = Math.min((vocLevel / 200) * 100, 100);
-    const pm25Component = Math.min((pm25Level / 80) * 100, 100);
-    const airQualityScore = Math.min((aqiComponent * 0.4) + (vocComponent * 0.3) + (pm25Component * 0.3), 100);
-    const noiseScore = Math.min((noiseLevel / 80) * 100, 100);
-    
-    // Calculate weighted total using SCOPE weights
-    const totalScore = (countScore * 0.15) + 
-                       (behaviorScore * 0.45) + 
-                       (vitalSignsScore * 0.15) + 
-                       (airQualityScore * 0.15) + 
-                       (noiseScore * 0.10);
-    
-    // Clamp to 0-100 range
-    const finalScore = Math.max(0, Math.min(100, totalScore));
-    
-    // Update display elements
-    threatScoreEl.textContent = Math.round(finalScore);
-    peopleScoreEl.textContent = Math.round(countScore);
-    pm25ScoreEl.textContent = Math.round(behaviorScore);
-    vocScoreEl.textContent = Math.round(vitalSignsScore);
-    aqiScoreEl.textContent = Math.round(airQualityScore);
-    noiseScoreEl.textContent = Math.round(noiseScore);
-    
-    // Update threat level and recommendation
-    let status, badgeClass, alertClass, recommendation;
-    
-    if (finalScore > 80) {
-        status = 'CRITICAL';
-        badgeClass = 'bg-dark';
-        alertClass = 'alert-danger';
-        recommendation = 'Emergency response required';
-    } else if (finalScore > 60) {
-        status = 'HIGH';
-        badgeClass = 'bg-danger';
-        alertClass = 'alert-warning';
-        recommendation = 'Investigate immediately';
-    } else if (finalScore > 40) {
-        status = 'ELEVATED';
-        badgeClass = 'bg-warning';
-        alertClass = 'alert-warning';
-        recommendation = 'Increased attention required';
-    } else if (finalScore > 20) {
-        status = 'MODERATE';
-        badgeClass = 'bg-info';
-        alertClass = 'alert-info';
-        recommendation = 'Monitor closely';
-    } else {
-        status = 'LOW';
-        badgeClass = 'bg-success';
-        alertClass = 'alert-success';
-        recommendation = 'Normal monitoring';
-    }
-    
-    // Update UI elements
-    threatBadgeEl.textContent = status;
-    threatBadgeEl.className = `badge ${badgeClass}`;
-    recommendationBoxEl.className = `alert ${alertClass}`;
-    recommendationTextEl.textContent = recommendation;
-    
-    // Add animation effect
-    const scoreElement = document.getElementById('threatScore');
-    scoreElement.style.transform = 'scale(1.1)';
-    setTimeout(() => {
-        scoreElement.style.transform = 'scale(1)';
-    }, 200);
-}
-
-/**
- * Reset scoring values to defaults
- */
-function resetScoringValues() {
-    document.getElementById('peopleCount').value = 5;
-    document.getElementById('noiseLevel').value = 40;
-    document.getElementById('aqiLevel').value = 50;
-    document.getElementById('vocLevel').value = 100;
-    document.getElementById('pm25Level').value = 25;
-    document.getElementById('timeOfDay').value = 'morning';
-    document.getElementById('environmentType').value = 'classroom';
-    
-    updateScoringDisplay();
-    
-    // Visual feedback
-    const resetButton = event.target;
-    resetButton.innerHTML = '<i class="bi bi-check-circle me-2"></i>Reset Complete!';
-    setTimeout(() => {
-        resetButton.innerHTML = '<i class="bi bi-arrow-clockwise me-2"></i>Reset Values';
-    }, 1500);
-}
-
-// Initialize scoring playground when DOM is ready
-document.addEventListener('DOMContentLoaded', function() {
-    // Add scoring playground initialization to the existing initializeDocumentation function
-    if (typeof initializeDocumentation === 'function') {
-        const originalInit = initializeDocumentation;
-        initializeDocumentation = function() {
-            originalInit();
-            initializeScoringPlayground();
-        };
-    } else {
-        initializeScoringPlayground();
-    }
-});
-
-// Make functions globally accessible
-window.updateScoringDisplay = updateScoringDisplay;
-window.resetScoringValues = resetScoringValues;
