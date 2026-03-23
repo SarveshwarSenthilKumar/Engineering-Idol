@@ -1,6 +1,1 @@
-
-
-create a webpage with js code and create a summary for each section of code and make it look good and add a chatbot to ask, a documentation page to cover everything including every advantage and everything fof the webapp and also add a feature where you can play with the scoring system
-
-update whole webapp for mobile styling
-
+add the logo and update the actual platform and add it to comprehensive breakdown
