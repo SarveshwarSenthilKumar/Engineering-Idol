@@ -3696,6 +3696,23 @@ def scenario_status():
 def rerouted():
     return redirect("/dashboard")
 
+@app.route("/scoring-playground")
+@login_required
+def scoring_playground():
+    """Interactive scoring playground page"""
+    fake_mode = session.get('fake_mode', True)
+    
+    # Get environment data for consistency
+    all_environments = live_data.get_all_environments()
+    current_env = live_data.get_current_environment()
+    highest_threat_env = live_data.get_highest_threat_environment()
+    
+    return render_template('scoring_playground.html',
+                         fake_mode=fake_mode,
+                         environments=all_environments,
+                         current_environment=current_env,
+                         highest_threat_environment=highest_threat_env)
+
 @app.route("/documentation")
 @login_required
 def documentation():
