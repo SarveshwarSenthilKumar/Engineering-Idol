@@ -1,0 +1,1024 @@
+{% extends "base.html" %}
+
+{% block title %}Scoring Playground{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary-color: #007bff;
+        --secondary-color: #6c757d;
+        --success-color: #28a745;
+        --warning-color: #ffc107;
+        --danger-color: #dc3545;
+        --info-color: #17a2b8;
+        --light-bg: #f8f9fa;
+        --card-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    body {
+        background: #fafbfc;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        color: #24292f;
+        line-height: 1.6;
+        font-size: 16px;
+    }
+    
+    .main-content {
+        background: #fafbfc;
+        position: relative;
+        padding: 0 16px;
+    }
+    
+    /* Scoring Controls */
+    .scoring-controls {
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 32px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        border: 1px solid #d0d7de;
+    }
+    
+    .scoring-controls h3 {
+        color: #24292f;
+        font-weight: 600;
+        margin-bottom: 20px;
+        font-size: 1.25rem;
+    }
+    
+    /* Component Cards */
+    .component-card {
+        background: #ffffff;
+        border: 1px solid #d0d7de;
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 24px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .component-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+    }
+    
+    .component-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 20px;
+    }
+    
+    .component-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #24292f;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .component-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        color: white;
+    }
+    
+    /* Slider Controls */
+    .slider-container {
+        margin-bottom: 20px;
+    }
+    
+    .slider-label {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+        font-size: 14px;
+        color: #656d76;
+    }
+    
+    .slider-value {
+        background: #f6f8fa;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-weight: 500;
+        min-width: 60px;
+        text-align: center;
+    }
+    
+    .custom-slider {
+        width: 100%;
+        height: 8px;
+        border-radius: 4px;
+        background: #f6f8fa;
+        outline: none;
+        -webkit-appearance: none;
+        transition: background 0.3s;
+    }
+    
+    .custom-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #0969da;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .custom-slider::-webkit-slider-thumb:hover {
+        transform: scale(1.2);
+        box-shadow: 0 4px 12px rgba(9, 105, 218, 0.3);
+    }
+    
+    .custom-slider::-moz-range-thumb {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #0969da;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    /* Weight Controls */
+    .weight-control {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+    
+    .weight-slider {
+        flex: 1;
+    }
+    
+    .weight-value {
+        background: #e3f2fd;
+        color: #0969da;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-weight: 600;
+        min-width: 50px;
+        text-align: center;
+    }
+    
+    /* Threat Display */
+    .threat-display {
+        background: linear-gradient(135deg, #f8f9ff 0%, #e8f0ff 100%);
+        border: 1px solid #0969da;
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 32px;
+        text-align: center;
+        box-shadow: 0 4px 20px rgba(9, 105, 218, 0.15);
+    }
+    
+    .threat-score {
+        font-size: 3rem;
+        font-weight: 700;
+        color: #0969da;
+        margin-bottom: 8px;
+    }
+    
+    .threat-level {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 16px;
+    }
+    
+    .threat-bar {
+        width: 100%;
+        height: 12px;
+        background: #f6f8fa;
+        border-radius: 6px;
+        overflow: hidden;
+        margin-bottom: 16px;
+    }
+    
+    .threat-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #28a745, #ffc107, #dc3545);
+        transition: width 0.3s ease;
+    }
+    
+    /* Component Breakdown */
+    .component-breakdown {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-top: 20px;
+    }
+    
+    .breakdown-item {
+        background: #f6f8fa;
+        padding: 16px;
+        border-radius: 8px;
+        text-align: center;
+    }
+    
+    .breakdown-score {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
+    
+    .breakdown-label {
+        font-size: 0.875rem;
+        color: #656d76;
+    }
+    
+    /* Action Buttons */
+    .action-buttons {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-top: 24px;
+    }
+    
+    .btn-scoring {
+        padding: 12px 24px;
+        border-radius: 8px;
+        border: none;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 14px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .btn-scoring:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .btn-primary-scoring {
+        background: linear-gradient(135deg, #0969da, #0550ae);
+        color: white;
+    }
+    
+    .btn-secondary-scoring {
+        background: #f6f8fa;
+        color: #24292f;
+        border: 1px solid #d0d7de;
+    }
+    
+    .btn-danger-scoring {
+        background: linear-gradient(135deg, #dc3545, #b02a37);
+        color: white;
+    }
+    
+    /* Presets */
+    .preset-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 16px;
+        margin-top: 20px;
+    }
+    
+    .preset-card {
+        background: #f6f8fa;
+        border: 1px solid #d0d7de;
+        border-radius: 8px;
+        padding: 16px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .preset-card:hover {
+        background: #e3f2fd;
+        border-color: #0969da;
+        transform: translateY(-1px);
+    }
+    
+    .preset-title {
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #24292f;
+    }
+    
+    .preset-description {
+        font-size: 0.875rem;
+        color: #656d76;
+        margin-bottom: 12px;
+    }
+    
+    .preset-stats {
+        display: flex;
+        gap: 12px;
+        font-size: 0.75rem;
+        color: #656d76;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .component-breakdown {
+            grid-template-columns: 1fr;
+        }
+        
+        .preset-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+        }
+        
+        .btn-scoring {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+    
+    /* Animation Classes */
+    .fade-in {
+        animation: fadeIn 0.5s ease-in;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .pulse {
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <div class="container-fluid">
+        <!-- Header -->
+        <div class="professional-header">
+            <h1>🎯 Scoring Playground</h1>
+            <p>Interactive environment to experiment with SCOPE threat scoring system</p>
+        </div>
+
+        <!-- Scoring Controls -->
+        <div class="scoring-controls">
+            <h3>🎮 Scoring Controls</h3>
+            <div class="action-buttons">
+                <button id="calculateBtn" class="btn-scoring btn-primary-scoring">
+                    <span>🧮</span> Calculate Threat
+                </button>
+                <button id="randomizeBtn" class="btn-scoring btn-secondary-scoring">
+                    <span>🎲</span> Randomize Values
+                </button>
+                <button id="resetBtn" class="btn-scoring btn-secondary-scoring">
+                    <span>🔄</span> Reset All
+                </button>
+                <button id="exportBtn" class="btn-scoring btn-secondary-scoring">
+                    <span>📊</span> Export Configuration
+                </button>
+            </div>
+        </div>
+
+        <!-- Threat Display -->
+        <div class="threat-display">
+            <div class="threat-score" id="threatScore">0</div>
+            <div class="threat-level" id="threatLevel">LOW</div>
+            <div class="threat-bar">
+                <div class="threat-fill" id="threatFill" style="width: 0%"></div>
+            </div>
+            <div class="component-breakdown">
+                <div class="breakdown-item">
+                    <div class="breakdown-score" id="proximityScore">0</div>
+                    <div class="breakdown-label">Proximity</div>
+                </div>
+                <div class="breakdown-item">
+                    <div class="breakdown-score" id="countScore">0</div>
+                    <div class="breakdown-label">Count</div>
+                </div>
+                <div class="breakdown-item">
+                    <div class="breakdown-score" id="behaviorScore">0</div>
+                    <div class="breakdown-label">Behavior</div>
+                </div>
+                <div class="breakdown-item">
+                    <div class="breakdown-score" id="vitalSignsScore">0</div>
+                    <div class="breakdown-label">Vital Signs</div>
+                </div>
+                <div class="breakdown-item">
+                    <div class="breakdown-score" id="airQualityScore">0</div>
+                    <div class="breakdown-label">Air Quality</div>
+                </div>
+                <div class="breakdown-item">
+                    <div class="breakdown-score" id="noiseScore">0</div>
+                    <div class="breakdown-label">Noise</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Component Controls -->
+        <div class="row">
+            <!-- Proximity Component -->
+            <div class="col-md-6">
+                <div class="component-card">
+                    <div class="component-header">
+                        <div class="component-title">
+                            <div class="component-icon" style="background: #dc3545;">
+                                <i class="bi bi-geo-alt"></i>
+                            </div>
+                            Proximity Threat
+                        </div>
+                    </div>
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Raw Score</span>
+                            <span class="slider-value" id="proximityRawValue">0</span>
+                        </div>
+                        <input type="range" class="custom-slider" id="proximityRaw" min="0" max="100" value="0">
+                    </div>
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Confidence</span>
+                            <span class="slider-value" id="proximityConfidenceValue">0.8</span>
+                        </div>
+                        <input type="range" class="custom-slider" id="proximityConfidence" min="0" max="1" step="0.1" value="0.8">
+                    </div>
+                    <div class="weight-control">
+                        <span>Weight</span>
+                        <input type="range" class="custom-slider weight-slider" id="proximityWeight" min="0" max="1" step="0.1" value="0.25">
+                        <span class="weight-value" id="proximityWeightValue">0.25</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Count Component -->
+            <div class="col-md-6">
+                <div class="component-card">
+                    <div class="component-header">
+                        <div class="component-title">
+                            <div class="component-icon" style="background: #ffc107;">
+                                <i class="bi bi-people"></i>
+                            </div>
+                            Count Threat
+                        </div>
+                    </div>
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Raw Score</span>
+                            <span class="slider-value" id="countRawValue">0</span>
+                        </div>
+                        <input type="range" class="custom-slider" id="countRaw" min="0" max="100" value="0">
+                    </div>
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Confidence</span>
+                            <span class="slider-value" id="countConfidenceValue">0.8</span>
+                        </div>
+                        <input type="range" class="custom-slider" id="countConfidence" min="0" max="1" step="0.1" value="0.8">
+                    </div>
+                    <div class="weight-control">
+                        <span>Weight</span>
+                        <input type="range" class="custom-slider weight-slider" id="countWeight" min="0" max="1" step="0.1" value="0.15">
+                        <span class="weight-value" id="countWeightValue">0.15</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Behavior Component -->
+            <div class="col-md-6">
+                <div class="component-card">
+                    <div class="component-header">
+                        <div class="component-title">
+                            <div class="component-icon" style="background: #fd7e14;">
+                                <i class="bi bi-activity"></i>
+                            </div>
+                            Behavior Threat
+                        </div>
+                    </div>
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Raw Score</span>
+                            <span class="slider-value" id="behaviorRawValue">0</span>
+                        </div>
+                        <input type="range" class="custom-slider" id="behaviorRaw" min="0" max="100" value="0">
+                    </div>
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Confidence</span>
+                            <span class="slider-value" id="behaviorConfidenceValue">0.8</span>
+                        </div>
+                        <input type="range" class="custom-slider" id="behaviorConfidence" min="0" max="1" step="0.1" value="0.8">
+                    </div>
+                    <div class="weight-control">
+                        <span>Weight</span>
+                        <input type="range" class="custom-slider weight-slider" id="behaviorWeight" min="0" max="1" step="0.1" value="0.20">
+                        <span class="weight-value" id="behaviorWeightValue">0.20</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vital Signs Component -->
+            <div class="col-md-6">
+                <div class="component-card">
+                    <div class="component-header">
+                        <div class="component-title">
+                            <div class="component-icon" style="background: #dc3545;">
+                                <i class="bi bi-heart-pulse"></i>
+                            </div>
+                            Vital Signs Threat
+                        </div>
+                    </div>
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Raw Score</span>
+                            <span class="slider-value" id="vitalSignsRawValue">0</span>
+                        </div>
+                        <input type="range" class="custom-slider" id="vitalSignsRaw" min="0" max="100" value="0">
+                    </div>
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Confidence</span>
+                            <span class="slider-value" id="vitalSignsConfidenceValue">0.8</span>
+                        </div>
+                        <input type="range" class="custom-slider" id="vitalSignsConfidence" min="0" max="1" step="0.1" value="0.8">
+                    </div>
+                    <div class="weight-control">
+                        <span>Weight</span>
+                        <input type="range" class="custom-slider weight-slider" id="vitalSignsWeight" min="0" max="1" step="0.1" value="0.15">
+                        <span class="weight-value" id="vitalSignsWeightValue">0.15</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Air Quality Component -->
+            <div class="col-md-6">
+                <div class="component-card">
+                    <div class="component-header">
+                        <div class="component-title">
+                            <div class="component-icon" style="background: #6f42c1;">
+                                <i class="bi bi-wind"></i>
+                            </div>
+                            Air Quality Threat
+                        </div>
+                    </div>
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Raw Score</span>
+                            <span class="slider-value" id="airQualityRawValue">0</span>
+                        </div>
+                        <input type="range" class="custom-slider" id="airQualityRaw" min="0" max="100" value="0">
+                    </div>
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Confidence</span>
+                            <span class="slider-value" id="airQualityConfidenceValue">0.8</span>
+                        </div>
+                        <input type="range" class="custom-slider" id="airQualityConfidence" min="0" max="1" step="0.1" value="0.8">
+                    </div>
+                    <div class="weight-control">
+                        <span>Weight</span>
+                        <input type="range" class="custom-slider weight-slider" id="airQualityWeight" min="0" max="1" step="0.1" value="0.15">
+                        <span class="weight-value" id="airQualityWeightValue">0.15</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Noise Component -->
+            <div class="col-md-6">
+                <div class="component-card">
+                    <div class="component-header">
+                        <div class="component-title">
+                            <div class="component-icon" style="background: #17a2b8;">
+                                <i class="bi bi-volume-up"></i>
+                            </div>
+                            Noise Threat
+                        </div>
+                    </div>
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Raw Score</span>
+                            <span class="slider-value" id="noiseRawValue">0</span>
+                        </div>
+                        <input type="range" class="custom-slider" id="noiseRaw" min="0" max="100" value="0">
+                    </div>
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Confidence</span>
+                            <span class="slider-value" id="noiseConfidenceValue">0.8</span>
+                        </div>
+                        <input type="range" class="custom-slider" id="noiseConfidence" min="0" max="1" step="0.1" value="0.8">
+                    </div>
+                    <div class="weight-control">
+                        <span>Weight</span>
+                        <input type="range" class="custom-slider weight-slider" id="noiseWeight" min="0" max="1" step="0.1" value="0.10">
+                        <span class="weight-value" id="noiseWeightValue">0.10</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Presets -->
+        <div class="scoring-controls">
+            <h3>🎭 Scenario Presets</h3>
+            <div class="preset-grid">
+                <div class="preset-card" onclick="loadPreset('normal')">
+                    <div class="preset-title">🟢 Normal Conditions</div>
+                    <div class="preset-description">Low threat levels with normal sensor readings</div>
+                    <div class="preset-stats">
+                        <span>📊 Threat: 15</span>
+                        <span>👥 People: 1-2</span>
+                        <span>🔊 Noise: 40-50 dB</span>
+                    </div>
+                </div>
+                <div class="preset-card" onclick="loadPreset('moderate')">
+                    <div class="preset-title">🟡 Moderate Activity</div>
+                    <div class="preset-description">Elevated readings with moderate concern</div>
+                    <div class="preset-stats">
+                        <span>📊 Threat: 45</span>
+                        <span>👥 People: 2-4</span>
+                        <span>🔊 Noise: 55-70 dB</span>
+                    </div>
+                </div>
+                <div class="preset-card" onclick="loadPreset('high')">
+                    <div class="preset-title">🟠 High Alert</div>
+                    <div class="preset-description">High threat levels requiring attention</div>
+                    <div class="preset-stats">
+                        <span>📊 Threat: 75</span>
+                        <span>👥 People: 4-8</span>
+                        <span>🔊 Noise: 75-90 dB</span>
+                    </div>
+                </div>
+                <div class="preset-card" onclick="loadPreset('critical')">
+                    <div class="preset-title">🔴 Critical Emergency</div>
+                    <div class="preset-description">Maximum threat levels requiring immediate action</div>
+                    <div class="preset-stats">
+                        <span>📊 Threat: 95</span>
+                        <span>👥 People: 5-12</span>
+                        <span>🔊 Noise: 90-100 dB</span>
+                    </div>
+                </div>
+                <div class="preset-card" onclick="loadPreset('vaping')">
+                    <div class="preset-title">🌬️ Vaping Detection</div>
+                    <div class="preset-description">Elevated VOC levels with moderate threat</div>
+                    <div class="preset-stats">
+                        <span>📊 Threat: 45</span>
+                        <span>🧪 VOC: 150-200</span>
+                        <span>👥 People: 2-3</span>
+                    </div>
+                </div>
+                <div class="preset-card" onclick="loadPreset('fighting')">
+                    <div class="preset-title">🥊 Fighting/Altercation</div>
+                    <div class="preset-description">Critical threat with high noise and activity</div>
+                    <div class="preset-stats">
+                        <span>📊 Threat: 85</span>
+                        <span>🔊 Noise: 85-100 dB</span>
+                        <span>👥 People: 3-5</span>
+                    </div>
+                </div>
+                <div class="preset-card" onclick="loadPreset('medical')">
+                    <div class="preset-title">🚑 Medical Emergency</div>
+                    <div class="preset-description">Critical vital signs with low movement</div>
+                    <div class="preset-stats">
+                        <span>📊 Threat: 90</span>
+                        <span>💓 Abnormal vitals</span>
+                        <span>👥 People: 1-2</span>
+                    </div>
+                </div>
+                <div class="preset-card" onclick="loadPreset('fire')">
+                    <div class="preset-title">🔥 Fire/Smoke Detection</div>
+                    <div class="preset-description">Hazardous air quality with critical threat</div>
+                    <div class="preset-stats">
+                        <span>📊 Threat: 95</span>
+                        <span>💨 PM2.5: 150-200</span>
+                        <span>🔥 Smoke detected</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Component data structure
+    const components = {
+        proximity: { raw: 0, confidence: 0.8, weight: 0.25 },
+        count: { raw: 0, confidence: 0.8, weight: 0.15 },
+        behavior: { raw: 0, confidence: 0.8, weight: 0.20 },
+        vitalSigns: { raw: 0, confidence: 0.8, weight: 0.15 },
+        airQuality: { raw: 0, confidence: 0.8, weight: 0.15 },
+        noise: { raw: 0, confidence: 0.8, weight: 0.10 }
+    };
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeSliders();
+        setupEventListeners();
+        calculateThreat();
+    });
+    
+    function initializeSliders() {
+        // Set up all sliders
+        Object.keys(components).forEach(component => {
+            const rawSlider = document.getElementById(`${component}Raw`);
+            const confidenceSlider = document.getElementById(`${component}Confidence`);
+            const weightSlider = document.getElementById(`${component}Weight`);
+            
+            if (rawSlider) {
+                rawSlider.addEventListener('input', (e) => {
+                    components[component].raw = parseFloat(e.target.value);
+                    document.getElementById(`${component}RawValue`).textContent = e.target.value;
+                    calculateThreat();
+                });
+            }
+            
+            if (confidenceSlider) {
+                confidenceSlider.addEventListener('input', (e) => {
+                    components[component].confidence = parseFloat(e.target.value);
+                    document.getElementById(`${component}ConfidenceValue`).textContent = e.target.value;
+                    calculateThreat();
+                });
+            }
+            
+            if (weightSlider) {
+                weightSlider.addEventListener('input', (e) => {
+                    components[component].weight = parseFloat(e.target.value);
+                    document.getElementById(`${component}WeightValue`).textContent = e.target.value;
+                    calculateThreat();
+                });
+            }
+        });
+    }
+    
+    function setupEventListeners() {
+        document.getElementById('calculateBtn').addEventListener('click', calculateThreat);
+        document.getElementById('randomizeBtn').addEventListener('click', randomizeValues);
+        document.getElementById('resetBtn').addEventListener('click', resetAll);
+        document.getElementById('exportBtn').addEventListener('click', exportConfiguration);
+    }
+    
+    function calculateThreat() {
+        let totalWeightedScore = 0;
+        let totalWeight = 0;
+        
+        Object.keys(components).forEach(component => {
+            const comp = components[component];
+            const adjustedScore = comp.raw * comp.confidence * comp.weight;
+            totalWeightedScore += adjustedScore;
+            totalWeight += comp.weight;
+            
+            // Update component display
+            const finalScore = comp.raw * comp.confidence;
+            document.getElementById(`${component}Score`).textContent = Math.round(finalScore);
+        });
+        
+        // Calculate overall threat
+        const overallThreat = totalWeight > 0 ? totalWeightedScore / totalWeight : 0;
+        
+        // Update display
+        updateThreatDisplay(overallThreat);
+    }
+    
+    function updateThreatDisplay(threat) {
+        const threatScore = Math.round(threat);
+        const threatLevel = getThreatLevel(threat);
+        const threatColor = getThreatColor(threat);
+        
+        // Update main display
+        document.getElementById('threatScore').textContent = threatScore;
+        document.getElementById('threatLevel').textContent = threatLevel;
+        document.getElementById('threatFill').style.width = `${threat}%`;
+        
+        // Update colors
+        const threatDisplay = document.querySelector('.threat-display');
+        threatDisplay.style.background = `linear-gradient(135deg, ${threatColor}20 0%, ${threatColor}40 100%)`;
+        threatDisplay.style.borderColor = threatColor;
+        
+        document.getElementById('threatScore').style.color = threatColor;
+        document.getElementById('threatFill').style.background = `linear-gradient(90deg, ${getGradientColor(threat)})`;
+    }
+    
+    function getThreatLevel(threat) {
+        if (threat >= 80) return 'CRITICAL';
+        if (threat >= 60) return 'HIGH';
+        if (threat >= 40) return 'ELEVATED';
+        if (threat >= 20) return 'MODERATE';
+        return 'LOW';
+    }
+    
+    function getThreatColor(threat) {
+        if (threat >= 80) return '#dc3545';
+        if (threat >= 60) return '#fd7e14';
+        if (threat >= 40) return '#ffc107';
+        if (threat >= 20) return '#20c997';
+        return '#28a745';
+    }
+    
+    function getGradientColor(threat) {
+        if (threat >= 80) return '#dc3545, #b02a37';
+        if (threat >= 60) return '#fd7e14, #e8590c';
+        if (threat >= 40) return '#ffc107, #e0a800';
+        if (threat >= 20) return '#20c997, #12b886';
+        return '#28a745, #1e7e34';
+    }
+    
+    function randomizeValues() {
+        Object.keys(components).forEach(component => {
+            const rawValue = Math.random() * 100;
+            const confidenceValue = 0.5 + Math.random() * 0.5;
+            const weightValue = 0.05 + Math.random() * 0.3;
+            
+            components[component].raw = rawValue;
+            components[component].confidence = confidenceValue;
+            components[component].weight = weightValue;
+            
+            // Update sliders
+            document.getElementById(`${component}Raw`).value = rawValue;
+            document.getElementById(`${component}RawValue`).textContent = Math.round(rawValue);
+            
+            document.getElementById(`${component}Confidence`).value = confidenceValue;
+            document.getElementById(`${component}ConfidenceValue`).textContent = confidenceValue.toFixed(1);
+            
+            document.getElementById(`${component}Weight`).value = weightValue;
+            document.getElementById(`${component}WeightValue`).textContent = weightValue.toFixed(2);
+        });
+        
+        calculateThreat();
+    }
+    
+    function resetAll() {
+        Object.keys(components).forEach(component => {
+            components[component].raw = 0;
+            components[component].confidence = 0.8;
+            components[component].weight = 0.15;
+            
+            // Update sliders
+            document.getElementById(`${component}Raw`).value = 0;
+            document.getElementById(`${component}RawValue`).textContent = '0';
+            
+            document.getElementById(`${component}Confidence`).value = 0.8;
+            document.getElementById(`${component}ConfidenceValue`).textContent = '0.8';
+            
+            document.getElementById(`${component}Weight`).value = 0.15;
+            document.getElementById(`${component}WeightValue`).textContent = '0.15';
+        });
+        
+        // Reset specific weights
+        components.proximity.weight = 0.25;
+        components.count.weight = 0.15;
+        components.behavior.weight = 0.20;
+        components.vitalSigns.weight = 0.15;
+        components.airQuality.weight = 0.15;
+        components.noise.weight = 0.10;
+        
+        // Update weight displays
+        document.getElementById('proximityWeight').value = 0.25;
+        document.getElementById('proximityWeightValue').textContent = '0.25';
+        
+        document.getElementById('countWeight').value = 0.15;
+        document.getElementById('countWeightValue').textContent = '0.15';
+        
+        document.getElementById('behaviorWeight').value = 0.20;
+        document.getElementById('behaviorWeightValue').textContent = '0.20';
+        
+        document.getElementById('vitalSignsWeight').value = 0.15;
+        document.getElementById('vitalSignsWeightValue').textContent = '0.15';
+        
+        document.getElementById('airQualityWeight').value = 0.15;
+        document.getElementById('airQualityWeightValue').textContent = '0.15';
+        
+        document.getElementById('noiseWeight').value = 0.10;
+        document.getElementById('noiseWeightValue').textContent = '0.10';
+        
+        calculateThreat();
+    }
+    
+    function loadPreset(presetName) {
+        const presets = {
+            normal: {
+                proximity: { raw: 10, confidence: 0.7, weight: 0.25 },
+                count: { raw: 15, confidence: 0.8, weight: 0.15 },
+                behavior: { raw: 5, confidence: 0.6, weight: 0.20 },
+                vitalSigns: { raw: 8, confidence: 0.7, weight: 0.15 },
+                airQuality: { raw: 12, confidence: 0.8, weight: 0.15 },
+                noise: { raw: 20, confidence: 0.7, weight: 0.10 }
+            },
+            moderate: {
+                proximity: { raw: 35, confidence: 0.8, weight: 0.25 },
+                count: { raw: 45, confidence: 0.8, weight: 0.15 },
+                behavior: { raw: 40, confidence: 0.7, weight: 0.20 },
+                vitalSigns: { raw: 30, confidence: 0.7, weight: 0.15 },
+                airQuality: { raw: 55, confidence: 0.8, weight: 0.15 },
+                noise: { raw: 50, confidence: 0.8, weight: 0.10 }
+            },
+            high: {
+                proximity: { raw: 70, confidence: 0.8, weight: 0.25 },
+                count: { raw: 80, confidence: 0.9, weight: 0.15 },
+                behavior: { raw: 75, confidence: 0.8, weight: 0.20 },
+                vitalSigns: { raw: 65, confidence: 0.7, weight: 0.15 },
+                airQuality: { raw: 70, confidence: 0.8, weight: 0.15 },
+                noise: { raw: 85, confidence: 0.9, weight: 0.10 }
+            },
+            critical: {
+                proximity: { raw: 90, confidence: 0.9, weight: 0.25 },
+                count: { raw: 95, confidence: 0.9, weight: 0.15 },
+                behavior: { raw: 85, confidence: 0.8, weight: 0.20 },
+                vitalSigns: { raw: 95, confidence: 0.9, weight: 0.15 },
+                airQuality: { raw: 90, confidence: 0.9, weight: 0.15 },
+                noise: { raw: 95, confidence: 0.9, weight: 0.10 }
+            },
+            vaping: {
+                proximity: { raw: 20, confidence: 0.6, weight: 0.25 },
+                count: { raw: 35, confidence: 0.8, weight: 0.15 },
+                behavior: { raw: 30, confidence: 0.7, weight: 0.20 },
+                vitalSigns: { raw: 25, confidence: 0.6, weight: 0.15 },
+                airQuality: { raw: 80, confidence: 0.9, weight: 0.15 },
+                noise: { raw: 45, confidence: 0.7, weight: 0.10 }
+            },
+            fighting: {
+                proximity: { raw: 85, confidence: 0.9, weight: 0.25 },
+                count: { raw: 80, confidence: 0.8, weight: 0.15 },
+                behavior: { raw: 90, confidence: 0.9, weight: 0.20 },
+                vitalSigns: { raw: 75, confidence: 0.8, weight: 0.15 },
+                airQuality: { raw: 40, confidence: 0.6, weight: 0.15 },
+                noise: { raw: 95, confidence: 0.9, weight: 0.10 }
+            },
+            medical: {
+                proximity: { raw: 30, confidence: 0.7, weight: 0.25 },
+                count: { raw: 25, confidence: 0.8, weight: 0.15 },
+                behavior: { raw: 20, confidence: 0.6, weight: 0.20 },
+                vitalSigns: { raw: 95, confidence: 0.9, weight: 0.15 },
+                airQuality: { raw: 15, confidence: 0.6, weight: 0.15 },
+                noise: { raw: 35, confidence: 0.7, weight: 0.10 }
+            },
+            fire: {
+                proximity: { raw: 40, confidence: 0.7, weight: 0.25 },
+                count: { raw: 20, confidence: 0.6, weight: 0.15 },
+                behavior: { raw: 60, confidence: 0.8, weight: 0.20 },
+                vitalSigns: { raw: 85, confidence: 0.8, weight: 0.15 },
+                airQuality: { raw: 95, confidence: 0.9, weight: 0.15 },
+                noise: { raw: 80, confidence: 0.8, weight: 0.10 }
+            }
+        };
+        
+        const preset = presets[presetName];
+        if (preset) {
+            Object.keys(preset).forEach(component => {
+                const values = preset[component];
+                components[component] = { ...values };
+                
+                // Update sliders
+                document.getElementById(`${component}Raw`).value = values.raw;
+                document.getElementById(`${component}RawValue`).textContent = Math.round(values.raw);
+                
+                document.getElementById(`${component}Confidence`).value = values.confidence;
+                document.getElementById(`${component}ConfidenceValue`).textContent = values.confidence.toFixed(1);
+                
+                document.getElementById(`${component}Weight`).value = values.weight;
+                document.getElementById(`${component}WeightValue`).textContent = values.weight.toFixed(2);
+            });
+            
+            calculateThreat();
+        }
+    }
+    
+    function exportConfiguration() {
+        const config = {
+            components: components,
+            threatScore: Math.round(calculateOverallThreat()),
+            threatLevel: getThreatLevel(calculateOverallThreat()),
+            timestamp: new Date().toISOString()
+        };
+        
+        const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `scoring-config-${Date.now()}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+    
+    function calculateOverallThreat() {
+        let totalWeightedScore = 0;
+        let totalWeight = 0;
+        
+        Object.keys(components).forEach(component => {
+            const comp = components[component];
+            totalWeightedScore += comp.raw * comp.confidence * comp.weight;
+            totalWeight += comp.weight;
+        });
+        
+        return totalWeight > 0 ? totalWeightedScore / totalWeight : 0;
+    }
+</script>
+{% endblock %}
