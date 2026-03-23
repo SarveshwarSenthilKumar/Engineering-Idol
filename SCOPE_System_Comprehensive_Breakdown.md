@@ -3165,9 +3165,69 @@ scenarios = {
         'voc': {'min': 150, 'max': 200},
         'pm25': {'min': 40, 'max': 80},
         'description': 'Simulated vaping with elevated VOC and particulate levels'
+    },
+    'sensor_fault': {
+        'name': 'Sensor Fault',
+        'threatScore': 60,
+        'threatLevel': 'HIGH',
+        'people': {'min': 0, 'max': 1},
+        'voc': {'min': 0, 'max': 10},
+        'noise': {'min': 0, 'max': 20},
+        'pm25': {'min': 0, 'max': 5},
+        'description': 'Simulates sensor malfunction or vandalism',
+        'sensorFaults': ['radar', 'pms5003', 'mq135', 'sound']
     }
 }
 ```
+
+#### Sensor Fault Scenario Features
+The sensor fault scenario provides realistic simulation of hardware malfunctions:
+
+**Fault Types Simulated:**
+- **Disconnection**: Cable cut or power failure
+- **Stuck Reading**: Sensor stuck at one value
+- **Out of Range**: Impossible sensor values  
+- **Intermittent**: On/off sensor behavior
+
+**Affected Sensors:**
+- **📡 Radar (mmWave)**: No people detection when faulty
+- **🌫️ PMS5003 (Particulate)**: No PM2.5 readings when faulty
+- **💨 MQ135 (VOC)**: No VOC readings when faulty
+- **🔊 Sound Sensor**: No sound readings when faulty
+
+**Fault Simulation Logic:**
+```python
+# Handle sensor fault scenario
+if scenario_config.get('name') == 'Sensor Fault':
+    # Randomly select which sensors are faulty (70% chance each)
+    faulty_sensors = scenario_config.get('sensorFaults', [])
+    sensor_faults = {}
+    
+    for sensor in faulty_sensors:
+        if random.random() < 0.7:  # 70% chance each sensor is faulty
+            sensor_faults[sensor] = {
+                'status': 'fault',
+                'last_reading': None,
+                'error_type': random.choice(['disconnection', 'stuck_reading', 'out_of_range', 'intermittent']),
+                'fault_time': datetime.now().strftime('%H:%M:%S')
+            }
+    
+    # Set sensor readings to indicate faults
+    if 'radar' in sensor_faults:
+        people = 0  # No people detected by radar
+    if 'pms5003' in sensor_faults:
+        pm25 = 0  # No particulate readings
+    if 'mq135' in sensor_faults:
+        voc = 0  # No VOC readings
+    if 'sound' in sensor_faults:
+        noise = 0  # No sound readings
+```
+
+**Training Applications:**
+- **Maintenance Training**: Practice diagnosing sensor failures
+- **Security Testing**: Test system behavior with compromised sensors
+- **Vandalism Response**: Train for deliberate sensor damage scenarios
+- **System Resilience**: Test backup monitoring capabilities
 
 ### 2. Scenario Data Generation
 
@@ -3312,6 +3372,7 @@ def stop_scenario():
 3. **Environmental Hazards**: Chemical spills, fire/smoke detection
 4. **Behavioral Issues**: Vaping, substance use, crowd control
 5. **System Testing**: Data validation, connectivity testing
+6. **Hardware Failures**: Sensor malfunctions, vandalism, maintenance scenarios
 
 ---
 
