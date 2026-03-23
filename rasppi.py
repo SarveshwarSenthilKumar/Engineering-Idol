@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
 ENHANCED ENVIRONMENTAL MONITORING SYSTEM
 Advanced threat detection with temporal dynamics and exponential escalation
@@ -377,7 +377,7 @@ class DatabaseManager:
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_events_log_timestamp ON events_log(timestamp)")
             
             conn.commit()
-            logger.info("✅ Database tables created successfully")
+            logger.info("âœ… Database tables created successfully")
             
         except Exception as e:
             logger.error(f"Database creation error: {e}")
@@ -641,6 +641,42 @@ class DatabaseManager:
             if conn:
                 conn.close()
     
+    def log_sensor_fault_event(self, sensor_name: str, fault_info: dict):
+        """Log a sensor fault event to the events_log table"""
+        conn = None
+        try:
+            conn = self.get_connection()
+            cursor = conn.cursor()
+            timestamp = datetime.now().isoformat()
+            
+            cursor.execute("""
+                INSERT INTO events_log (
+                    timestamp, threat_level, threat_score, quality_score,
+                    people_count, sound_db, air_aqi, event_type, description
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                timestamp,
+                'SENSOR_FAULT',  # Special threat level for sensor faults
+                50,  # Medium threat score for sensor faults
+                50,  # Medium quality score for sensor faults
+                0,   # No people count for sensor faults
+                None, # No sound data
+                None, # No air quality data
+                f'SENSOR_FAULT_{sensor_name.upper()}',
+                f"{fault_info['type']}: {fault_info['description']}"
+            ))
+            
+            conn.commit()
+            logger.info(f"Sensor fault event logged: {sensor_name} - {fault_info['type']}")
+            return cursor.lastrowid
+            
+        except Exception as e:
+            logger.error(f"Error logging sensor fault event: {e}")
+            return None
+        finally:
+            if conn:
+                conn.close()
+    
     def generate_report(self, start_time=None, end_time=None, min_threat=0):
         """Generate a comprehensive report of events"""
         conn = None
@@ -739,14 +775,14 @@ class DatabaseManager:
             return
         
         print("\n" + "="*80)
-        print(f"📊 SCOPE MONITORING REPORT")
+        print(f"ðŸ“Š SCOPE MONITORING REPORT")
         print("="*80)
         print(f"Generated: {report['generated_at']}")
         if report['period']['start']:
             print(f"Period: {report['period']['start']} to {report['period']['end'] or 'now'}")
         print("-"*80)
         
-        print("\n📈 STATISTICS:")
+        print("\nðŸ“ˆ STATISTICS:")
         print(f"   Total Events: {report['statistics']['total_events']}")
         print(f"   Average Threat: {report['statistics']['average_threat']}/100")
         print(f"   Maximum Threat: {report['statistics']['maximum_threat']}/100")
@@ -756,14 +792,14 @@ class DatabaseManager:
         print(f"   Average AQI: {report['statistics']['average_aqi']:.1f}")
         
         if report['threat_distribution']:
-            print("\n🎯 THREAT DISTRIBUTION:")
+            print("\nðŸŽ¯ THREAT DISTRIBUTION:")
             max_count = max(report['threat_distribution'].values()) if report['threat_distribution'] else 1
             for level, count in report['threat_distribution'].items():
-                bar = "█" * int(count / max_count * 20) if max_count > 0 else ""
+                bar = "â–ˆ" * int(count / max_count * 20) if max_count > 0 else ""
                 print(f"   {level:10}: {bar} {count}")
         
         if report['events']:
-            print("\n📋 RECENT EVENTS:")
+            print("\nðŸ“‹ RECENT EVENTS:")
             for event in report['events'][:10]:
                 print(f"\n   [{event['timestamp']}]")
                 print(f"   Threat: {event['threat_level']} ({event['threat_score']}/100)")
@@ -957,7 +993,7 @@ class SoftwareUART:
         # Set TX pin high (idle state)
         self.pi.write(self.tx_pin, 1)
         self.connected = True
-        logger.info(f"✅ Software UART initialized on TX:{tx_pin}, RX:{rx_pin} at {baudrate} baud")
+        logger.info(f"âœ… Software UART initialized on TX:{tx_pin}, RX:{rx_pin} at {baudrate} baud")
     
     def write(self, data):
         """Write data to software UART"""
@@ -1034,7 +1070,7 @@ class SoftwareUART:
             self.pi.write(self.tx_pin, 1)  # Set TX high before closing
             self.pi.stop()
             self.connected = False
-            logger.info("✅ Software UART closed")
+            logger.info("âœ… Software UART closed")
 class RadarProcessor:
     """Advanced mmWave radar processor with tracking and vital signs"""
     
@@ -1060,9 +1096,9 @@ class RadarProcessor:
                 self.serial_conn = SoftwareUART(MMWAVE_TX_PIN, MMWAVE_RX_PIN, MMWAVE_BAUDRATE)
                 self.detected_radar_type = 'rd03d'
                 self.config = RADAR_CONFIGS['rd03d']
-                logger.info(f"✅ Using Software UART for mmWave radar on pins TX:{MMWAVE_TX_PIN}, RX:{MMWAVE_RX_PIN}")
+                logger.info(f"âœ… Using Software UART for mmWave radar on pins TX:{MMWAVE_TX_PIN}, RX:{MMWAVE_RX_PIN}")
             except Exception as e:
-                logger.error(f"❌ Failed to initialize Software UART: {e}")
+                logger.error(f"âŒ Failed to initialize Software UART: {e}")
                 self.serial_conn = None
                 self.detected_radar_type = 'rd03d'
                 self.config = RADAR_CONFIGS['rd03d']
@@ -1088,13 +1124,13 @@ class RadarProcessor:
                                 self.detected_radar_type = 'rd03d'
                                 self.config = RADAR_CONFIGS['rd03d']
                                 self.config['baudrate'] = baud
-                                logger.info(f"✅ Detected RD-03D radar at {baud} baud")
+                                logger.info(f"âœ… Detected RD-03D radar at {baud} baud")
                                 break
                             elif b'F' in test_data or b'T' in test_data:
                                 self.detected_radar_type = 'ld2410'
                                 self.config = RADAR_CONFIGS['ld2410']
                                 self.config['baudrate'] = baud
-                                logger.info(f"✅ Detected LD2410 radar at {baud} baud")
+                                logger.info(f"âœ… Detected LD2410 radar at {baud} baud")
                                 break
                     
                     self.serial_conn.close()
@@ -1110,7 +1146,7 @@ class RadarProcessor:
                     timeout=1,
                     write_timeout=1
                 )
-                logger.warning("⚠ Could not auto-detect radar, assuming RD-03D")
+                logger.warning("âš  Could not auto-detect radar, assuming RD-03D")
     
     def _parse_rd03d_frame(self, data):
         """Parse RD-03D radar data format"""
@@ -1843,23 +1879,23 @@ class EnhancedThreatScorer:
         # Determine threat level
         if overall_threat < 20:
             level = "LOW"
-            color = "🟢"
+            color = "ðŸŸ¢"
             response = "Normal conditions"
         elif overall_threat < 40:
             level = "MODERATE"
-            color = "🟡"
+            color = "ðŸŸ¡"
             response = "Monitor situation"
         elif overall_threat < 60:
             level = "ELEVATED"
-            color = "🟠"
+            color = "ðŸŸ "
             response = "Increased awareness advised"
         elif overall_threat < 80:
             level = "HIGH"
-            color = "🔴"
+            color = "ðŸ”´"
             response = "Potential threat detected"
         else:
             level = "CRITICAL"
-            color = "⚫"
+            color = "âš«"
             response = "IMMEDIATE ATTENTION REQUIRED"
         
         # Add temporal warnings
@@ -1922,7 +1958,7 @@ class EnvironmentalQualityScorer:
                          odor_data: Optional[Dict], radar_data: Optional[Dict]) -> Dict:
         """Calculate environmental quality score"""
         if not threat_data:
-            return {'quality_score': 75, 'category': 'GOOD', 'icon': '✅', 'adjustments': {}, 'trend': 'stable', 'base_quality': 75}
+            return {'quality_score': 75, 'category': 'GOOD', 'icon': 'âœ…', 'adjustments': {}, 'trend': 'stable', 'base_quality': 75}
         
         # Base quality is inverse of threat with exponential scaling
         base_quality = 100 - (threat_data['overall_threat'] * 0.8)
@@ -1988,19 +2024,19 @@ class EnvironmentalQualityScorer:
         # Determine category
         if smoothed >= 90:
             category = "EXCELLENT"
-            icon = "🌟"
+            icon = "ðŸŒŸ"
         elif smoothed >= 80:
             category = "GOOD"
-            icon = "✅"
+            icon = "âœ…"
         elif smoothed >= 70:
             category = "FAIR"
-            icon = "⚠️"
+            icon = "âš ï¸"
         elif smoothed >= 60:
             category = "POOR"
-            icon = "🔴"
+            icon = "ðŸ”´"
         else:
             category = "CRITICAL"
-            icon = "🚨"
+            icon = "ðŸš¨"
         
         # Calculate trend
         if len(self.quality_history) > 10:
@@ -2188,7 +2224,7 @@ def init_hardware():
             write_timeout=2
         )
         
-        logger.info("✅ Hardware initialized successfully")
+        logger.info("âœ… Hardware initialized successfully")
         logger.info(f"  - Air Quality (MQ135): ADS1115 P0 (A1)")
         logger.info(f"  - Microphone: ADS1115 P1 (A2)")
         logger.info(f"  - Particle Sensor (PMS5003): Hardware UART")
@@ -2260,7 +2296,7 @@ def read_sound():
 def signal_handler(sig, frame):
     """Handle Ctrl+C and Ctrl+\ signals"""
     if sig == signal.SIGQUIT:  # Ctrl+\
-        print("\n\n📋 Generating report...")
+        print("\n\nðŸ“‹ Generating report...")
         report = db_manager.generate_report(start_time=(datetime.now() - timedelta(hours=24)).isoformat())
         db_manager.print_report(report)
     else:  # Ctrl+C
@@ -2269,7 +2305,7 @@ def signal_handler(sig, frame):
         # Summary statistics
         if threat_history:
             threats = [t['overall_threat'] for t in threat_history]
-            print(f"\n📈 THREAT SUMMARY:")
+            print(f"\nðŸ“ˆ THREAT SUMMARY:")
             print(f"   Average: {np.mean(threats):.1f}")
             print(f"   Maximum: {max(threats):.1f}")
             print(f"   Minimum: {min(threats):.1f}")
@@ -2286,7 +2322,7 @@ def signal_handler(sig, frame):
         
         if quality_scorer.quality_history:
             qualities = list(quality_scorer.quality_history)
-            print(f"\n🌿 FACILITY QUALITY:")
+            print(f"\nðŸŒ¿ FACILITY QUALITY:")
             print(f"   Average: {np.mean(qualities):.1f}")
             print(f"   Best: {max(qualities):.1f}")
             print(f"   Worst: {min(qualities):.1f}")
@@ -2296,17 +2332,265 @@ def signal_handler(sig, frame):
             pms.close()
         if radar_processor and radar_processor.serial_conn:
             radar_processor.serial_conn.close()
-        print("\n✓ Cleanup complete. Exiting.")
+        print("\nâœ“ Cleanup complete. Exiting.")
         sys.exit(0)
 
 # Register signal handlers
 signal.signal(signal.SIGINT, signal_handler)   # Ctrl+C
 signal.signal(signal.SIGQUIT, signal_handler)  # Ctrl+\
 
-# Initialize processors
 radar_processor = RadarProcessor(use_software_uart=True)  # Use software UART for mmWave sensor
 threat_scorer = EnhancedThreatScorer()
 quality_scorer = FacilityQualityScorer()
+
+# ==================== SENSOR HEALTH MONITOR ====================
+class SensorHealthMonitor:
+    """Monitors sensor health and detects faults/vandalism"""
+    
+    def __init__(self):
+        self.sensor_history = {
+            'radar': deque(maxlen=100),      # Last 100 readings
+            'pms5003': deque(maxlen=100),    # Last 100 readings
+            'mq135': deque(maxlen=100),      # Last 100 readings
+            'sound': deque(maxlen=100)       # Last 100 readings
+        }
+        self.sensor_faults = {
+            'radar': {'count': 0, 'first_detected': None, 'last_notified': None},
+            'pms5003': {'count': 0, 'first_detected': None, 'last_notified': None},
+            'mq135': {'count': 0, 'first_detected': None, 'last_notified': None},
+            'sound': {'count': 0, 'first_detected': None, 'last_notified': None}
+        }
+        self.last_check_time = time.time()
+        self.fault_cooldown = 300  # 5 minutes between fault notifications
+        
+    def update_sensor_status(self, sensor_name: str, is_connected: bool, data_value=None):
+        """Update sensor status and health history"""
+        current_time = time.time()
+        
+        # Record current status
+        self.sensor_history[sensor_name].append({
+            'timestamp': current_time,
+            'connected': is_connected,
+            'data': data_value
+        })
+        
+        # Check for fault conditions
+        fault_detected = self._detect_sensor_fault(sensor_name, is_connected, data_value)
+        
+        if fault_detected:
+            self._handle_sensor_fault(sensor_name, fault_detected)
+        else:
+            # Reset fault count if sensor is working
+            if self.sensor_faults[sensor_name]['count'] > 0:
+                self._handle_sensor_recovery(sensor_name)
+                
+    def _detect_sensor_fault(self, sensor_name: str, is_connected: bool, data_value=None):
+        """Detect if sensor has a fault"""
+        history = list(self.sensor_history[sensor_name])
+        
+        if len(history) < 10:  # Need at least 10 readings to assess
+            return None
+            
+        recent_history = history[-20:]  # Last 20 readings
+        
+        # Check 1: Connection failures
+        connection_failures = sum(1 for h in recent_history if not h['connected'])
+        if connection_failures >= 15:  # 75% failure rate
+            return {
+                'type': 'connection_failure',
+                'severity': 'critical',
+                'description': f'{sensor_name} sensor disconnected ({connection_failures}/20 failures)',
+                'possible_cause': ['vandalism', 'cable_cut', 'power_failure']
+            }
+            
+        # Check 2: Stuck/Dead sensor (same value repeated)
+        if is_connected and data_value is not None:
+            recent_values = [h['data'] for h in recent_history if h['data'] is not None]
+            if len(recent_values) >= 15:
+                # Check if values are too similar (dead sensor)
+                if sensor_name in ['pms5003', 'mq135', 'sound']:
+                    # For analog sensors
+                    value_variance = np.var(recent_values)
+                    if value_variance < 0.01:  # Very low variance = stuck sensor
+                        return {
+                            'type': 'stuck_sensor',
+                            'severity': 'high',
+                            'description': f'{sensor_name} sensor appears stuck (constant readings)',
+                            'possible_cause': ['sensor_failure', 'vandalism', 'calibration_drift']
+                        }
+                
+        # Check 3: Out of range values (sensor damage)
+        if is_connected and data_value is not None:
+            if self._is_value_out_of_range(sensor_name, data_value):
+                return {
+                    'type': 'out_of_range',
+                    'severity': 'high',
+                    'description': f'{sensor_name} reporting impossible values: {data_value}',
+                    'possible_cause': ['sensor_damage', 'environmental_interference']
+                }
+                
+        # Check 4: Intermittent failures (vandalism in progress)
+        if connection_failures >= 5 and connection_failures <= 10:
+            return {
+                'type': 'intermittent_failure',
+                'severity': 'medium',
+                'description': f'{sensor_name} showing intermittent connectivity ({connection_failures}/20 failures)',
+                'possible_cause': ['vandalism_in_progress', 'loose_connection', 'power_issues']
+            }
+            
+        return None
+        
+    def _is_value_out_of_range(self, sensor_name: str, value):
+        """Check if sensor value is physically impossible"""
+        ranges = {
+            'pms5003': {'min': 0, 'max': 1000},      # PM2.5 should be 0-1000 Î¼g/mÂ³
+            'mq135': {'min': 0, 'max': 5},           # Voltage should be 0-5V
+            'sound': {'min': 0, 'max': 120},         # dB should be 0-120
+            'radar': {'min': 0, 'max': 20}           # Target count should be 0-20
+        }
+        
+        if sensor_name not in ranges:
+            return False
+            
+        range_info = ranges[sensor_name]
+        
+        # Special checks for different sensor types
+        if sensor_name == 'pms5003' and isinstance(value, dict):
+            # Check PM2.5 specifically
+            pm25 = value.get('pm25', 0)
+            return pm25 < range_info['min'] or pm25 > range_info['max']
+        elif sensor_name == 'radar' and isinstance(value, dict):
+            # Check target count
+            target_count = value.get('target_count', 0)
+            return target_count < range_info['min'] or target_count > range_info['max']
+        else:
+            return value < range_info['min'] or value > range_info['max']
+            
+    def _handle_sensor_fault(self, sensor_name: str, fault_info: dict):
+        """Handle detected sensor fault"""
+        current_time = time.time()
+        fault_record = self.sensor_faults[sensor_name]
+        
+        fault_record['count'] += 1
+        
+        if fault_record['first_detected'] is None:
+            fault_record['first_detected'] = current_time
+            
+        # Check if we should send notification
+        time_since_last_notification = current_time - (fault_record['last_notified'] or 0)
+        
+        should_notify = (
+            fault_record['count'] >= 3 or  # After 3 consecutive fault detections
+            (fault_info['severity'] == 'critical' and time_since_last_notification > self.fault_cooldown) or
+            (fault_info['severity'] == 'high' and time_since_last_notification > self.fault_cooldown * 2)
+        )
+        
+        if should_notify:
+            self._send_sensor_fault_alert(sensor_name, fault_info)
+            fault_record['last_notified'] = current_time
+            
+    def _handle_sensor_recovery(self, sensor_name: str):
+        """Handle sensor recovery"""
+        fault_record = self.sensor_faults[sensor_name]
+        
+        if fault_record['count'] > 0:
+            logger.info(f"âœ… {sensor_name} sensor recovered after {fault_record['count']} fault detections")
+            
+            # Send recovery notification
+            self._send_sensor_recovery_alert(sensor_name)
+            
+        # Reset fault record
+        fault_record['count'] = 0
+        fault_record['first_detected'] = None
+        fault_record['last_notified'] = None
+        
+    def _send_sensor_fault_alert(self, sensor_name: str, fault_info: dict):
+        """Send sensor fault alert"""
+        severity_emoji = {
+            'critical': 'ðŸš¨',
+            'high': 'âš ï¸',
+            'medium': 'âš¡'
+        }
+        
+        subject = f"{severity_emoji[fault_info['severity']]} SENSOR FAULT: {sensor_name.upper()}"
+        
+        message = f"""
+ðŸ”§ SENSOR FAULT DETECTED
+
+Sensor: {sensor_name.upper()}
+Severity: {fault_info['severity'].upper()}
+Type: {fault_info['type']}
+Description: {fault_info['description']}
+
+Possible Causes:
+{chr(10).join(f'â€¢ {cause}' for cause in fault_info['possible_cause'])}
+
+Time Detected: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+Fault Count: {self.sensor_faults[sensor_name]['count']}
+
+ðŸš¨ ACTION REQUIRED:
+â€¢ Inspect sensor immediately
+â€¢ Check physical connections
+â€¢ Verify power supply
+â€¢ Look for signs of vandalism
+â€¢ Consider backup activation
+
+This is a SEPARATE alarm from security threats.
+System may continue operating with reduced capability.
+        """
+        
+        # Send through notification manager
+        notification_manager.send_sensor_fault_notification(subject, message, fault_info['severity'])
+        
+        # Log to database as special event
+        db_manager.log_sensor_fault_event(sensor_name, fault_info)
+        
+        logger.critical(f"ðŸš¨ SENSOR FAULT: {sensor_name} - {fault_info['description']}")
+        
+    def _send_sensor_recovery_alert(self, sensor_name: str):
+        """Send sensor recovery notification"""
+        subject = f"âœ… SENSOR RECOVERED: {sensor_name.upper()}"
+        
+        message = f"""
+âœ… SENSOR RECOVERED
+
+Sensor: {sensor_name.upper()}
+Status: Back online and functioning normally
+Time Recovered: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+
+System is now back to full operational capability.
+No further action required.
+        """
+        
+        notification_manager.send_email(subject, message, is_urgent=False)
+        logger.info(f"âœ… SENSOR RECOVERED: {sensor_name}")
+        
+    def get_sensor_health_summary(self):
+        """Get overall sensor health summary"""
+        summary = {}
+        
+        for sensor_name in ['radar', 'pms5003', 'mq135', 'sound']:
+            history = list(self.sensor_history[sensor_name])
+            fault_record = self.sensor_faults[sensor_name]
+            
+            if len(history) > 0:
+                recent_history = history[-20:]
+                connected_count = sum(1 for h in recent_history if h['connected'])
+                connectivity_rate = connected_count / len(recent_history) * 100
+            else:
+                connectivity_rate = 0
+                
+            summary[sensor_name] = {
+                'connectivity_rate': connectivity_rate,
+                'fault_count': fault_record['count'],
+                'status': 'fault' if fault_record['count'] > 0 else 'operational',
+                'last_fault': fault_record['first_detected']
+            }
+            
+        return summary
+
+# Initialize sensor health monitor
+sensor_health_monitor = SensorHealthMonitor()
 
 # ==================== NOTIFICATION MANAGER ====================
 class NotificationManager:
@@ -2346,25 +2630,25 @@ class NotificationManager:
                     os.getenv('TWILIO_ACCOUNT_SID'),
                     os.getenv('TWILIO_AUTH_TOKEN')
                 )
-                logger.info("✅ Twilio client initialized")
+                logger.info("âœ… Twilio client initialized")
             except ImportError:
-                logger.warning("⚠️ Twilio library not installed - SMS notifications disabled")
+                logger.warning("âš ï¸ Twilio library not installed - SMS notifications disabled")
                 self.twilio_configured = False
             except Exception as e:
-                logger.error(f"❌ Failed to initialize Twilio client: {e}")
+                logger.error(f"âŒ Failed to initialize Twilio client: {e}")
                 self.twilio_configured = False
         
         if not self.gmail_configured:
-            logger.warning("⚠️ Gmail credentials not configured - email notifications disabled")
+            logger.warning("âš ï¸ Gmail credentials not configured - email notifications disabled")
         if not self.teams_configured:
-            logger.warning("⚠️ Teams webhook not configured - Teams notifications disabled")
+            logger.warning("âš ï¸ Teams webhook not configured - Teams notifications disabled")
         if not self.twilio_configured:
-            logger.warning("⚠️ Twilio credentials not configured - SMS notifications disabled")
+            logger.warning("âš ï¸ Twilio credentials not configured - SMS notifications disabled")
         
         if self.gmail_configured or self.teams_configured or self.twilio_configured:
-            logger.info("✅ Notification system initialized")
+            logger.info("âœ… Notification system initialized")
         else:
-            logger.warning("⚠️ No notification channels configured - running without notifications")
+            logger.warning("âš ï¸ No notification channels configured - running without notifications")
         
     def send_gmail_notification(self, subject: str, message: str, is_urgent: bool = False):
         """Send notification via Gmail"""
@@ -2376,12 +2660,12 @@ class NotificationManager:
             msg = MimeMultipart()
             msg['From'] = GMAIL_SENDER_EMAIL
             msg['To'] = GMAIL_RECIPIENT_EMAIL
-            msg['Subject'] = f"{'🚨 URGENT: ' if is_urgent else 'ℹ️ INFO: '}{subject}"
+            msg['Subject'] = f"{'ðŸš¨ URGENT: ' if is_urgent else 'â„¹ï¸ INFO: '}{subject}"
             
             body = f"""
-            🕐 Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-            📍 Location: Bathroom Monitoring System
-            📊 System: {SYSTEM_NAME} v{VERSION}
+            ðŸ• Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+            ðŸ“ Location: Bathroom Monitoring System
+            ðŸ“Š System: {SYSTEM_NAME} v{VERSION}
             
             {message}
             
@@ -2396,11 +2680,11 @@ class NotificationManager:
                 server.login(GMAIL_SENDER_EMAIL, GMAIL_SENDER_PASSWORD)
                 server.send_message(msg)
                 
-            logger.info(f"✅ Gmail notification sent: {subject}")
+            logger.info(f"âœ… Gmail notification sent: {subject}")
             return True
             
         except Exception as e:
-            logger.error(f"❌ Failed to send Gmail notification: {e}")
+            logger.error(f"âŒ Failed to send Gmail notification: {e}")
             return False
     
     def send_teams_notification(self, message: str, is_urgent: bool = False):
@@ -2414,10 +2698,10 @@ class NotificationManager:
                 "@type": "MessageCard",
                 "@context": "http://schema.org/extensions",
                 "themeColor": "FF0000" if is_urgent else "0078D4",
-                "summary": "{'🚨 ALARM' if is_urgent else 'ℹ️ NOTICE'}: Bathroom Monitor",
+                "summary": "{'ðŸš¨ ALARM' if is_urgent else 'â„¹ï¸ NOTICE'}: Bathroom Monitor",
                 "sections": [{
-                    "activityTitle": "{'🚨 SECURITY ALERT' if is_urgent else 'ℹ️ SYSTEM NOTICE'}",
-                    "activitySubtitle": f"🕐 {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+                    "activityTitle": "{'ðŸš¨ SECURITY ALERT' if is_urgent else 'â„¹ï¸ SYSTEM NOTICE'}",
+                    "activitySubtitle": f"ðŸ• {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
                     "facts": [{
                         "name": "System",
                         "value": f"{SYSTEM_NAME} v{VERSION}"
@@ -2426,7 +2710,7 @@ class NotificationManager:
                         "value": "Bathroom Monitoring System"
                     }, {
                         "name": "Priority",
-                        "value": "🚨 HIGH" if is_urgent else "ℹ️ Normal"
+                        "value": "ðŸš¨ HIGH" if is_urgent else "â„¹ï¸ Normal"
                     }],
                     "text": message
                 }]
@@ -2438,14 +2722,14 @@ class NotificationManager:
                                     timeout=10)
             
             if response.status_code == 200:
-                logger.info(f"✅ Teams notification sent successfully")
+                logger.info(f"âœ… Teams notification sent successfully")
                 return True
             else:
-                logger.error(f"❌ Teams notification failed: {response.status_code} - {response.text}")
+                logger.error(f"âŒ Teams notification failed: {response.status_code} - {response.text}")
                 return False
                 
         except Exception as e:
-            logger.error(f"❌ Failed to send Teams notification: {e}")
+            logger.error(f"âŒ Failed to send Teams notification: {e}")
             return False
     
     def send_sms_notification(self, message: str, is_urgent: bool = False):
@@ -2462,7 +2746,7 @@ class NotificationManager:
             
             # Add urgency prefix if needed
             if is_urgent:
-                message = "🚨 " + message
+                message = "ðŸš¨ " + message
             
             # Send SMS
             message_obj = self.twilio_client.messages.create(
@@ -2471,11 +2755,11 @@ class NotificationManager:
                 to=os.getenv('RECIPIENT_PHONE_NUMBER')
             )
             
-            logger.info(f"✅ SMS notification sent: SID {message_obj.sid}")
+            logger.info(f"âœ… SMS notification sent: SID {message_obj.sid}")
             return True
             
         except Exception as e:
-            logger.error(f"❌ Failed to send SMS notification: {e}")
+            logger.error(f"âŒ Failed to send SMS notification: {e}")
             return False
     
     def send_alarm_notification(self, threat_data: Dict, sensor_data: Dict = None):
@@ -2492,38 +2776,38 @@ class NotificationManager:
         
         # Check component threats
         if threat_data['components']['air_quality']['score'] > 80:
-            alarm_reasons.append("🚬 Poor air quality/smoking detected")
+            alarm_reasons.append("ðŸš¬ Poor air quality/smoking detected")
         if threat_data['components']['noise']['score'] > 80:
-            alarm_reasons.append("🔊 Extreme noise levels")
+            alarm_reasons.append("ðŸ”Š Extreme noise levels")
         if threat_data['components']['behavior']['score'] > 75:
-            alarm_reasons.append("🏃 Abnormal behavior detected")
+            alarm_reasons.append("ðŸƒ Abnormal behavior detected")
         if threat_data['components']['vital_signs']['score'] > 70:
-            alarm_reasons.append("😮 Abnormal vital signs")
+            alarm_reasons.append("ðŸ˜® Abnormal vital signs")
         
         # Create alarm message
         subject = f"ALARM TRIGGERED - Threat Level: {threat_data['level']} ({threat_data['overall_threat']:.0f}/100)"
         
         message = f"""
-🚨 **IMMEDIATE ATTENTION REQUIRED** 🚨
+ðŸš¨ **IMMEDIATE ATTENTION REQUIRED** ðŸš¨
 
 **Threat Level:** {threat_data['level']} ({threat_data['overall_threat']:.0f}/100)
 **Response:** {threat_data['response']}
 
 **Detected Issues:**
-{chr(10).join(f'• {reason}' for reason in alarm_reasons) if alarm_reasons else '• Critical threat level detected'}
+{chr(10).join(f'â€¢ {reason}' for reason in alarm_reasons) if alarm_reasons else 'â€¢ Critical threat level detected'}
 
 **Component Breakdown:**
-• Count: {threat_data['components']['count']['score']:.0f}/100
-• Behavior: {threat_data['components']['behavior']['score']:.0f}/100
-• Vital Signs: {threat_data['components']['vital_signs']['score']:.0f}/100
-• Air Quality: {threat_data['components']['air_quality']['score']:.0f}/100
-• Noise: {threat_data['components']['noise']['score']:.0f}/100
+â€¢ Count: {threat_data['components']['count']['score']:.0f}/100
+â€¢ Behavior: {threat_data['components']['behavior']['score']:.0f}/100
+â€¢ Vital Signs: {threat_data['components']['vital_signs']['score']:.0f}/100
+â€¢ Air Quality: {threat_data['components']['air_quality']['score']:.0f}/100
+â€¢ Noise: {threat_data['components']['noise']['score']:.0f}/100
 
 **Trend:** {threat_data['temporal']['trend'].upper()}
 **Confidence:** {threat_data['confidence']*100:.0f}%
 
-📍 **Location:** Bathroom Monitoring System
-🕐 **Time:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+ðŸ“ **Location:** Bathroom Monitoring System
+ðŸ• **Time:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
         """
         
         # Send notifications
@@ -2550,7 +2834,7 @@ class NotificationManager:
         subject = f"MISBEHAVIOR RESOLVED - Threat Level: {threat_data['level']} ({threat_data['overall_threat']:.0f}/100)"
         
         message = f"""
-✅ **SITUATION RESOLVED** ✅
+âœ… **SITUATION RESOLVED** âœ…
 
 **Current Threat Level:** {threat_data['level']} ({threat_data['overall_threat']:.0f}/100)
 **Status:** Normal conditions have resumed
@@ -2559,16 +2843,16 @@ class NotificationManager:
 **Resolution Time:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
 **Current Component Status:**
-• Count: {threat_data['components']['count']['score']:.0f}/100
-• Behavior: {threat_data['components']['behavior']['score']:.0f}/100
-• Vital Signs: {threat_data['components']['vital_signs']['score']:.0f}/100
-• Air Quality: {threat_data['components']['air_quality']['score']:.0f}/100
-• Noise: {threat_data['components']['noise']['score']:.0f}/100
+â€¢ Count: {threat_data['components']['count']['score']:.0f}/100
+â€¢ Behavior: {threat_data['components']['behavior']['score']:.0f}/100
+â€¢ Vital Signs: {threat_data['components']['vital_signs']['score']:.0f}/100
+â€¢ Air Quality: {threat_data['components']['air_quality']['score']:.0f}/100
+â€¢ Noise: {threat_data['components']['noise']['score']:.0f}/100
 
 **Trend:** {threat_data['temporal']['trend'].upper()}
 
-📍 **Location:** Bathroom Monitoring System
-🕐 **Time:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+ðŸ“ **Location:** Bathroom Monitoring System
+ðŸ• **Time:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
         """
         
         # Send notifications
@@ -2595,12 +2879,12 @@ class NotificationManager:
         elif current_threat >= MISBEHAVIOR_NOTIFICATION_THRESHOLD:
             if not self.misbehavior_active:
                 self.misbehavior_active = True
-                logger.info(f"🚨 Misbehavior detected - threat level: {current_threat:.0f}")
+                logger.info(f"ðŸš¨ Misbehavior detected - threat level: {current_threat:.0f}")
         
         # Check for misbehavior resolution
         elif current_threat <= MISBEHAVIOR_EXIT_THRESHOLD and self.misbehavior_active:
             self.send_misbehavior_exit_notification(threat_data)
-            logger.info(f"✅ Misbehavior resolved - threat level: {current_threat:.0f}")
+            logger.info(f"âœ… Misbehavior resolved - threat level: {current_threat:.0f}")
 
 # Initialize notification manager
 notification_manager = NotificationManager()
@@ -2611,22 +2895,22 @@ db_manager = DatabaseManager()
 def main():
     """Main program loop with database integration"""
     print("\n" + "="*100)
-    print(f"🚀 {SYSTEM_NAME} v{VERSION}")
+    print(f"ðŸš€ {SYSTEM_NAME} v{VERSION}")
     print("="*100)
     print("Features:")
-    print("  • Sound Analysis with ML Classification")
-    print("  • Air Quality Monitoring (VOC, PM1.0, PM2.5, PM10)")
-    print(f"  • mmWave Radar: {radar_processor.detected_radar_type or 'Unknown'}")
+    print("  â€¢ Sound Analysis with ML Classification")
+    print("  â€¢ Air Quality Monitoring (VOC, PM1.0, PM2.5, PM10)")
+    print(f"  â€¢ mmWave Radar: {radar_processor.detected_radar_type or 'Unknown'}")
     print("    - Multi-target tracking with orientation")
     print("    - Activity recognition & breathing monitoring")
-    print("  • EXPONENTIAL TEMPORAL THREAT SCORING:")
-    print("    - Time-based escalation: threat ∝ (1 + 0.1*t)^2")
+    print("  â€¢ EXPONENTIAL TEMPORAL THREAT SCORING:")
+    print("    - Time-based escalation: threat âˆ (1 + 0.1*t)^2")
     print("    - Intensity jumps: 1.5x per threshold")
     print("    - Persistence multiplier: up to 2x")
     print("    - Trend acceleration detection")
     print("    - 5/15/30 minute predictions")
-    print("  • Facility Quality Assessment")
-    print("  • DATABASE INTEGRATION:")
+    print("  â€¢ Facility Quality Assessment")
+    print("  â€¢ DATABASE INTEGRATION:")
     print("    - Automatic event logging")
     print("    - Comprehensive reporting")
     print("    - Historical data analysis")
@@ -2644,7 +2928,7 @@ def main():
     
     # Check hardware
     if None in [mq135_channel, sound_channel, pms]:
-        logger.warning("⚠ Some sensors failed to initialize - running in simulation mode")
+        logger.warning("âš  Some sensors failed to initialize - running in simulation mode")
     
     try:
         while True:
@@ -2655,19 +2939,6 @@ def main():
                 pms_data = read_pms5003()
                 mq135_voltage = read_mq135()
                 sound_voltage = read_sound()
-                radar_data = read_radar()
-                
-                # Analyze sound
-                sound_analysis = analyze_sound(sound_voltage)
-                
-                # Analyze odor
-                odor_analysis = None
-                if sound_analysis:
-                    odor_analysis = analyze_odor(sound_analysis['db'])
-                
-                # Analyze radar
-                motion_patterns = radar_processor.analyze_motion_patterns() if radar_processor else {}
-                activity_events = radar_processor.detect_activity_events() if radar_processor else []
                 
                 # Get sensor status
                 sensor_status = {
@@ -2676,6 +2947,13 @@ def main():
                     'mq135': mq135_channel is not None,
                     'sound': sound_channel is not None
                 }
+                
+                # ===== SENSOR HEALTH MONITORING =====
+                # Update sensor health monitor with current status
+                sensor_health_monitor.update_sensor_status('radar', sensor_status['radar'], radar_data)
+                sensor_health_monitor.update_sensor_status('pms5003', sensor_status['pms5003'], pms_data)
+                sensor_health_monitor.update_sensor_status('mq135', sensor_status['mq135'], mq135_voltage)
+                sensor_health_monitor.update_sensor_status('sound', sensor_status['sound'], sound_analysis)
                 
                 # Calculate threat and quality
                 threat_data = threat_scorer.calculate_overall_threat(
@@ -2777,31 +3055,31 @@ def main():
                 # Periodic output
                 if current_time - last_print_time >= print_interval:
                     print("\n" + "="*100)
-                    print(f"📊 COMPREHENSIVE REPORT - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+                    print(f"ðŸ“Š COMPREHENSIVE REPORT - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
                     print("="*100)
                     
                     # Sound Analysis
                     if sound_analysis:
-                        print("\n🔊 SOUND ANALYSIS:")
+                        print("\nðŸ”Š SOUND ANALYSIS:")
                         print(f"   Level: {sound_analysis['db']:.1f} dB (Baseline: {sound_analysis['baseline']:.1f} dB)")
                         print(f"   Event: {sound_analysis['event']} (conf: {sound_analysis['confidence']:.2f})")
                         if sound_analysis['spike']:
-                            print(f"   ⚠ Sound spike! (Rate: {sound_analysis['rate_of_change']:.2f})")
+                            print(f"   âš  Sound spike! (Rate: {sound_analysis['rate_of_change']:.2f})")
                     
                     # Odor Analysis
                     if odor_analysis:
-                        print("\n🌬️ AIR QUALITY:")
+                        print("\nðŸŒ¬ï¸ AIR QUALITY:")
                         print(f"   VOC: {odor_analysis['voc_ppm']:.1f} ppm")
-                        print(f"   PM2.5: {odor_analysis['pm25']} µg/m³")
+                        print(f"   PM2.5: {odor_analysis['pm25']} Âµg/mÂ³")
                         print(f"   AQI: {odor_analysis['air_quality_index']:.1f}")
                         print(f"   Odor: {odor_analysis['odor_type']} (conf: {odor_analysis['classification_confidence']:.2f})")
                         if odor_analysis['odor_anomaly']:
-                            print("   ⚠ Odor anomaly!")
+                            print("   âš  Odor anomaly!")
                     
                     # Radar Analysis
                     if radar_data and 'targets' in radar_data:
                         targets = radar_data.get('targets', [])
-                        print(f"\n📡 RADAR ANALYSIS:")
+                        print(f"\nðŸ“¡ RADAR ANALYSIS:")
                         print(f"   Targets detected: {len(targets)}")
                         
                         for i, target in enumerate(targets):
@@ -2809,7 +3087,7 @@ def main():
                             if 'distance' in target:
                                 print(f"     Distance: {target['distance']:.2f}m")
                             if 'angle' in target:
-                                print(f"     Angle: {target['angle']:.1f}°")
+                                print(f"     Angle: {target['angle']:.1f}Â°")
                             if 'velocity' in target:
                                 print(f"     Speed: {target['velocity']:.2f} m/s")
                             if 'direction' in target:
@@ -2819,7 +3097,7 @@ def main():
                             if 'activity' in target:
                                 print(f"     Activity: {target['activity']} (conf: {target.get('activity_confidence', 0):.2f})")
                             if 'breathing_rate' in target:
-                                indicator = "⚠" if target.get('abnormal_breathing') else "✓"
+                                indicator = "âš " if target.get('abnormal_breathing') else "âœ“"
                                 print(f"     {indicator} Breathing: {target['breathing_rate']:.1f} bpm")
                         
                         if motion_patterns:
@@ -2829,7 +3107,7 @@ def main():
                         if activity_events:
                             print(f"\n   Events: {len(activity_events)}")
                             for event in activity_events:
-                                print(f"     • {event['type']} (conf: {event.get('confidence', 0):.2f})")
+                                print(f"     â€¢ {event['type']} (conf: {event.get('confidence', 0):.2f})")
                     
                     # Threat Assessment
                     print(f"\n{threat_data['color']} THREAT ASSESSMENT {threat_data['color']}")
@@ -2838,14 +3116,14 @@ def main():
                     print(f"   Confidence: {threat_data['confidence']}")
                     
                     # Temporal Context
-                    print(f"\n   ⏱️ TEMPORAL DYNAMICS:")
+                    print(f"\n   â±ï¸ TEMPORAL DYNAMICS:")
                     print(f"      Trend: {threat_data['temporal']['trend'].upper()}")
                     print(f"      Rate: {threat_data['temporal']['slope']:.2f} points/min")
                     print(f"      Acceleration: {threat_data['temporal']['acceleration']:.3f}")
                     print(f"      Persistence factor: {threat_data['temporal']['persistence_factor']:.2f}x")
                     
                     # Trajectory
-                    print(f"\n   🔮 THREAT TRAJECTORY:")
+                    print(f"\n   ðŸ”® THREAT TRAJECTORY:")
                     if threat_data['trajectory']['5min']:
                         print(f"      5min:  {threat_data['trajectory']['5min']:.0f}/100")
                         print(f"      15min: {threat_data['trajectory']['15min']:.0f}/100")
@@ -2854,17 +3132,17 @@ def main():
                         # Visual indicator
                         current = threat_data['overall_threat']
                         if threat_data['trajectory']['30min'] > current * 1.5:
-                            print("      ⬆️⬆️ RAPIDLY ESCALATING")
+                            print("      â¬†ï¸â¬†ï¸ RAPIDLY ESCALATING")
                         elif threat_data['trajectory']['30min'] > current * 1.2:
-                            print("      ⬆️ ESCALATING")
+                            print("      â¬†ï¸ ESCALATING")
                         elif threat_data['trajectory']['30min'] < current * 0.7:
-                            print("      ⬇️ DECAYING")
+                            print("      â¬‡ï¸ DECAYING")
                     
                     # Component Breakdown
-                    print(f"\n   📊 THREAT COMPONENTS:")
+                    print(f"\n   ðŸ“Š THREAT COMPONENTS:")
                     for name, data in threat_data['components'].items():
-                        bar = "█" * int(data['score'] / 5) + "░" * (20 - int(data['score'] / 5))
-                        esc_indicator = "⚡" if data['score'] > data['raw_score'] * 1.2 else " "
+                        bar = "â–ˆ" * int(data['score'] / 5) + "â–‘" * (20 - int(data['score'] / 5))
+                        esc_indicator = "âš¡" if data['score'] > data['raw_score'] * 1.2 else " "
                         print(f"      {name.replace('_', ' ').title():12} [{bar}] {data['score']:.1f}{esc_indicator} "
                               f"(base:{data['raw_score']:.0f}, conf:{data['confidence']:.2f}, w:{data['weight']:.2f})")
                     
@@ -2873,10 +3151,20 @@ def main():
                     print(f"      Trend: {quality_data['trend']}")
                     
                     # Raw Data
-                    print("\n📊 RAW SENSOR DATA:")
+                    print("\nðŸ“Š RAW SENSOR DATA:")
                     if pms_data:
-                        print(f"   PM1.0: {pms_data[0]:3d}  PM2.5: {pms_data[1]:3d}  PM10: {pms_data[2]:3d} µg/m³")
+                        print(f"   PM1.0: {pms_data[0]:3d}  PM2.5: {pms_data[1]:3d}  PM10: {pms_data[2]:3d} Âµg/mÂ³")
                     print(f"   MQ135: {mq135_voltage:.3f} V")
+                    
+                    # Sensor Health Status
+                    sensor_health = sensor_health_monitor.get_sensor_health_summary()
+                    print(f"\nðŸ”§ SENSOR HEALTH:")
+                    for sensor_name, health in sensor_health.items():
+                        status_icon = "âœ…" if health['status'] == 'operational' else "âš ï¸"
+                        connectivity_icon = "ðŸŸ¢" if health['connectivity_rate'] > 90 else "ðŸŸ¡" if health['connectivity_rate'] > 70 else "ðŸ”´"
+                        print(f"   {sensor_name.upper():8} {status_icon} {health['status']:12} {connectivity_icon} {health['connectivity_rate']:5.1f}%")
+                        if health['fault_count'] > 0:
+                            print(f"            Faults: {health['fault_count']} (since {health['last_fault'] or 'N/A'})")
                     
                     print("\n" + "="*100 + "\n")
                     last_print_time = current_time
