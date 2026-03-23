@@ -3229,6 +3229,215 @@ if scenario_config.get('name') == 'Sensor Fault':
 - **Vandalism Response**: Train for deliberate sensor damage scenarios
 - **System Resilience**: Test backup monitoring capabilities
 
+### 6. Sensor Fault Scenario - Detailed Analysis
+
+#### Scenario Overview
+The **Sensor Fault** scenario is a critical training tool designed to simulate hardware malfunctions, vandalism, and maintenance situations. It provides realistic simulation of sensor failures that can occur in real-world deployments, allowing staff to practice diagnosis, response, and recovery procedures.
+
+#### Scenario Purpose & Importance
+**Why Sensor Faults Matter:**
+- **System Reliability**: Understanding how the system behaves with compromised sensors
+- **Maintenance Response**: Training staff to quickly identify and resolve hardware issues
+- **Security Implications**: Testing threat detection when sensors are disabled or damaged
+- **Operational Continuity**: Ensuring monitoring continues despite partial sensor loss
+
+#### Detailed Fault Simulation
+
+**Fault Generation Algorithm:**
+```python
+# Sensor fault probability matrix
+FAULT_PROBABILITY = 0.7  # 70% chance each sensor fails
+
+# Fault type weighting
+FAULT_TYPES = {
+    'disconnection': 0.35,      # Cable cut, power failure
+    'stuck_reading': 0.25,     # Sensor stuck at one value
+    'out_of_range': 0.20,      # Impossible sensor values
+    'intermittent': 0.20       # On/off sensor behavior
+}
+
+# Sensor impact mapping
+SENSOR_IMPACTS = {
+    'radar': {
+        'affected_metrics': ['people_count', 'targets', 'proximity'],
+        'fallback_behavior': 'zero_readings',
+        'threat_impact': 'reduced_detection'
+    },
+    'pms5003': {
+        'affected_metrics': ['pm25', 'aqi', 'air_quality'],
+        'fallback_behavior': 'baseline_values',
+        'threat_impact': 'environmental_blindness'
+    },
+    'mq135': {
+        'affected_metrics': ['voc', 'odor_type', 'air_quality'],
+        'fallback_behavior': 'clean_air_assumption',
+        'threat_impact': 'chemical_detection_loss'
+    },
+    'sound': {
+        'affected_metrics': ['sound_db', 'sound_event', 'noise'],
+        'fallback_behavior': 'silent_environment',
+        'threat_impact': 'audio_threat_loss'
+    }
+}
+```
+
+#### Real-World Failure Scenarios
+
+**1. Vandalism Simulation**
+```python
+# Simulate deliberate sensor damage
+if scenario_config.get('vandalism_mode'):
+    # Target high-value sensors first
+    priority_sensors = ['radar', 'mq135']
+    for sensor in priority_sensors:
+        sensor_faults[sensor] = {
+            'status': 'vandalized',
+            'error_type': 'disconnection',
+            'damage_level': 'severe',
+            'estimated_repair_time': '4-6 hours',
+            'security_implication': 'monitoring_gap'
+        }
+```
+
+**2. Environmental Degradation**
+```python
+# Simulate environmental sensor aging
+if scenario_config.get('aging_mode'):
+    # Gradual sensor performance decline
+    for sensor in sensors:
+        if random.random() < 0.3:  # 30% degradation chance
+            sensor_faults[sensor] = {
+                'status': 'degraded',
+                'error_type': 'intermittent',
+                'performance_loss': f"{random.randint(20, 60)}%",
+                'maintenance_priority': 'scheduled'
+            }
+```
+
+**3. Power/Connectivity Issues**
+```python
+# Simulate infrastructure problems
+if scenario_config.get('infrastructure_mode'):
+    # Cluster failures (realistic power/network issues)
+    affected_zones = random.choice(['zone_a', 'zone_b', 'partial'])
+    sensor_faults = generate_cluster_failure(affected_zones)
+```
+
+#### System Response & Recovery
+
+**Automatic System Adaptations:**
+```python
+def handle_sensor_faults(sensor_faults):
+    """System response to sensor failures"""
+    
+    # Calculate detection capability loss
+    active_sensors = [s for s in ALL_SENSORS if s not in sensor_faults]
+    detection_capability = len(active_sensors) / len(ALL_SENSORS)
+    
+    # Adjust threat scoring based on available sensors
+    if detection_capability < 0.5:
+        # Major sensor loss - increase uncertainty
+        threat_data['uncertainty_factor'] = 2.0
+        threat_data['reliability_score'] = 'low'
+    
+    # Generate maintenance alerts
+    maintenance_alerts = []
+    for sensor, fault_info in sensor_faults.items():
+        maintenance_alerts.append({
+            'sensor': sensor,
+            'priority': 'high' if fault_info['error_type'] == 'disconnection' else 'medium',
+            'estimated_downtime': calculate_repair_time(fault_info),
+            'affected_capabilities': SENSOR_IMPACTS[sensor]['affected_metrics']
+        })
+    
+    return maintenance_alerts
+```
+
+#### Training Exercises & Scenarios
+
+**Exercise 1: Fault Diagnosis**
+- **Objective**: Train staff to identify which sensors have failed
+- **Method**: Present sensor data with anomalies and require fault identification
+- **Skills**: Data analysis, pattern recognition, troubleshooting
+
+**Exercise 2: Emergency Response**
+- **Objective**: Practice response to deliberate sensor vandalism
+- **Method**: Simulate security breach with concurrent sensor failures
+- **Skills**: Security protocols, coordination, backup procedures
+
+**Exercise 3: Maintenance Prioritization**
+- **Objective**: Learn to prioritize repairs based on impact
+- **Method**: Multiple simultaneous sensor failures with limited repair resources
+- **Skills**: Risk assessment, resource allocation, decision making
+
+#### Performance Metrics & KPIs
+
+**Fault Detection Metrics:**
+- **Mean Time to Detection (MTTD)**: How quickly faults are identified
+- **Fault Identification Accuracy**: Percentage of correctly diagnosed faults
+- **System Recovery Time**: Time to restore full monitoring capability
+
+**Training Effectiveness Metrics:**
+- **Response Time Improvement**: Reduction in fault response time after training
+- **Diagnostic Accuracy**: Improvement in fault identification accuracy
+- **Procedure Compliance**: Adherence to established response protocols
+
+#### Integration with Maintenance Systems
+
+**CMMS Integration:**
+```python
+def generate_maintenance_ticket(sensor_fault):
+    """Create maintenance work order"""
+    return {
+        'ticket_id': f"MT-{datetime.now().strftime('%Y%m%d-%H%M%S')}",
+        'asset_id': sensor_fault['sensor'],
+        'priority': map_priority(sensor_fault['error_type']),
+        'problem_description': generate_problem_description(sensor_fault),
+        'estimated_duration': calculate_repair_time(sensor_fault),
+        'required_parts': determine_parts_needed(sensor_fault),
+        'safety_considerations': assess_safety_implications(sensor_fault)
+    }
+```
+
+#### Advanced Features
+
+**Predictive Fault Analysis:**
+```python
+def predict_sensor_failure(sensor_history):
+    """Analyze sensor patterns to predict imminent failures"""
+    
+    # Check for performance degradation
+    if detect_performance_decline(sensor_history):
+        return {
+            'prediction': 'likely_failure',
+            'confidence': 0.85,
+            'timeframe': '24-48 hours',
+            'recommended_action': 'preventive_maintenance'
+        }
+    
+    return {'prediction': 'normal_operation'}
+```
+
+**Fault Impact Assessment:**
+```python
+def assess_fault_impact(sensor_faults, current_threat_level):
+    """Calculate operational impact of sensor failures"""
+    
+    impact_score = 0
+    for sensor in sensor_faults:
+        # Weight sensors by importance in current context
+        if current_threat_level == 'CRITICAL':
+            impact_score += CRITICAL_SENSOR_WEIGHTS.get(sensor, 1.0)
+        else:
+            impact_score += NORMAL_SENSOR_WEIGHTS.get(sensor, 1.0)
+    
+    return {
+        'impact_level': 'severe' if impact_score > 3.0 else 'moderate' if impact_score > 1.5 else 'minor',
+        'operational_capacity': max(0, 100 - (impact_score * 20)),
+        'recommended_actions': generate_response_plan(impact_score)
+    }
+```
+
 ### 2. Scenario Data Generation
 
 #### Realistic Simulation Data
