@@ -1742,6 +1742,12 @@ NOTIFICATION_COOLDOWN = 300             # 5 minutes between same notifications</
                                 </div>
                             </div>
 
+                            <div class="alert alert-info mt-3">
+                                <h6 class="alert-heading"><i class="bi bi-info-circle me-2"></i>New Feature: Sensor Fault Scenario</h6>
+                                <p class="mb-2">Advanced simulation of hardware malfunctions, vandalism, and maintenance situations for comprehensive training.</p>
+                                <a href="#sensor-fault-scenario" class="btn btn-sm btn-info">View Details</a>
+                            </div>
+
                             <h5>Scenario Features:</h5>
                             <ul>
                                 <li>Realistic parameters with environment-specific value ranges</li>
@@ -1749,7 +1755,266 @@ NOTIFICATION_COOLDOWN = 300             # 5 minutes between same notifications</
                                 <li>Dynamic variation with natural data fluctuations</li>
                                 <li>Contextual events and target generation</li>
                                 <li>Training applications for security staff</li>
+                                <li>Sensor fault simulation with realistic failure modes</li>
                             </ul>
+                        </div>
+                    </div>
+
+                    <!-- Sensor Fault Scenario - Detailed Section -->
+                    <div id="sensor-fault-scenario" class="card mb-4 border-primary">
+                        <div class="card-header bg-primary text-white">
+                            <h3 class="h5 mb-0"><i class="bi bi-tools me-2"></i>Sensor Fault Scenario - Detailed Analysis</h3>
+                        </div>
+                        <div class="card-body">
+                            <h4 class="h6">Scenario Overview</h4>
+                            <p>The <strong>Sensor Fault</strong> scenario is a critical training tool designed to simulate hardware malfunctions, vandalism, and maintenance situations. It provides realistic simulation of sensor failures that can occur in real-world deployments, allowing staff to practice diagnosis, response, and recovery procedures.</p>
+
+                            <h5 class="mt-4">Why Sensor Faults Matter</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <ul>
+                                        <li><strong>System Reliability:</strong> Understanding system behavior with compromised sensors</li>
+                                        <li><strong>Maintenance Response:</strong> Training staff to quickly identify and resolve hardware issues</li>
+                                        <li><strong>Security Implications:</strong> Testing threat detection when sensors are disabled or damaged</li>
+                                        <li><strong>Operational Continuity:</strong> Ensuring monitoring continues despite partial sensor loss</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <h5 class="mt-4">Scenario Configuration</h5>
+                            <div class="code-block mb-3">
+                                <pre><code class="language-python">'sensor_fault': {
+    'name': 'Sensor Fault',
+    'threatScore': 60,
+    'threatLevel': 'HIGH',
+    'people': {'min': 0, 'max': 1},
+    'voc': {'min': 0, 'max': 10},
+    'noise': {'min': 0, 'max': 20},
+    'pm25': {'min': 0, 'max': 5},
+    'description': 'Simulates sensor malfunction or vandalism',
+    'sensorFaults': ['radar', 'pms5003', 'mq135', 'sound']
+}</code></pre>
+                            </div>
+
+                            <h5 class="mt-4">Fault Types Simulated</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="card bg-light">
+                                        <div class="card-body">
+                                            <h6 class="card-title"><i class="bi bi-x-circle text-danger me-2"></i>Disconnection</h6>
+                                            <p class="card-text small">Cable cut or power failure - complete sensor loss</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card bg-light">
+                                        <div class="card-body">
+                                            <h6 class="card-title"><i class="bi bi-lock text-warning me-2"></i>Stuck Reading</h6>
+                                            <p class="card-text small">Sensor stuck at one value - no data variation</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mt-2">
+                                    <div class="card bg-light">
+                                        <div class="card-body">
+                                            <h6 class="card-title"><i class="bi bi-exclamation-triangle text-warning me-2"></i>Out of Range</h6>
+                                            <p class="card-text small">Impossible sensor values - data corruption</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mt-2">
+                                    <div class="card bg-light">
+                                        <div class="card-body">
+                                            <h6 class="card-title"><i class="bi bi-arrow-repeat text-info me-2"></i>Intermittent</h6>
+                                            <p class="card-text small">On/off sensor behavior - unreliable data</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h5 class="mt-4">Affected Sensors & Impact</h5>
+                            <div class="table-responsive">
+                                <table class="table table-bordered">
+                                    <thead class="table-primary">
+                                        <tr>
+                                            <th>Sensor</th>
+                                            <th>Icon</th>
+                                            <th>Affected Metrics</th>
+                                            <th>Failure Behavior</th>
+                                            <th>Threat Impact</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><strong>Radar (mmWave)</strong></td>
+                                            <td>📡</td>
+                                            <td>people_count, targets, proximity</td>
+                                            <td>Zero readings</td>
+                                            <td><span class="badge bg-warning">Reduced Detection</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>PMS5003 (Particulate)</strong></td>
+                                            <td>🌫️</td>
+                                            <td>pm25, aqi, air_quality</td>
+                                            <td>Baseline values</td>
+                                            <td><span class="badge bg-info">Environmental Blindness</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>MQ135 (VOC)</strong></td>
+                                            <td>💨</td>
+                                            <td>voc, odor_type, air_quality</td>
+                                            <td>Clean air assumption</td>
+                                            <td><span class="badge bg-danger">Chemical Detection Loss</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Sound Sensor</strong></td>
+                                            <td>🔊</td>
+                                            <td>sound_db, sound_event, noise</td>
+                                            <td>Silent environment</td>
+                                            <td><span class="badge bg-secondary">Audio Threat Loss</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <h5 class="mt-4">Real-World Failure Scenarios</h5>
+                            <div class="accordion" id="failureScenarios">
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#vandalismScenario">
+                                            <i class="bi bi-hammer text-danger me-2"></i>Vandalism Simulation
+                                        </button>
+                                    </h2>
+                                    <div id="vandalismScenario" class="accordion-collapse collapse show" data-bs-parent="#failureScenarios">
+                                        <div class="accordion-body">
+                                            <p>Simulates deliberate sensor damage targeting high-value sensors first:</p>
+                                            <div class="code-block">
+                                                <pre><code class="language-python"># Target high-value sensors first
+priority_sensors = ['radar', 'mq135']
+for sensor in priority_sensors:
+    sensor_faults[sensor] = {
+        'status': 'vandalized',
+        'error_type': 'disconnection',
+        'damage_level': 'severe',
+        'estimated_repair_time': '4-6 hours',
+        'security_implication': 'monitoring_gap'
+    }</code></pre>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#agingScenario">
+                                            <i class="bi bi-clock-history text-warning me-2"></i>Environmental Degradation
+                                        </button>
+                                    </h2>
+                                    <div id="agingScenario" class="accordion-collapse collapse" data-bs-parent="#failureScenarios">
+                                        <div class="accordion-body">
+                                            <p>Simulates gradual sensor aging and performance decline:</p>
+                                            <div class="code-block">
+                                                <pre><code class="language-python"># Gradual sensor performance decline
+for sensor in sensors:
+    if random.random() < 0.3:  # 30% degradation chance
+        sensor_faults[sensor] = {
+            'status': 'degraded',
+            'error_type': 'intermittent',
+            'performance_loss': f"{random.randint(20, 60)}%",
+            'maintenance_priority': 'scheduled'
+        }</code></pre>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#infrastructureScenario">
+                                            <i class="bi bi-wifi-off text-info me-2"></i>Power/Connectivity Issues
+                                        </button>
+                                    </h2>
+                                    <div id="infrastructureScenario" class="accordion-collapse collapse" data-bs-parent="#failureScenarios">
+                                        <div class="accordion-body">
+                                            <p>Simulates infrastructure problems with cluster failures:</p>
+                                            <div class="code-block">
+                                                <pre><code class="language-python"># Cluster failures (realistic power/network issues)
+affected_zones = random.choice(['zone_a', 'zone_b', 'partial'])
+sensor_faults = generate_cluster_failure(affected_zones)</code></pre>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h5 class="mt-4">Training Exercises</h5>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="card h-100">
+                                        <div class="card-header bg-success text-white">
+                                            <h6 class="mb-0"><i class="bi bi-search me-2"></i>Exercise 1: Fault Diagnosis</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <p class="small"><strong>Objective:</strong> Train staff to identify which sensors have failed</p>
+                                            <p class="small"><strong>Method:</strong> Present sensor data with anomalies and require fault identification</p>
+                                            <p class="small"><strong>Skills:</strong> Data analysis, pattern recognition, troubleshooting</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card h-100">
+                                        <div class="card-header bg-warning text-white">
+                                            <h6 class="mb-0"><i class="bi bi-shield-exclamation me-2"></i>Exercise 2: Emergency Response</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <p class="small"><strong>Objective:</strong> Practice response to deliberate sensor vandalism</p>
+                                            <p class="small"><strong>Method:</strong> Simulate security breach with concurrent sensor failures</p>
+                                            <p class="small"><strong>Skills:</strong> Security protocols, coordination, backup procedures</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card h-100">
+                                        <div class="card-header bg-info text-white">
+                                            <h6 class="mb-0"><i class="bi bi-gear me-2"></i>Exercise 3: Maintenance Prioritization</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <p class="small"><strong>Objective:</strong> Learn to prioritize repairs based on impact</p>
+                                            <p class="small"><strong>Method:</strong> Multiple simultaneous sensor failures with limited repair resources</p>
+                                            <p class="small"><strong>Skills:</strong> Risk assessment, resource allocation, decision making</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h5 class="mt-4">Performance Metrics & KPIs</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>Fault Detection Metrics</h6>
+                                    <ul>
+                                        <li><strong>Mean Time to Detection (MTTD):</strong> How quickly faults are identified</li>
+                                        <li><strong>Fault Identification Accuracy:</strong> Percentage of correctly diagnosed faults</li>
+                                        <li><strong>System Recovery Time:</strong> Time to restore full monitoring capability</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Training Effectiveness Metrics</h6>
+                                    <ul>
+                                        <li><strong>Response Time Improvement:</strong> Reduction in fault response time after training</li>
+                                        <li><strong>Diagnostic Accuracy:</strong> Improvement in fault identification accuracy</li>
+                                        <li><strong>Procedure Compliance:</strong> Adherence to established response protocols</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="alert alert-success mt-4">
+                                <h6 class="alert-heading"><i class="bi bi-check-circle me-2"></i>Training Value</h6>
+                                <p class="mb-2">The sensor fault scenario provides comprehensive training for:</p>
+                                <ul class="mb-0">
+                                    <li><strong>Maintenance Teams:</strong> Fault diagnosis and repair procedures</li>
+                                    <li><strong>Security Staff:</strong> Response to compromised monitoring systems</li>
+                                    <li><strong>System Administrators:</strong> System resilience and recovery testing</li>
+                                    <li><strong>Emergency Responders:</strong> Operating with partial sensor coverage</li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
 
@@ -1765,6 +2030,9 @@ NOTIFICATION_COOLDOWN = 300             # 5 minutes between same notifications</
                                 <li>Scenario termination with data restoration</li>
                                 <li>Scenario status tracking and monitoring</li>
                                 <li>Training use cases for system testing and validation</li>
+                                <li>Sensor fault simulation with realistic failure modes</li>
+                                <li>Maintenance workflow integration</li>
+                                <li>Performance metrics and KPI tracking</li>
                             </ul>
                         </div>
                     </div>
