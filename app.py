@@ -3480,6 +3480,33 @@ def generate_scenario_data(scenario_config):
     noise = max(0, noise_base + random.uniform(-5, 5))
     pm25 = max(0, pm25_base + random.uniform(-5, 5))
     
+    # Handle sensor fault scenario
+    if scenario_config.get('name') == 'Sensor Fault':
+        # Randomly select which sensors are faulty
+        faulty_sensors = scenario_config.get('sensorFaults', [])
+        sensor_faults = {}
+        
+        for sensor in faulty_sensors:
+            if random.random() < 0.7:  # 70% chance each sensor is faulty
+                sensor_faults[sensor] = {
+                    'status': 'fault',
+                    'last_reading': None,
+                    'error_type': random.choice(['disconnection', 'stuck_reading', 'out_of_range', 'intermittent']),
+                    'fault_time': datetime.now().strftime('%H:%M:%S')
+                }
+        
+        # Set sensor readings to indicate faults
+        if 'radar' in sensor_faults:
+            people = 0  # No people detected by radar
+        if 'pms5003' in sensor_faults:
+            pm25 = 0  # No particulate readings
+        if 'mq135' in sensor_faults:
+            voc = 0  # No VOC readings
+        if 'sound' in sensor_faults:
+            noise = 0  # No sound readings
+    else:
+        sensor_faults = {}
+    
     # Generate scenario-specific components
     components = {
         'proximity': {
@@ -3581,7 +3608,8 @@ def generate_scenario_data(scenario_config):
         'packet_count': random.randint(1000, 9999),
         'last_update': datetime.now().strftime('%H:%M:%S.%f')[:-3],
         'scenario_active': True,
-        'scenario_name': scenario_config.get('name', 'Unknown Scenario')
+        'scenario_name': scenario_config.get('name', 'Unknown Scenario'),
+        'sensor_faults': sensor_faults
     }
 
 @app.route("/scenarios")
