@@ -1,4 +1,28 @@
+<div align="center">
+
+![SCOPE Logo](../static/assets/logo_icon.png)
+
 # 📊 COMPLETE VARIABLES & METRICS REFERENCE
+
+**Author**: [Sarveshwar Senthil Kumar](https://github.com/SarveshwarSenthilKumar)  
+**Repository**: [Engineering Idol - SCOPE System](https://github.com/SarveshwarSenthilKumar/Engineering-Idol)  
+**Documentation**: [Live Site](https://sarveshwarsenthilkumar.github.io/SCOPE/)
+
+---
+
+## 📋 TABLE OF CONTENTS
+
+- [🔴 Threat Assessment Metrics](#-threat-assessment-metrics)
+- [📈 Temporal Dynamics](#-temporal-dynamics)
+- [🔮 Threat Trajectory Predictions](#-threat-trajectory-predictions)
+- [👥 Person Detection Metrics](#-person-detection-metrics)
+- [🌡️ Environmental Metrics](#-environmental-metrics)
+- [🔊 Audio Metrics](#-audio-metrics)
+- [🎯 Quality Assessment](#-quality-assessment)
+- [📊 System Performance](#-system-performance)
+- [🔧 Configuration Variables](#-configuration-variables)
+
+---
 
 Based on your comprehensive SCOPE system, here's every variable, metric, and data point you have access to:
 

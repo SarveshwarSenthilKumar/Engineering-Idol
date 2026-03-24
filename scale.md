@@ -1,4 +1,25 @@
+<div align="center">
+
+![SCOPE Logo](../static/assets/logo_icon.png)
+
 # 🎯 SIMPLE SCORING SYSTEM BREAKDOWN
+
+**Author**: [Sarveshwar Senthil Kumar](https://github.com/SarveshwarSenthilKumar)  
+**Repository**: [Engineering Idol - SCOPE System](https://github.com/SarveshwarSenthilKumar/Engineering-Idol)  
+**Documentation**: [Live Site](https://sarveshwarsenthilkumar.github.io/SCOPE/)
+
+---
+
+## 📋 TABLE OF CONTENTS
+
+- [📊 The Big Picture](#-the-big-picture)
+- [🧮 Threat Score Formula](#-threat-score-formula)
+- [📈 Key Improvements](#-key-improvements)
+- [🎯 Quality Score Formula](#-quality-score-formula)
+- [🚨 Auto-Alarms](#-auto-alarms)
+- [📊 Scoring Examples](#-scoring-examples)
+
+---
 
 ## 📊 **THE BIG PICTURE**
 
