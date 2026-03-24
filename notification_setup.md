@@ -1,6 +1,27 @@
-# Notification Setup Guide
+<div align="center">
 
-## Gmail Configuration
+![SCOPE Logo](../static/assets/logo_icon.png)
+
+# 📧 Notification Setup Guide
+
+**Author**: [Sarveshwar Senthil Kumar](https://github.com/SarveshwarSenthilKumar)  
+**Repository**: [Engineering Idol - SCOPE System](https://github.com/SarveshwarSenthilKumar/Engineering-Idol)  
+**Documentation**: [Live Site](https://sarveshwarsenthilkumar.github.io/SCOPE/)
+
+---
+
+## 📋 TABLE OF CONTENTS
+
+- [📧 Gmail Configuration](#-gmail-configuration)
+- [📱 Microsoft Teams Configuration](#-microsoft-teams-configuration)
+- [📞 Twilio SMS Configuration](#-twilio-sms-configuration)
+- [🔧 Advanced Settings](#-advanced-settings)
+- [🚨 Testing Notifications](#-testing-notifications)
+- [🛠️ Troubleshooting](#️-troubleshooting)
+
+---
+
+## 📧 Gmail Configuration
 
 1. **Enable 2-Factor Authentication** on your Gmail account
 2. **Generate an App Password**:

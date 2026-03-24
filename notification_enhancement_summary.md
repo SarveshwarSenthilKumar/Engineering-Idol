@@ -1,9 +1,32 @@
-# Notification System Enhancement Summary
+<div align="center">
 
-## Overview
-Successfully added comprehensive notification options for fake data mode and organized all environment variables into the .env file.
+![SCOPE Logo](../static/assets/logo_icon.png)
 
-## Changes Made
+# 📧 Notification System Enhancement Summary
+
+**Author**: [Sarveshwar Senthil Kumar](https://github.com/SarveshwarSenthilKumar)  
+**Repository**: [Engineering Idol - SCOPE System](https://github.com/SarveshwarSenthilKumar/Engineering-Idol)  
+**Documentation**: [Live Site](https://sarveshwarsenthilkumar.github.io/SCOPE/)
+
+---
+
+## 📋 TABLE OF CONTENTS
+
+- [📖 Overview](#-overview)
+- [🔄 Changes Made](#-changes-made)
+- [📁 Enhanced .env File](#-enhanced-env-file)
+- [🐍 Updated rasppi.py](#-updated-rasppipy)
+- [🔧 Configuration Details](#-configuration-details)
+- [🚨 Testing Results](#-testing-results)
+- [📈 Future Enhancements](#-future-enhancements)
+
+---
+
+## 📖 Overview
+
+Successfully added comprehensive notification options for fake data mode and organized all environment variables into a .env file.
+
+## 🔄 Changes Made
 
 ### 1. Enhanced .env File
 **File**: `.env`
