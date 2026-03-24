@@ -1,7 +1,27 @@
-# COMPLETE HARDWARE SETUP GUIDE
-## SCOPE System with mmWave Radar
+<div align="center">
 
-## SYSTEM OVERVIEW
+![SCOPE Logo](../static/assets/logo_icon.png)
+
+# COMPLETE HARDWARE SETUP GUIDE
+
+## 🎯 SCOPE System with mmWave Radar
+
+**Author**: [Sarveshwar Senthil Kumar](https://github.com/SarveshwarSenthilKumar)  
+**Repository**: [Engineering Idol - SCOPE System](https://github.com/SarveshwarSenthilKumar/Engineering-Idol)  
+**Documentation**: [Live Site](https://sarveshwarsenthilkumar.github.io/SCOPE/)
+
+---
+
+## 📋 TABLE OF CONTENTS
+
+- [🔧 System Overview](#-system-overview)
+- [🍓 Part 1: Raspberry Pi Zero W Setup](#-part-1-raspberry-pi-zero-w-setup)
+- [📡 Part 2: Wiring Diagrams](#-part-2-wiring-diagrams)
+- [🔧 Part 3: Verify Interfaces](#-part-3-verify-interfaces)
+
+---
+
+## 🔧 SYSTEM OVERVIEW
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
