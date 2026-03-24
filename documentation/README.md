@@ -1,12 +1,22 @@
-# SCOPE System Documentation
+<div align="center">
+
+![SCOPE Logo](../../static/assets/logo_icon.png)
+
+# 📚 SCOPE System Documentation
+
+**Author**: [Sarveshwar Senthil Kumar](https://github.com/SarveshwarSenthilKumar)  
+**Repository**: [Engineering Idol - SCOPE System](https://github.com/SarveshwarSenthilKumar/Engineering-Idol)  
+**Documentation**: [Live Site](https://sarveshwarsenthilkumar.github.io/SCOPE/)
+
+---
 
 System for Comprehensive Observation and Protection of Environments - Advanced environmental monitoring and threat detection system.
 
 ## 🚀 Quick Start
 
-### Viewing the Documentation
+### 📖 Viewing Documentation
 
-**📚 Live Documentation:** [https://sarveshwarsenthilkumar.github.io/SCOPE/](https://sarveshwarsenthilkumar.github.io/SCOPE/)
+**🌐 Live Documentation**: [https://sarveshwarsenthilkumar.github.io/SCOPE/](https://sarveshwarsenthilkumar.github.io/SCOPE/)
 
 Open the documentation directly in your browser:
 
@@ -16,7 +26,7 @@ open scope-docs.html
 # or double-click the file in your file explorer
 ```
 
-### Running the Documentation Server
+### 🐍 Running the Documentation Server
 
 ```bash
 python app.py
