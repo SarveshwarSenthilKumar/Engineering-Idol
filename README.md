@@ -1,11 +1,22 @@
+<div align="center">
+
+# ![SCOPE Logo](static/assets/logo_icon.png)
+
 # SCOPE System
+
+**System for Comprehensive Observation and Protection of Environments**
 
 [![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/Flask-2.3.3-green.svg)](https://flask.palletsprojects.com/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Documentation](https://img.shields.io/badge/Documentation-Live-brightgreen.svg)](https://sarveshwarsenthilkumar.github.io/SCOPE/)
+[![GitHub stars](https://img.shields.io/github/stars/SarveshwarSenthilKumar/Engineering-Idol?style=social)](https://github.com/SarveshwarSenthilKumar/Engineering-Idol/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/SarveshwarSenthilKumar/Engineering-Idol?style=social)](https://github.com/SarveshwarSenthilKumar/Engineering-Idol/network)
+[![GitHub issues](https://img.shields.io/github/issues/SarveshwarSenthilKumar/Engineering-Idol)](https://github.com/SarveshwarSenthilKumar/Engineering-Idol/issues)
 
-**System for Comprehensive Observation and Protection of Environments** - Advanced environmental monitoring and threat detection system designed for educational facilities and similar environments.
+> **🎯 Advanced environmental monitoring and threat detection system** designed for educational facilities and similar environments. Integrates multiple sensors with AI-powered analytics to provide real-time monitoring, threat assessment, and automated reporting capabilities.
+
+---
 
 ## 🚀 Quick Start
 
@@ -37,44 +48,60 @@ python fake_data_generator.py
 python app.py
 ```
 
-### Quick Access
+### 🌐 Quick Access
 
-- **🌐 Live Application**: `http://localhost:5000`
-- **📚 Documentation**: [https://sarveshwarsenthilkumar.github.io/SCOPE/](https://sarveshwarsenthilkumar.github.io/SCOPE/)
-- **📖 Local Documentation**: Open `documentation/scope-docs.html` in browser
+| 🚀 **Live Demo** | 📚 **Documentation** | 📖 **Local Docs** |
+|---|---|---|
+| [http://localhost:5000](http://localhost:5000) | [🌐 Live Site](https://sarveshwarsenthilkumar.github.io/SCOPE/) | Open `documentation/scope-docs.html` |
+
+### 🔗 Key Links
+- **🏠 Dashboard**: `http://localhost:5000/dashboard`
+- **� Analytics**: `http://localhost:5000/analytics` 
+- **🎯 Scenarios**: `http://localhost:5000/scenarios`
+- **📋 Reports**: `http://localhost:5000/weekly_report`
+- **⚙️ Settings**: `http://localhost:5000/settings`
 
 ## 📁 Project Structure
 
 ```
-SCOPE/
-├── README.md                    # This file
-├── app.py                      # Main Flask application (3,699+ lines)
-├── rasppi.py                    # Hardware interface (2,894+ lines)
-├── fake_data_generator.py        # Test data generation (901+ lines)
-├── requirements.txt              # Python dependencies
-├── events.db                   # SQLite database
-├── documentation/               # Complete documentation
-│   ├── README.md              # Documentation README
-│   ├── scope-docs.html        # Main documentation (standalone)
-│   ├── app.py                # Documentation server
-│   └── static/
-│       ├── css/
-│       │   └── scope-docs.css # Documentation styles (43KB)
-│       └── js/
-│           └── scope-docs.js  # Documentation scripts (44KB)
-├── templates/                   # Flask templates
-│   ├── index.html             # Main dashboard
-│   ├── analytics.html          # Analytics page
-│   ├── history.html           # Event history page
-│   ├── weekly_report.html      # Weekly reports
-│   └── [other templates]
-├── static/                     # Static assets
-│   ├── css/
-│   ├── js/
-│   ├── assets/
-│   └── images/
-└── logs/                      # Application logs
+📦 SCOPE System/
+├── 📄 README.md                    # This comprehensive documentation
+├── 🐍 app.py                      # Main Flask application (3,699+ lines)
+├── 🔧 rasppi.py                    # Hardware interface (2,894+ lines)
+├── 🎲 fake_data_generator.py        # Test data generation (901+ lines)
+├── 📋 requirements.txt              # Python dependencies
+├── 🗄️ events.db                   # SQLite database
+├── 📚 documentation/               # Complete documentation
+│   ├── 📄 README.md              # Documentation README
+│   ├── 🌐 scope-docs.html        # Main documentation (standalone)
+│   ├── 🐍 app.py                # Documentation server
+│   └── 🎨 static/
+│       ├── 🎨 css/
+│       │   └── 📄 scope-docs.css # Documentation styles (43KB)
+│       └── 📜 js/
+│           └── 📄 scope-docs.js  # Documentation scripts (44KB)
+├── 🎨 templates/                   # Flask templates
+│   ├── 🏠 index.html             # Main dashboard
+│   ├── 📊 analytics.html          # Analytics page
+│   ├── 🕐 history.html           # Event history page
+│   ├── 📋 weekly_report.html      # Weekly reports with cover page
+│   └── 📄 [other templates]     # Additional UI pages
+├── 🎨 static/                     # Static assets
+│   ├── 🎨 css/
+│   ├── 📜 js/
+│   ├── 🖼️ assets/
+│   │   └── 🖼️ logo_icon.png     # SCOPE system logo
+│   └── 🖼️ images/
+└── 📝 logs/                      # Application logs
 ```
+
+### 📊 Project Statistics
+- **📝 Total Lines**: 7,500+ lines of code
+- **📄 Documentation**: 15+ comprehensive pages  
+- **🎨 Templates**: 15+ HTML templates
+- **🔧 Components**: 70+ database fields
+- **🌐 API Endpoints**: 25+ REST endpoints
+- **📱 Responsive**: Mobile-optimized design
 
 ## 🏗️ Architecture
 
@@ -141,64 +168,91 @@ SCOPE/
 
 ## 🔧 Technology Stack
 
-### Backend
-- **Python 3.11+**: Core programming language
-- **Flask 2.3.3**: Web framework
-- **SQLite3**: Database with optimized indexing
-- **Google Gemini AI**: Advanced analytics and reporting
-- **scikit-learn**: Machine learning algorithms
-- **NumPy**: Numerical computing
+### 🖥 Backend Technologies
 
-### Frontend
-- **HTML5**: Semantic markup
-- **CSS3**: Modern styling with responsive design
-- **JavaScript**: Interactive features and real-time updates
-- **Bootstrap 5.3.0**: UI framework
-- **Chart.js 3.9.1**: Data visualization
-- **Font Awesome**: Icon library
+| 🐍 **Language** | 🌐 **Framework** | 🗄️ **Database** | 🤖 **AI/ML** |
+|---|---|---|---|
+| **Python 3.11+** | **Flask 2.3.3** | **SQLite3** | **Google Gemini AI** |
+| Core programming | Web framework | Optimized indexing | Advanced analytics |
+| [![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/) | [![Flask](https://img.shields.io/badge/Flask-2.3.3-green.svg)](https://flask.palletsprojects.com/) | [![SQLite](https://img.shields.io/badge/SQLite-3.0+-lightgrey.svg)](https://www.sqlite.org/) | [![Gemini](https://img.shields.io/badge/Gemini-AI-blue.svg)](https://ai.google.dev/) |
 
-### Hardware
-- **Raspberry Pi 4**: Edge computing platform
-- **mmWave Radar**: Person detection and tracking
-- **MQ135**: VOC gas sensor
-- **PMS5003**: Particulate matter sensor
-- **MAX4466**: Audio microphone
-- **ADS1115**: 16-bit ADC converter
+### 🎨 Frontend Technologies
 
-### Integration
-- **SMTP (Gmail)**: Email notifications
-- **Microsoft Teams**: Webhook notifications
-- **Server-Sent Events**: Real-time data streaming
-- **REST API**: External system integration
+| 🎨 **Styling** | 📊 **Visualization** | 🎯 **UI Framework** | 📜 **Scripts** |
+|---|---|---|---|
+| **CSS3** | **Chart.js 3.9.1** | **Bootstrap 5.3.0** | **JavaScript ES6+** |
+| Modern styling | Data visualization | Responsive design | Interactive features |
+| [![CSS3](https://img.shields.io/badge/CSS3-blue.svg)](https://developer.mozilla.org/en-US/docs/Web/CSS) | [![Chart.js](https://img.shields.io/badge/Chart.js-3.9.1-orange.svg)](https://www.chartjs.org/) | [![Bootstrap](https://img.shields.io/badge/Bootstrap-5.3.0-purple.svg)](https://getbootstrap.com/) | [![JavaScript](https://img.shields.io/badge/JavaScript-yellow.svg)](https://developer.mozilla.org/en-US/docs/Web/JavaScript) |
+
+### 🔧 Hardware Components
+
+| 🍓 **Platform** | 📡 **Sensors** | 🌡️ **Environmental** | 🔊 **Audio** |
+|---|---|---|---|
+| **Raspberry Pi 4** | **mmWave Radar** | **MQ135 VOC** | **I2S Microphone** |
+| Edge computing | Person detection | PMS5003 particles | Sound analysis |
+| [![Raspberry Pi](https://img.shields.io/badge/RPi-4-green.svg)](https://www.raspberrypi.org/) | [![mmWave](https://img.shields.io/badge/mmWave-blue.svg)](https://seeedstudio.com/) | [![Air Quality](https://img.shields.io/badge/Air%20Quality-orange.svg)](https://www.sparkfun.com/) | [![Audio](https://img.shields.io/badge/Audio-red.svg)](https://www.raspberrypi.org/) |
+
+### 📚 Key Libraries & Dependencies
+
+```python
+# Core Dependencies
+Flask==2.3.3              # Web framework
+SQLite3                    # Database (built-in)
+scikit-learn==1.3.0        # Machine learning
+numpy==1.24.3              # Numerical computing
+pandas==2.0.3               # Data analysis
+requests==2.31.0             # HTTP requests
+```
+
+### 🌐 Integration APIs
+
+- **🤖 Google Gemini AI**: Advanced analytics and natural language processing
+- **📧 Gmail SMTP**: Email notifications and alerts
+- **📱 Microsoft Teams**: Team collaboration and alerts
+- **📞 Twilio**: SMS notifications for critical events
+
+---
 
 ## 🎯 Key Features
 
-### Real-time Monitoring
-- **Multi-target Tracking**: Up to 20 simultaneous targets
-- **Activity Recognition**: Sitting, walking, running, stationary
-- **Vital Signs Detection**: Breathing rate monitoring
-- **Environmental Sensing**: Air quality, noise levels
-- **Threat Assessment**: AI-powered threat scoring
+### 🎥 Real-time Monitoring
 
-### Multi-Environment Support
-- **Primary Environment**: Main monitoring area
-- **Secondary Environment**: Additional zones
-- **Warehouse Mode**: Large space monitoring
-- **Outdoor Monitoring**: External area coverage
+| 📡 **Detection** | 🏃 **Activity** | 💓 **Vitals** | 🌡️ **Environmental** |
+|---|---|---|---|
+| **Multi-target Tracking** | **Activity Recognition** | **Vital Signs Detection** | **Environmental Sensing** |
+| Up to 20 targets | Sitting, walking, running | Breathing rate monitoring | Air quality, noise levels |
+| AI-powered analysis | Pattern recognition | Medical emergency detection | Threat assessment |
 
-### Advanced Analytics
-- **Threat Timeline**: Historical threat patterns
-- **Component Analysis**: Breakdown of threat factors
-- **Predictive Analytics**: Trend forecasting
-- **Automated Reporting**: AI-generated insights
-- **Executive Summaries**: High-level overviews
+### 🌍 Multi-Environment Support
 
-### User Interface
-- **Responsive Design**: Desktop, tablet, mobile support
-- **Dark Mode**: Complete theme switching
-- **Real-time Updates**: Live data streaming
-- **Interactive Charts**: Dynamic data visualization
-- **Search Functionality**: Content and data search
+| 🏠 **Primary** | 🏢 **Secondary** | 🏭 **Warehouse** | 🌳 **Outdoor** |
+|---|---|---|---|
+| Main monitoring area | Additional zones | Large space monitoring | External area coverage |
+| Full sensor suite | Extended coverage | Wide area tracking | Weather-resistant |
+
+### 📊 Advanced Analytics
+
+| 📈 **Analytics** | 🤖 **AI Features** | 📋 **Reporting** | 🔮 **Predictive** |
+|---|---|---|---|
+| Threat timeline | Natural language processing | Automated insights | Trend forecasting |
+| Component analysis | Pattern recognition | Executive summaries | Risk assessment |
+| Historical patterns | Anomaly detection | Custom reports | Behavior prediction |
+
+### 🎨 User Interface
+
+| 📱 **Responsive** | 🌙 **Dark Mode** | ⚡ **Real-time** | 📊 **Interactive** |
+|---|---|---|---|
+| Desktop, tablet, mobile | Complete theme switching | Live data streaming | Dynamic charts |
+| Touch-friendly | Eye-care mode | Server-sent events | Zoomable visualizations |
+| Accessibility support | High contrast | Auto-refresh | Drill-down capabilities |
+
+### 🔔 Notification System
+
+| 📧 **Channel** | ⚡ **Priority** | 🎯 **Targeting** | 🔄 **Automation** |
+|---|---|---|---|
+| Email (Gmail) | Critical alerts | Role-based notifications | Escalation rules |
+| Microsoft Teams | Warning notifications | Location-specific alerts | Scheduled reports |
+| SMS (Twilio) | Info updates | System status messages | Maintenance alerts |
 
 ## 📊 Database Schema
 
