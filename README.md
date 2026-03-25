@@ -166,7 +166,62 @@ python app.py
    - Historical event logging
    - Automated data generation for testing
 
-## 🔧 Technology Stack
+## � Threat Level Classification
+
+### **Scoring System Overview**
+
+The SCOPE system uses a **dual-score architecture**:
+- **Threat Score (0-100)**: How dangerous/unusual the situation is
+- **Quality Score (0-100)**: How comfortable/pleasant the environment is
+
+### **Threat Level Mapping**
+
+| **Score Range** | **Level** | **Color** | **Response** | **Description** |
+|-----------------|-----------|-----------|--------------|----------------|
+| **0-19** | **LOW** | 🟢 | Normal Conditions | Everything is optimal |
+| **20-39** | **MODERATE** | 🟡 | Increase Awareness | Minor issues detected |
+| **40-59** | **ELEVATED** | 🟠 | Monitor Closely | Significant concerns |
+| **60-79** | **HIGH** | 🔴 | Urgent Attention Needed | Serious threats |
+| **80-100** | **CRITICAL** | ⚫ | IMMEDIATE ACTION REQUIRED | Maximum danger |
+
+### **Threat Score Formula**
+
+```python
+THREAT = (Count × 0.15) + (Behavior × 0.45) + 
+         (Vital Signs × 0.15) + (Air Quality × 0.15) + (Noise × 0.10)
+```
+
+**Component Weights:**
+- **Behavior (45%)**: Human behavior patterns and proximity
+- **Count (15%)**: Number of people detected
+- **Vital Signs (15%)**: Abnormal breathing/health indicators
+- **Air Quality (15%)**: VOC, PM2.5, odor levels
+- **Noise (10%)**: Sound levels and events
+
+### **Auto-Alarm Triggers**
+
+#### **Extreme Value Auto-Alarms**
+- **Air Quality**: VOC > 300 ppm OR PM2.5 > 150 μg/m³ → Force **CRITICAL**
+- **Noise**: > 110 dB OR Spike > 100 dB → Force **CRITICAL**
+- **Combined**: VOC > 200 + PM2.5 > 100 → Force **CRITICAL**
+
+#### **Temporal Auto-Alarms**
+- **Rapid Escalation**: Trend = "rapidly_worsening" + Score > 70 → **CRITICAL**
+- **Persistent Threat**: Duration > 30 min + Score > 60 → **HIGH+**
+
+### **Quality Score Categories**
+
+| **Score Range** | **Category** | **Description** |
+|----------------|-------------|----------------|
+| **80-100** | Excellent | Optimal conditions |
+| **60-79** | Good | Comfortable environment |
+| **40-59** | Fair | Noticeable issues |
+| **20-39** | Poor | Significant problems |
+| **0-19** | Critical | Unacceptable conditions |
+
+---
+
+## �🔧 Technology Stack
 
 ### 🖥 Backend Technologies
 

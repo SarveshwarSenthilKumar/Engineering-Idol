@@ -2,27 +2,28 @@
 
 ## Table of Contents
 1. [System Overview](#system-overview)
-2. [Core Architecture](#core-architecture)
-3. [Hardware Components](#hardware-components)
-4. [Software Components](#software-components)
-5. [Web Application Features](#web-application-features)
-6. [Database Schema](#database-schema)
-7. [API Endpoints](#api-endpoints)
-8. [Security & Authentication](#security--authentication)
-9. [Real-time Monitoring](#real-time-monitoring)
-10. [Analytics & Reporting](#analytics--reporting)
-11. [Notification System](#notification-system)
-12. [Multi-Environment Support](#multi-environment-support)
-13. [Scenario Simulation](#scenario-simulation)
-14. [User Management](#user-management)
-15. [Data Management](#data-management)
-16. [Configuration & Settings](#configuration--settings)
-17. [Deployment & Operations](#deployment--operations)
-18. [Integration Capabilities](#integration-capabilities)
-19. [Performance Features](#performance-features)
-20. [Advanced Features](#advanced-features)
-21. [Documentation System](#documentation-system)
-22. [Testing & Development Tools](#testing--development-tools)
+2. [Threat Level Classification System](#threat-level-classification-system)
+3. [Core Architecture](#core-architecture)
+4. [Hardware Components](#hardware-components)
+5. [Software Components](#software-components)
+6. [Web Application Features](#web-application-features)
+7. [Database Schema](#database-schema)
+8. [API Endpoints](#api-endpoints)
+9. [Security & Authentication](#security--authentication)
+10. [Real-time Monitoring](#real-time-monitoring)
+11. [Analytics & Reporting](#analytics--reporting)
+12. [Notification System](#notification-system)
+13. [Multi-Environment Support](#multi-environment-support)
+14. [Scenario Simulation](#scenario-simulation)
+15. [User Management](#user-management)
+16. [Data Management](#data-management)
+17. [Configuration & Settings](#configuration--settings)
+18. [Deployment & Operations](#deployment--operations)
+19. [Integration Capabilities](#integration-capabilities)
+20. [Performance Features](#performance-features)
+21. [Advanced Features](#advanced-features)
+22. [Documentation System](#documentation-system)
+23. [Testing & Development Tools](#testing--development-tools)
 
 ---
 
@@ -180,6 +181,269 @@ SCOPE is an advanced environmental monitoring and threat detection system design
 - **User Support**: Ongoing technical assistance and system optimization
 - **Feedback Integration**: Continuous improvement based on user input
 - **Success Metrics**: Clear KPIs for measuring implementation success
+
+---
+
+## Threat Level Classification System
+
+### **Scoring Architecture Overview**
+
+The SCOPE system implements a **dual-score architecture** for comprehensive environmental assessment:
+
+#### **Primary Scores**
+- **Threat Score (0-100)**: Measures danger and unusual activity levels
+- **Quality Score (0-100)**: Measures environmental comfort and pleasantness
+
+### **Threat Level Classification Matrix**
+
+| **Score Range** | **Threat Level** | **Color Indicator** | **Response Protocol** | **System Action** |
+|-----------------|------------------|---------------------|---------------------|-------------------|
+| **0-19** | **LOW** | 🟢 | Normal Conditions | Continue monitoring |
+| **20-39** | **MODERATE** | 🟡 | Increase Awareness | Enhanced logging |
+| **40-59** | **ELEVATED** | 🟠 | Monitor Closely | Alert notifications |
+| **60-79** | **HIGH** | 🔴 | Urgent Attention | Immediate alerts |
+| **80-100** | **CRITICAL** | ⚫ | IMMEDIATE ACTION | Maximum alert level |
+
+### **Threat Score Calculation Formula**
+
+```python
+THREAT = (Count × 0.15) + (Behavior × 0.45) + 
+         (Vital Signs × 0.15) + (Air Quality × 0.15) + (Noise × 0.10)
+```
+
+#### **Component Weight Distribution**
+
+| **Component** | **Weight** | **Description** | **Data Sources** |
+|---------------|------------|-----------------|------------------|
+| **Behavior** | 45% | Human behavior patterns and proximity analysis | mmWave Radar, Activity Classification |
+| **Count** | 15% | Number of people detected and occupancy levels | mmWave Radar Target Detection |
+| **Vital Signs** | 15% | Abnormal breathing and health indicators | mmWave Radar Vital Sign Detection |
+| **Air Quality** | 15% | VOC, PM2.5, odor levels and air quality index | MQ135 VOC Sensor, PMS5003 Particle Sensor |
+| **Noise** | 10% | Sound levels, events, and acoustic patterns | I2S Microphone with FFT Analysis |
+
+### **Component Scoring Details**
+
+#### **Behavior Scoring (45% Weight)**
+```python
+behavior_threat = (proximity_score × 0.6) + (movement_score × 0.3) + (activity_score × 0.1)
+```
+
+**Proximity Analysis:**
+- **Normal Distance** (>3m): 0-20 points
+- **Close Proximity** (2-3m): 20-50 points  
+- **Very Close** (1-2m): 50-80 points
+- **Direct Contact** (<1m): 80-100 points
+
+**Movement Pattern Analysis:**
+- **Normal Movement**: 0-30 points
+- **Aggressive Movement**: 30-60 points
+- **Erratic Movement**: 60-90 points
+- **Violent Movement**: 90-100 points
+
+**Activity Classification:**
+- **Normal Activity**: 0-20 points
+- **Suspicious Activity**: 20-50 points
+- **Threatening Activity**: 50-80 points
+- **Dangerous Activity**: 80-100 points
+
+#### **Count Scoring (15% Weight)**
+```python
+def calculate_count_threat(people_count):
+    if people_count <= 2: return 0
+    elif people_count <= 5: return 20
+    elif people_count <= 10: return 40
+    elif people_count <= 20: return 60
+    else: return 80
+```
+
+#### **Vital Signs Scoring (15% Weight)**
+**Dependency Logic**: Vital signs only impact threat when behavior score > 70
+
+**Breathing Pattern Analysis:**
+- **Normal Breathing**: 0-20 points
+- **Rapid Breathing**: 20-50 points
+- **Irregular Breathing**: 50-80 points
+- **No Breathing/Abnormal**: 80-100 points
+
+#### **Air Quality Scoring (15% Weight)**
+**VOC Level Assessment:**
+- **0-30 ppm**: 5 points (Low)
+- **30-50 ppm**: 15 points (Moderate)
+- **50-100 ppm**: 30 points (High)
+- **100-200 ppm**: 50 points (Very High)
+- **200+ ppm**: 70 points (Extreme)
+
+**PM2.5 Level Assessment:**
+- **0-25 μg/m³**: 10 points (Good)
+- **25-50 μg/m³**: 25 points (Moderate)
+- **50-100 μg/m³**: 45 points (Unhealthy)
+- **100-150 μg/m³**: 70 points (Very Unhealthy)
+- **150+ μg/m³**: 70 points (Hazardous)
+
+**Odor Type Multipliers:**
+- **strong_chemical**: ×1.5
+- **vaping_aerosol**: ×1.4
+- **cigarette_smoke**: ×1.3
+- **dust_or_smoke**: ×1.3
+
+#### **Noise Scoring (10% Weight)**
+**Decibel-Based Assessment:**
+- **0-60 dB**: 0-10 points (Normal)
+- **60-70 dB**: 25 points (Noticeable)
+- **70-80 dB**: 45 points (Moderate)
+- **80-90 dB**: 70 points (Loud)
+- **90-100 dB**: 70 points (Very Loud)
+- **100-110 dB**: 70 points (Extreme)
+- **110+ dB**: 90 points (Critical)
+
+**Event-Based Multipliers:**
+- **Spike Detection**: ×1.5
+- **Impact/Explosion**: ×2.0
+- **Door Slam/Shouting**: ×1.3
+
+### **Temporal Dynamics & Escalation**
+
+#### **Trend Analysis**
+```python
+def calculate_temporal_dynamics(threat_history):
+    # Calculate rate of change and acceleration
+    recent = list(threat_history)[-3:]
+    slope = (recent[-1] - recent[0]) / len(recent)
+    
+    # Determine trend classification
+    if slope > 2: trend = 'rapidly_worsening'
+    elif slope > 0.5: trend = 'worsening'
+    elif slope < -2: trend = 'rapidly_improving'
+    elif slope < -0.5: trend = 'improving'
+    else: trend = 'stable'
+```
+
+#### **Persistence Factor**
+```python
+# Escalation for recurring threats
+if threat_level in ['HIGH', 'CRITICAL']:
+    persistence_factor = 1.0 + (duration_minutes / 30) * 0.5
+else:
+    persistence_factor = 1.0
+
+final_threat = base_threat * persistence_factor
+```
+
+### **Auto-Alarm Mechanisms**
+
+#### **Extreme Value Triggers**
+- **Air Quality**: VOC > 300 ppm OR PM2.5 > 150 μg/m³ → Force **CRITICAL**
+- **Noise**: > 110 dB OR Spike > 100 dB → Force **CRITICAL**
+- **Combined Extreme**: VOC > 200 + PM2.5 > 100 → Force **CRITICAL**
+
+#### **Temporal Auto-Alarms**
+- **Rapid Escalation**: Trend = "rapidly_worsening" + Score > 70 → **CRITICAL**
+- **Persistent Threat**: Duration > 30 min + Score > 60 → **HIGH+**
+- **Combined Factors**: Multiple components elevated → **CRITICAL**
+
+### **Quality Score System**
+
+#### **Base Quality Calculation**
+```python
+quality_score = 85  # Good baseline
+
+# Sound adjustment
+if sound_db > 50:
+    quality_sound_adjust = -min(20, max(0, (sound_db - 50) * 0.4))
+
+# Air quality adjustment  
+if aqi > 50:
+    quality_air_adjust = -min(25, max(0, (aqi - 50) * 0.3))
+
+# Occupancy adjustment
+if people_count > 5:
+    quality_occupancy_adjust = -min(15, max(0, (people_count - 5) * 2))
+
+quality_score += quality_sound_adjust + quality_air_adjust + quality_occupancy_adjust
+```
+
+#### **Quality Categories**
+| **Score Range** | **Category** | **Description** | **Actions** |
+|----------------|-------------|----------------|------------|
+| **80-100** | Excellent | Optimal conditions | Maintain current settings |
+| **60-79** | Good | Comfortable environment | Continue monitoring |
+| **40-59** | Fair | Noticeable issues | Investigate causes |
+| **20-39** | Poor | Significant problems | Take corrective action |
+| **0-19** | Critical | Unacceptable conditions | Immediate intervention |
+
+### **Confidence Scoring System**
+
+#### **Component Confidence Weighting**
+```python
+overall_confidence = (
+    behavior_confidence × 0.45 +
+    air_quality_confidence × 0.15 +
+    noise_confidence × 0.10 +
+    vital_signs_confidence × 0.15 +
+    count_confidence × 0.15
+)
+```
+
+#### **Confidence Level Classification**
+- **High Confidence** (> 0.8): Reliable classification, take action
+- **Medium Confidence** (0.6-0.8): Moderate certainty, verify with additional data
+- **Low Confidence** (< 0.6): Uncertain classification, needs verification
+
+### **Response Protocols by Level**
+
+#### **LOW (0-19)**
+- **Monitoring**: Standard surveillance
+- **Logging**: Normal data collection
+- **Notifications**: None required
+- **Response**: Continue normal operations
+
+#### **MODERATE (20-39)**
+- **Monitoring**: Enhanced data collection
+- **Logging**: Detailed event recording
+- **Notifications**: Informational alerts
+- **Response**: Increase awareness
+
+#### **ELEVATED (40-59)**
+- **Monitoring**: Close surveillance
+- **Logging**: Comprehensive event documentation
+- **Notifications**: Warning alerts to administrators
+- **Response**: Prepare for potential action
+
+#### **HIGH (60-79)**
+- **Monitoring**: Continuous high-priority surveillance
+- **Logging**: Real-time event streaming
+- **Notifications**: Urgent alerts to all stakeholders
+- **Response**: Immediate assessment and action planning
+
+#### **CRITICAL (80-100)**
+- **Monitoring**: Maximum priority surveillance
+- **Logging**: Complete system state capture
+- **Notifications**: Emergency alerts to all channels
+- **Response**: Immediate emergency protocols activation
+
+### **Configuration Parameters**
+
+#### **Threshold Configuration**
+```python
+# Threat notification thresholds
+ALARM_NOTIFICATION_THRESHOLD = 80    # Critical threats
+MISBEHAVIOR_NOTIFICATION_THRESHOLD = 60  # High threats
+MISBEHAVIOR_EXIT_THRESHOLD = 40      # Exit monitoring
+
+# Component weights (configurable)
+WEIGHTS = {
+    'behavior': 0.45,
+    'count': 0.15,
+    'vital_signs': 0.15,
+    'air_quality': 0.15,
+    'noise': 0.10
+}
+```
+
+#### **Sensitivity Adjustments**
+- **High Sensitivity**: Lower thresholds for earlier warnings
+- **Low Sensitivity**: Higher thresholds to reduce false positives
+- **Balanced**: Default settings for optimal performance
 
 ---
 
