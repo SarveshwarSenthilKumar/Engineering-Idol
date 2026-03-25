@@ -348,7 +348,50 @@ Final = 27.75 × 1.8 × 3.38 × 1.7 = 287 → capped at 100 → ⚫ CRITICAL (10
 
 ---
 
-## 🔧 **SIMPLE WAYS TO ADJUST**
+## � **THREAT LEVEL CLASSIFICATION**
+
+### **Final Threat Score → Level Mapping**
+
+| **Score Range** | **Level** | **Color** | **Response** | **Description** |
+|-----------------|-----------|-----------|--------------|----------------|
+| **0-19** | **LOW** | 🟢 | Normal Conditions | Everything is optimal |
+| **20-39** | **MODERATE** | 🟡 | Increase Awareness | Minor issues detected |
+| **40-59** | **ELEVATED** | 🟠 | Monitor Closely | Significant concerns |
+| **60-79** | **HIGH** | 🔴 | Urgent Attention Needed | Serious threats |
+| **80-100** | **CRITICAL** | ⚫ | IMMEDIATE ACTION REQUIRED | Maximum danger |
+
+### **Auto-Alarm Triggers**
+
+#### **Extreme Value Auto-Alarms**
+- **Air Quality**: VOC > 300 ppm OR PM2.5 > 150 μg/m³ → Force **CRITICAL**
+- **Noise**: > 110 dB OR Spike > 100 dB → Force **CRITICAL**
+- **Combined**: VOC > 200 + PM2.5 > 100 → Force **CRITICAL**
+
+#### **Temporal Auto-Alarms**
+- **Rapid Escalation**: Trend = "rapidly_worsening" + Score > 70 → **CRITICAL**
+- **Persistent Threat**: Duration > 30 min + Score > 60 → **HIGH+**
+
+### **Confidence Scoring**
+
+```python
+# Component confidence weighting
+overall_confidence = (
+    behavior_confidence × 0.45 +
+    air_quality_confidence × 0.15 +
+    noise_confidence × 0.10 +
+    vital_signs_confidence × 0.15 +
+    count_confidence × 0.15
+)
+```
+
+**Confidence Levels:**
+- **High**: > 0.8 (reliable classification)
+- **Medium**: 0.6-0.8 (moderate certainty)
+- **Low**: < 0.6 (uncertain, needs verification)
+
+---
+
+## �🔧 **SIMPLE WAYS TO ADJUST**
 
 ### **Make it MORE sensitive** (earlier warnings)
 ```python
