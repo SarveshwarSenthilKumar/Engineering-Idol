@@ -24,7 +24,7 @@
 
 - **Python** 3.11 or higher
 - **SQLite** 3.0 or higher
-- **Raspberry Pi** 4 or higher (for hardware deployment)
+- **Raspberry Pi** 4 or higher (for hardware deployment) - We used a Pi Zero 2
 - **Node.js** 18+ (for documentation server)
 
 ### Installation
