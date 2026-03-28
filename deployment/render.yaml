@@ -1,0 +1,14 @@
+services:
+  # type: web
+  # name: scope-monitor
+  # env: python
+  # buildCommand: pip install -r requirements-heroku.txt
+  # startCommand: gunicorn app-heroku:app
+  # plan: free
+  
+  # Environment variables (set in Render dashboard)
+  # SECRET_KEY: your-secret-key
+  # GOOGLE_API_KEY: your-google-api-key
+  
+  # Health check
+  # healthCheckPath: /
