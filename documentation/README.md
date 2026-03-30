@@ -10,6 +10,12 @@
 
 ---
 
+## 🏆 IEEE Best Technical Award Winner
+
+**Winner of the IEEE Best Technical Award at the Engineering Idol Competition**
+
+---
+
 System for Comprehensive Observation and Protection of Environments - Advanced environmental monitoring and threat detection system.
 
 ## 🚀 Quick Start
