@@ -1,5 +1,11 @@
 # SCOPE System - Comprehensive Feature Breakdown
 
+## 🏆 IEEE Best Technical Award Winner
+
+**Winner of the IEEE Best Technical Award at the Engineering Idol Competition**
+
+---
+
 ## Table of Contents
 1. [System Overview](#system-overview)
 2. [Threat Level Classification System](#threat-level-classification-system)
