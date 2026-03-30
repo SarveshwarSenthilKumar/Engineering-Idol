@@ -13,8 +13,9 @@
 [![GitHub stars](https://img.shields.io/github/stars/SarveshwarSenthilKumar/Engineering-Idol?style=social)](https://github.com/SarveshwarSenthilKumar/Engineering-Idol/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/SarveshwarSenthilKumar/Engineering-Idol?style=social)](https://github.com/SarveshwarSenthilKumar/Engineering-Idol/network)
 [![GitHub issues](https://img.shields.io/github/issues/SarveshwarSenthilKumar/Engineering-Idol)](https://github.com/SarveshwarSenthilKumar/Engineering-Idol/issues)
+[![Award](https://img.shields.io/badge/Award-IEEE%20Best%20Technical%20Award-orange)](#)
 
-> **Advanced environmental monitoring and threat detection system** designed for educational facilities and similar environments. Integrates multiple sensors with AI-powered analytics to provide real-time monitoring, threat assessment, and automated reporting capabilities.
+> **Award-winning advanced environmental monitoring and threat detection system** designed for educational facilities and similar environments. Integrates multiple sensors with AI-powered analytics to provide real-time monitoring, threat assessment, and automated reporting capabilities. Winner of the IEEE Best Technical Award.
 
 ---
 
