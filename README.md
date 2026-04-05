@@ -97,7 +97,7 @@ SCOPE System/
 ```
 
 ### Project Statistics
-- **Total Lines**: 7,500+ lines of code
+- **Total Lines**: 7,500+ lines of code w/ rasppi.py
 - **Documentation**: 15+ comprehensive pages  
 - **Templates**: 15+ HTML templates
 - **Components**: 70+ database fields
