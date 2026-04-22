@@ -74,7 +74,7 @@ SCOPE System/
 ├── events.db                   # SQLite database
 ├── documentation/               # Complete documentation
 │   ├── README.md              # Documentation README
-│   ├── scope-docs.html        # Main documentation (standalone)
+│   ├── scope-docs.html        # Main documentation (standalone site)
 │   ├── app.py                # Documentation server
 │   └── static/
 │       ├── css/
